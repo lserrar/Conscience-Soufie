@@ -92,13 +92,15 @@ export default function EventDetailScreen() {
           <View style={styles.descriptionSection}>
             <Text style={styles.description}>{cleanedDescription}</Text>
           </View>
-        ) : (
-          <View style={styles.noDescriptionSection}>
-            <Text style={styles.noDescriptionText}>
-              Retrouvez tous les détails sur HelloAsso
-            </Text>
-          </View>
-        )}
+        ) : null}
+        
+        {/* Info about full description */}
+        <View style={styles.infoSection}>
+          <Ionicons name="information-circle-outline" size={20} color={theme.colors.textSecondary} />
+          <Text style={styles.infoText}>
+            Retrouvez la description complète et tous les détails sur HelloAsso
+          </Text>
+        </View>
       </ScrollView>
 
       {/* HelloAsso Button - Fixed at bottom */}

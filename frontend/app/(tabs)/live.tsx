@@ -116,7 +116,7 @@ export default function LiveScreen() {
 
       // Fetch WordPress events to cross-reference
       const wpResponse = await axios.get(
-        'https://consciencesoufie.com/wp-json/wp/v2/tribe_events?per_page=10&_embed&orderby=date&order=asc'
+        'https://consciencesoufie.com/wp-json/wp/v2/mec-events?per_page=10&_embed'
       );
       const wpEvents: WordPressEvent[] = wpResponse.data;
 

@@ -23,7 +23,7 @@ export default function TabLayout() {
           },
           tabBarLabelStyle: {
             fontFamily: theme.fonts.bodyMedium,
-            fontSize: 11,
+            fontSize: 10,
           },
         }}
       >
@@ -42,6 +42,15 @@ export default function TabLayout() {
             title: 'Articles',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="newspaper-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="podcasts"
+          options={{
+            title: 'Podcasts',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="headset-outline" size={size} color={color} />
             ),
           }}
         />

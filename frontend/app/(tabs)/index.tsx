@@ -160,7 +160,7 @@ export default function AccueilScreen() {
               </View>
               <TouchableOpacity
                 style={styles.eventButton}
-                onPress={() => openEvent(event.link)}
+                onPress={() => openEvent(event.id)}
               >
                 <Text style={styles.eventButtonText}>Voir le détail</Text>
               </TouchableOpacity>

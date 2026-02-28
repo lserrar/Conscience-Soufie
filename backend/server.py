@@ -68,6 +68,48 @@ class ZoomTokenCache:
 
 zoom_token_cache = ZoomTokenCache()
 
+class HelloAssoTokenCache:
+    token: Optional[str] = None
+    expires_at: Optional[datetime] = None
+
+helloasso_token_cache = HelloAssoTokenCache()
+
+async def get_helloasso_access_token():
+    """Get HelloAsso access token using OAuth2 client credentials"""
+    global helloasso_token_cache
+    
+    # Check if we have a valid cached token
+    if helloasso_token_cache.token and helloasso_token_cache.expires_at:
+        if datetime.utcnow() < helloasso_token_cache.expires_at:
+            return helloasso_token_cache.token
+    
+    async with httpx.AsyncClient() as http_client:
+        try:
+            response = await http_client.post(
+                "https://api.helloasso.com/oauth2/token",
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": HELLOASSO_CLIENT_ID,
+                    "client_secret": HELLOASSO_CLIENT_SECRET
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"HelloAsso OAuth error: {response.status_code} - {response.text}")
+                raise HTTPException(status_code=500, detail="Erreur d'authentification HelloAsso")
+            
+            data = response.json()
+            helloasso_token_cache.token = data["access_token"]
+            # Token expires in 30 minutes, cache for 25 minutes
+            from datetime import timedelta
+            helloasso_token_cache.expires_at = datetime.utcnow() + timedelta(minutes=25)
+            
+            return helloasso_token_cache.token
+        except httpx.RequestError as e:
+            logger.error(f"HelloAsso request error: {e}")
+            raise HTTPException(status_code=500, detail="Erreur de connexion à HelloAsso")
+
 async def get_zoom_access_token():
     """Get Zoom access token using Server-to-Server OAuth"""
     global zoom_token_cache

@@ -192,25 +192,133 @@ export default function Header() {
             </TouchableOpacity>
             
             {/* Center: Logo + Subtitle */}
-            <View style={styles.centerSection}>
+            <TouchableOpacity 
+              style={styles.centerSection}
+              onPress={() => setSearchModalVisible(true)}
+              activeOpacity={0.9}
+            >
               <Image
                 source={{ uri: LOGO_URL }}
                 style={styles.logo}
                 resizeMode="contain"
               />
               <Text style={styles.subtitle}>Association culturelle à but non lucratif</Text>
-            </View>
-            
-            {/* Right: Donation Button */}
-            <TouchableOpacity
-              style={styles.sideButton}
-              onPress={() => setDonationModalVisible(true)}
-            >
-              <Ionicons name="gift" size={26} color="#fff" />
             </TouchableOpacity>
+            
+            {/* Right: Search + Donation */}
+            <View style={styles.rightButtons}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setSearchModalVisible(true)}
+              >
+                <Ionicons name="search" size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setDonationModalVisible(true)}
+              >
+                <Ionicons name="gift" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
+
+      {/* Search Modal */}
+      <Modal
+        visible={searchModalVisible}
+        animationType="slide"
+        onRequestClose={closeSearchModal}
+      >
+        <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
+          {/* Search Header */}
+          <View style={styles.searchHeader}>
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Rechercher un article..."
+                placeholderTextColor={theme.colors.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={performSearch}
+                returnKeyType="search"
+                autoFocus
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <TouchableOpacity onPress={closeSearchModal} style={styles.searchCancelButton}>
+              <Text style={styles.searchCancelText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Search Results */}
+          <View style={styles.searchContent}>
+            {isSearching ? (
+              <View style={styles.searchLoading}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.searchLoadingText}>Recherche en cours...</Text>
+              </View>
+            ) : hasSearched && searchResults.length === 0 ? (
+              <View style={styles.searchEmpty}>
+                <Ionicons name="search-outline" size={48} color={theme.colors.textSecondary} />
+                <Text style={styles.searchEmptyText}>Aucun résultat trouvé</Text>
+                <Text style={styles.searchEmptySubtext}>
+                  Essayez avec d'autres mots-clés
+                </Text>
+              </View>
+            ) : !hasSearched ? (
+              <View style={styles.searchEmpty}>
+                <Ionicons name="document-text-outline" size={48} color={theme.colors.textSecondary} />
+                <Text style={styles.searchEmptyText}>Rechercher dans les articles</Text>
+                <Text style={styles.searchEmptySubtext}>
+                  Entrez un mot-clé et appuyez sur Entrée
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.searchResultsList}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.searchResultItem}
+                    onPress={() => openSearchResult(item)}
+                    activeOpacity={0.9}
+                  >
+                    {item._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+                      <Image
+                        source={{ uri: item._embedded['wp:featuredmedia'][0].source_url }}
+                        style={styles.searchResultImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.searchResultImage, styles.searchResultImagePlaceholder]}>
+                        <Ionicons name="document-text" size={24} color={theme.colors.primary} />
+                      </View>
+                    )}
+                    <View style={styles.searchResultContent}>
+                      <Text style={styles.searchResultTitle} numberOfLines={2}>
+                        {stripHTML(item.title.rendered)}
+                      </Text>
+                      <Text style={styles.searchResultExcerpt} numberOfLines={2}>
+                        {stripHTML(item.excerpt.rendered)}
+                      </Text>
+                      <Text style={styles.searchResultDate}>{formatDate(item.date)}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Profile/Settings Modal */}
       <Modal

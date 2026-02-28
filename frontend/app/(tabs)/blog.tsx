@@ -16,17 +16,22 @@ import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-// Topic filters
+// Topic filters (from WordPress categories)
 const TOPIC_FILTERS = [
   { slug: 'all', label: 'Tous' },
   { slug: 'soufisme', label: 'Soufisme' },
+  { slug: 'le-prophete-muhammad', label: 'Le Prophète' },
+  { slug: 'ibn-arabi', label: 'Ibn \'Arabî' },
   { slug: 'rumi', label: 'Rûmî' },
-  { slug: 'ibn-arabi', label: 'Ibn Arabi' },
-  { slug: 'poesie-sama', label: 'Poésie et samâ\'' },
   { slug: 'henry-corbin', label: 'Henry Corbin' },
-  { slug: 'eva-de-vitray', label: 'Eva de Vitray' },
-  { slug: 'louis-massignon', label: 'Louis Massignon' },
-  { slug: 'michel-chodkiewicz', label: 'Michel Chodkiewicz' },
+  { slug: 'eva', label: 'Eva de Vitray' },
+  { slug: 'cheikh-ahmad-al-alawi', label: 'Cheikh al-\'Alâwî' },
+  { slug: 'hallaj', label: 'Hallâj' },
+  { slug: 'poesie', label: 'Poésie' },
+  { slug: 'philosophie', label: 'Philosophie' },
+  { slug: 'references-bibilographiques', label: 'Bibliographie' },
+  { slug: 'paix', label: 'Paix' },
+  { slug: 'hommages', label: 'Hommages' },
 ];
 
 interface Post {

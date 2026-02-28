@@ -20,16 +20,21 @@ import theme from '@/constants/theme';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Thematic tags for article carousels
+// Thematic tags for article carousels (from WordPress categories)
 const THEMATIC_TAGS = [
   { slug: 'soufisme', label: 'Soufisme' },
+  { slug: 'le-prophete-muhammad', label: 'Le Prophète Muhammad' },
+  { slug: 'ibn-arabi', label: 'Ibn \'Arabî' },
   { slug: 'rumi', label: 'Rûmî' },
-  { slug: 'ibn-arabi', label: 'Ibn Arabi' },
-  { slug: 'poesie-sama', label: 'Poésie et samâ\'' },
   { slug: 'henry-corbin', label: 'Henry Corbin' },
-  { slug: 'eva-de-vitray', label: 'Eva de Vitray' },
-  { slug: 'louis-massignon', label: 'Louis Massignon' },
-  { slug: 'michel-chodkiewicz', label: 'Michel Chodkiewicz' },
+  { slug: 'eva', label: 'Eva de Vitray-Meyerovitch' },
+  { slug: 'cheikh-ahmad-al-alawi', label: 'Cheikh al-\'Alâwî' },
+  { slug: 'hallaj', label: 'Hallâj' },
+  { slug: 'poesie', label: 'Poésie' },
+  { slug: 'philosophie', label: 'Philosophie' },
+  { slug: 'references-bibilographiques', label: 'Bibliographie' },
+  { slug: 'paix', label: 'Paix' },
+  { slug: 'hommages', label: 'Hommages' },
 ];
 
 // Calameo magazines with actual cover images

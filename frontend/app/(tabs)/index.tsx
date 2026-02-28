@@ -374,33 +374,7 @@ export default function AccueilScreen() {
         />
       </View>
 
-      {/* Thematic Article Sections */}
-      {THEMATIC_TAGS.map((tag) => {
-        const tagArticles = themedArticles[tag.slug];
-        if (!tagArticles || tagArticles.length === 0) return null;
-        
-        return (
-          <View key={tag.slug} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{tag.label}</Text>
-              <TouchableOpacity onPress={() => router.push({ pathname: '/blog', params: { filter: tag.slug } })}>
-                <Text style={styles.sectionLink}>Voir tout</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <FlatList
-              horizontal
-              data={tagArticles}
-              keyExtractor={(item) => `${tag.slug}-${item.id}`}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-              renderItem={({ item }) => renderArticleCard(item)}
-            />
-          </View>
-        );
-      })}
-
-      {/* Section: Revues Conscience Soufie */}
+      {/* Section 3: Revues Conscience Soufie */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Revues Conscience Soufie</Text>
@@ -430,6 +404,32 @@ export default function AccueilScreen() {
           )}
         />
       </View>
+
+      {/* Thematic Article Sections */}
+      {THEMATIC_TAGS.map((tag) => {
+        const tagArticles = themedArticles[tag.slug];
+        if (!tagArticles || tagArticles.length === 0) return null;
+        
+        return (
+          <View key={tag.slug} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{tag.label}</Text>
+              <TouchableOpacity onPress={() => router.push({ pathname: '/blog', params: { filter: tag.slug } })}>
+                <Text style={styles.sectionLink}>Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              horizontal
+              data={tagArticles}
+              keyExtractor={(item) => `${tag.slug}-${item.id}`}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+              renderItem={({ item }) => renderArticleCard(item)}
+            />
+          </View>
+        );
+      })}
 
       <View style={styles.bottomSpacer} />
     </ScrollView>

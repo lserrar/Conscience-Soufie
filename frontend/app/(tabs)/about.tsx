@@ -23,115 +23,16 @@ interface Page {
 }
 
 export default function AboutScreen() {
-  const [page, setPage] = useState<Page | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { width } = useWindowDimensions();
-
-  const fetchPage = async () => {
-    try {
-      setError(null);
-      const response = await axios.get(
-        'https://consciencesoufie.com/wp-json/wp/v2/pages?slug=presentation'
-      );
-      if (response.data && response.data.length > 0) {
-        setPage(response.data[0]);
-      }
-    } catch (err) {
-      console.error('Error fetching page:', err);
-      setError('Impossible de charger le contenu. Vérifiez votre connexion.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPage();
-  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPage();
+    setTimeout(() => setRefreshing(false), 500);
   }, []);
 
   const openLink = async (url: string) => {
     await WebBrowser.openBrowserAsync(url);
   };
-
-  const decodeHTML = (html: string) => {
-    return html
-      .replace(/&#8217;/g, "'")
-      .replace(/&#8216;/g, "'")
-      .replace(/&#8220;/g, '"')
-      .replace(/&#8221;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#8211;/g, '–')
-      .replace(/&#8212;/g, '—');
-  };
-
-  const tagsStyles = {
-    body: {
-      color: '#333',
-      fontSize: 16,
-      lineHeight: 24,
-    },
-    p: {
-      marginBottom: 12,
-    },
-    h1: {
-      fontSize: 24,
-      fontWeight: 'bold' as const,
-      color: PRIMARY_COLOR,
-      marginBottom: 16,
-    },
-    h2: {
-      fontSize: 20,
-      fontWeight: 'bold' as const,
-      color: PRIMARY_COLOR,
-      marginBottom: 12,
-    },
-    h3: {
-      fontSize: 18,
-      fontWeight: 'bold' as const,
-      color: '#333',
-      marginBottom: 8,
-    },
-    a: {
-      color: PRIMARY_COLOR,
-      textDecorationLine: 'underline' as const,
-    },
-    ul: {
-      marginBottom: 12,
-    },
-    li: {
-      marginBottom: 4,
-    },
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-        <Text style={styles.loadingText}>Chargement...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchPage}>
-          <Text style={styles.retryButtonText}>Réessayer</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
     <ScrollView
@@ -146,19 +47,32 @@ export default function AboutScreen() {
         <Text style={styles.anniversaryText}>🎉 10 ans de Conscience Soufie !</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>
-        {page ? decodeHTML(page.title.rendered) : 'À Propos'}
-      </Text>
+      <Text style={styles.sectionTitle}>À Propos</Text>
 
-      {page && (
-        <View style={styles.contentCard}>
-          <RenderHtml
-            contentWidth={width - 64}
-            source={{ html: page.content.rendered }}
-            tagsStyles={tagsStyles}
-          />
-        </View>
-      )}
+      <View style={styles.contentCard}>
+        <Text style={styles.heading}>Qui sommes-nous ?</Text>
+        <Text style={styles.paragraph}>
+          Conscience Soufie est une association qui a pour vocation de faire connaître la spiritualité soufie dans son universalité et son actualité.
+        </Text>
+        
+        <Text style={styles.heading}>Nos missions</Text>
+        <Text style={styles.paragraph}>
+          • Organiser des conférences, séminaires et événements{"\n"}
+          • Diffuser la pensée soufie et ses enseignements{"\n"}
+          • Favoriser le dialogue interreligieux et interculturel{"\n"}
+          • Proposer un espace d'échange et de réflexion spirituelle
+        </Text>
+
+        <Text style={styles.heading}>Notre histoire</Text>
+        <Text style={styles.paragraph}>
+          Fondée en 2016, Conscience Soufie célèbre cette année ses 10 ans d'existence. L'association a su créer une communauté dynamique autour des valeurs du soufisme : amour, connaissance, tolérance et ouverture spirituelle.
+        </Text>
+
+        <Text style={styles.heading}>Nos intervenants</Text>
+        <Text style={styles.paragraph}>
+          Nous accueillons régulièrement des chercheurs, universitaires, enseignants spirituels et artistes qui partagent leurs connaissances et expériences lors de nos événements.
+        </Text>
+      </View>
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
@@ -176,6 +90,14 @@ export default function AboutScreen() {
         >
           <Ionicons name="mail" size={20} color={PRIMARY_COLOR} style={styles.buttonIcon} />
           <Text style={styles.secondaryButtonText}>Nous contacter</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.tertiaryButton}
+          onPress={() => openLink('https://consciencesoufie.com/presentation/')}
+        >
+          <Ionicons name="globe" size={20} color={PRIMARY_COLOR} style={styles.buttonIcon} />
+          <Text style={styles.tertiaryButtonText}>Voir sur le site web</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

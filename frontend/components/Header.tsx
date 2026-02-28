@@ -181,23 +181,15 @@ export default function Header() {
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            {/* Left: Profile + Search */}
-            <View style={styles.leftButtons}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setProfileModalVisible(true)}
-              >
-                <View style={styles.profileAvatar}>
-                  <Ionicons name="person" size={16} color="#fff" />
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setSearchModalVisible(true)}
-              >
-                <Ionicons name="search" size={22} color="#fff" />
-              </TouchableOpacity>
-            </View>
+            {/* Left: Profile */}
+            <TouchableOpacity
+              style={styles.sideButton}
+              onPress={() => setProfileModalVisible(true)}
+            >
+              <View style={styles.profileAvatar}>
+                <Ionicons name="person" size={16} color="#fff" />
+              </View>
+            </TouchableOpacity>
             
             {/* Center: Logo + Subtitle */}
             <View style={styles.centerSection}>
@@ -209,12 +201,18 @@ export default function Header() {
               <Text style={styles.subtitle}>Association culturelle à but non lucratif</Text>
             </View>
             
-            {/* Right: Donation */}
+            {/* Right: Search + Donation */}
+            <TouchableOpacity
+              style={styles.sideButton}
+              onPress={() => setSearchModalVisible(true)}
+            >
+              <Ionicons name="search" size={22} color="#fff" />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.sideButton}
               onPress={() => setDonationModalVisible(true)}
             >
-              <Ionicons name="gift-outline" size={24} color="#fff" />
+              <Ionicons name="gift-outline" size={22} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>

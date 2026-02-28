@@ -189,6 +189,22 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
+  infoSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(28,103,159,0.06)',
+    borderRadius: theme.borderRadius.medium,
+    padding: 16,
+    gap: 12,
+    marginTop: 8,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+  },
 
   // HelloAsso Button
   bottomContainer: {

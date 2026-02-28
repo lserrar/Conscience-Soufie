@@ -57,8 +57,8 @@ export default function BlogScreen() {
     fetchPosts();
   }, []);
 
-  const openPost = async (url: string) => {
-    await WebBrowser.openBrowserAsync(url);
+  const openPost = (postId: number) => {
+    router.push(`/post/${postId}`);
   };
 
   const stripHTML = (html: string) => {

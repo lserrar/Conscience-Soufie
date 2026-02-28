@@ -331,15 +331,13 @@ export default function AccueilScreen() {
               activeOpacity={0.9}
             >
               <View style={styles.magazineCover}>
-                <View style={styles.magazineCoverInner}>
-                  <Text style={styles.magazineBrand}>CONSCIENCE</Text>
-                  <Text style={styles.magazineBrand}>SOUFIE</Text>
-                  <View style={styles.magazineNumberBadge}>
-                    <Text style={styles.magazineNumber}>N°{item.id}</Text>
-                  </View>
-                </View>
+                <Image
+                  source={{ uri: item.cover }}
+                  style={styles.magazineImage}
+                  resizeMode="cover"
+                />
               </View>
-              <Text style={styles.magazineTitle}>{item.title}</Text>
+              <Text style={styles.magazineTitle}>Revue N°{item.id}</Text>
             </TouchableOpacity>
           )}
         />

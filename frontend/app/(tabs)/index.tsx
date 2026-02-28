@@ -100,7 +100,12 @@ export default function AccueilScreen() {
       .replace(/&gt;/g, '>')
       .replace(/&nbsp;/g, ' ')
       .replace(/&#8211;/g, '–')
-      .replace(/&#8212;/g, '—');
+      .replace(/&#8212;/g, '—')
+      .replace(/&rsquo;/g, "'")
+      .replace(/&lsquo;/g, "'")
+      .replace(/&rdquo;/g, '"')
+      .replace(/&ldquo;/g, '"')
+      .replace(/&hellip;/g, '...');
   };
 
   if (loading) {

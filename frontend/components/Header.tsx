@@ -552,6 +552,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  rightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   profileAvatar: {
     width: 38,
     height: 38,
@@ -567,14 +577,132 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 180,
-    height: 50,
+    width: 160,
+    height: 45,
   },
   subtitle: {
     color: 'rgba(255,255,255,0.8)',
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: theme.fonts.body,
     marginTop: 4,
+  },
+  
+  // Search Modal Styles
+  searchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,103,159,0.1)',
+    gap: 12,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
+  },
+  searchCancelButton: {
+    paddingVertical: 8,
+  },
+  searchCancelText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.primary,
+  },
+  searchContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  searchLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+  },
+  searchEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  searchEmptyText: {
+    fontSize: 18,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  searchEmptySubtext: {
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  searchResultsList: {
+    padding: 16,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
+  },
+  searchResultImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  searchResultImagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchResultContent: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  searchResultTitle: {
+    fontSize: 15,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  searchResultExcerpt: {
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  searchResultDate: {
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.gold,
   },
   
   // Modal Styles

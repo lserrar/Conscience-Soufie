@@ -25,6 +25,11 @@ ZOOM_ACCOUNT_ID = os.environ.get('ZOOM_ACCOUNT_ID', '')
 ZOOM_CLIENT_ID = os.environ.get('ZOOM_CLIENT_ID', '')
 ZOOM_CLIENT_SECRET = os.environ.get('ZOOM_CLIENT_SECRET', '')
 
+# HelloAsso credentials
+HELLOASSO_CLIENT_ID = os.environ.get('HELLOASSO_CLIENT_ID', '')
+HELLOASSO_CLIENT_SECRET = os.environ.get('HELLOASSO_CLIENT_SECRET', '')
+HELLOASSO_ORG_SLUG = os.environ.get('HELLOASSO_ORG_SLUG', 'conscience-soufie')
+
 # Create the main app without a prefix
 app = FastAPI()
 

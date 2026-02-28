@@ -10,10 +10,9 @@ import {
   Image,
   Animated,
   Dimensions,
-  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
+import { useRouter } from 'expo-router';
 import axios from 'axios';
 import theme from '@/constants/theme';
 

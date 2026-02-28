@@ -883,8 +883,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   eventImageContainer: {
-    width: 110,
-    height: 130,
+    width: 130,
+    height: 150,
     position: 'relative',
     overflow: 'hidden',
   },

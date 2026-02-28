@@ -9,10 +9,25 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import theme from '@/constants/theme';
+
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+// Topic filters
+const TOPIC_FILTERS = [
+  { slug: 'all', label: 'Tous' },
+  { slug: 'soufisme', label: 'Soufisme' },
+  { slug: 'rumi', label: 'Rumi' },
+  { slug: 'ibn-arabi', label: 'Ibn Arabi' },
+  { slug: 'poesie-sama', label: 'Poésie et samâ\'' },
+  { slug: 'henri-corbin', label: 'Henri Corbin' },
+  { slug: 'eva-de-vitray', label: 'Eva de Vitray' },
+  { slug: 'louis-massignon', label: 'Louis Massignon' },
+  { slug: 'michel-chodkiewicz', label: 'Michel Chodkiewicz' },
+];
 
 interface Post {
   id: number;
@@ -26,19 +41,36 @@ interface Post {
 }
 
 export default function BlogScreen() {
+  const params = useLocalSearchParams();
+  const initialFilter = typeof params.filter === 'string' ? params.filter : 'all';
+  
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState(initialFilter);
   const router = useRouter();
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (filter: string = 'all') => {
     try {
       setError(null);
-      const response = await axios.get(
-        'https://consciencesoufie.com/wp-json/wp/v2/posts?per_page=15&_embed'
-      );
-      setPosts(response.data);
+      setLoading(true);
+      
+      if (filter === 'all') {
+        // Fetch all posts
+        const response = await axios.get(
+          'https://consciencesoufie.com/wp-json/wp/v2/posts?per_page=20&_embed'
+        );
+        setPosts(response.data);
+      } else {
+        // Fetch by tag/category
+        const response = await axios.get(`${BACKEND_URL}/api/articles/by-tag/${filter}`);
+        if (response.data.articles) {
+          setPosts(response.data.articles);
+        } else {
+          setPosts([]);
+        }
+      }
     } catch (err) {
       console.error('Error fetching posts:', err);
       setError('Impossible de charger le contenu. Vérifiez votre connexion.');
@@ -49,13 +81,17 @@ export default function BlogScreen() {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    fetchPosts(activeFilter);
+  }, [activeFilter]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPosts();
-  }, []);
+    fetchPosts(activeFilter);
+  }, [activeFilter]);
+
+  const handleFilterChange = (slug: string) => {
+    setActiveFilter(slug);
+  };
 
   const openPost = (post: Post) => {
     const title = stripHTML(post.title.rendered);
@@ -101,78 +137,117 @@ export default function BlogScreen() {
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Chargement des articles...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchPosts}>
-          <Text style={styles.retryButtonText}>Réessayer</Text>
+  const renderFilters = () => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.filtersContainer}
+    >
+      {TOPIC_FILTERS.map((filter) => (
+        <TouchableOpacity
+          key={filter.slug}
+          style={[
+            styles.filterChip,
+            activeFilter === filter.slug && styles.filterChipActive,
+          ]}
+          onPress={() => handleFilterChange(filter.slug)}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.filterChipText,
+              activeFilter === filter.slug && styles.filterChipTextActive,
+            ]}
+          >
+            {filter.label}
+          </Text>
         </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+
+  if (error && !loading) {
+    return (
+      <View style={styles.container}>
+        {renderFilters()}
+        <View style={styles.errorContainer}>
+          <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchPosts(activeFilter)}>
+            <Text style={styles.retryButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-      }
-    >
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Articles récents</Text>
-        <View style={styles.goldAccent} />
-      </View>
+    <View style={styles.container}>
+      {/* Topic Filters */}
+      {renderFilters()}
       
-      {posts.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="document-text-outline" size={48} color={theme.colors.textSecondary} />
-          <Text style={styles.emptyText}>Aucun article disponible.</Text>
-        </View>
-      ) : (
-        posts.map((post) => (
-          <TouchableOpacity 
-            key={post.id} 
-            style={styles.postCard}
-            onPress={() => openPost(post)}
-            activeOpacity={0.9}
-          >
-            {post._embedded?.['wp:featuredmedia']?.[0]?.source_url && (
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{ uri: post._embedded['wp:featuredmedia'][0].source_url }}
-                  style={styles.postImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.imageOverlay} />
-              </View>
-            )}
-            <View style={styles.postContent}>
-              <Text style={styles.postDate}>{formatDate(post.date)}</Text>
-              <Text style={styles.postTitle}>{stripHTML(post.title.rendered)}</Text>
-              <Text style={styles.postExcerpt} numberOfLines={3}>
-                {stripHTML(post.excerpt.rendered)}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
+      >
+        {loading ? (
+          <View style={styles.loadingInner}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.loadingText}>Chargement des articles...</Text>
+          </View>
+        ) : posts.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="document-text-outline" size={48} color={theme.colors.textSecondary} />
+            <Text style={styles.emptyText}>Aucun article trouvé pour ce thème.</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {activeFilter === 'all' 
+                  ? 'Articles récents' 
+                  : TOPIC_FILTERS.find(f => f.slug === activeFilter)?.label || 'Articles'}
               </Text>
-              <View style={styles.readMoreContainer}>
-                <Text style={styles.readMoreText}>Lire la suite</Text>
-                <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} />
-              </View>
+              <View style={styles.goldAccent} />
             </View>
-          </TouchableOpacity>
-        ))
-      )}
-    </ScrollView>
+            
+            {posts.map((post) => (
+              <TouchableOpacity 
+                key={post.id} 
+                style={styles.postCard}
+                onPress={() => openPost(post)}
+                activeOpacity={0.9}
+              >
+                {post._embedded?.['wp:featuredmedia']?.[0]?.source_url && (
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={{ uri: post._embedded['wp:featuredmedia'][0].source_url }}
+                      style={styles.postImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.imageOverlay} />
+                  </View>
+                )}
+                <View style={styles.postContent}>
+                  <Text style={styles.postDate}>{formatDate(post.date)}</Text>
+                  <Text style={styles.postTitle}>{stripHTML(post.title.rendered)}</Text>
+                  <Text style={styles.postExcerpt} numberOfLines={3}>
+                    {stripHTML(post.excerpt.rendered)}
+                  </Text>
+                  <View style={styles.readMoreContainer}>
+                    <Text style={styles.readMoreText}>Lire la suite</Text>
+                    <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -181,15 +256,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  scrollView: {
+    flex: 1,
+  },
   contentContainer: {
     padding: 16,
     paddingBottom: 32,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  
+  // Filters
+  filtersContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,103,159,0.08)',
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(28,103,159,0.08)',
+    marginRight: 8,
+  },
+  filterChipActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  filterChipText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.textPrimary,
+  },
+  filterChipTextActive: {
+    color: '#fff',
+  },
+  
+  // Loading
+  loadingInner: {
+    paddingVertical: 60,
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
   },
   loadingText: {
     marginTop: 12,
@@ -197,11 +303,12 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
   },
+  
+  // Error
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
     padding: 24,
   },
   errorText: {
@@ -223,11 +330,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: theme.fonts.bodySemiBold,
   },
+  
+  // Section
   sectionHeader: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
     marginBottom: 8,
@@ -238,6 +347,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.gold,
     borderRadius: 2,
   },
+  
+  // Empty
   emptyContainer: {
     padding: 48,
     alignItems: 'center',
@@ -249,6 +360,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
+  
+  // Post Card
   postCard: {
     backgroundColor: theme.colors.cardBackground,
     borderRadius: theme.borderRadius.medium,

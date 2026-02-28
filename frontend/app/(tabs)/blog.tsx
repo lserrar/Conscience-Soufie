@@ -42,14 +42,21 @@ interface Post {
 
 export default function BlogScreen() {
   const params = useLocalSearchParams();
-  const initialFilter = typeof params.filter === 'string' ? params.filter : 'all';
+  const filterParam = typeof params.filter === 'string' ? params.filter : 'all';
   
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState(initialFilter);
+  const [activeFilter, setActiveFilter] = useState(filterParam);
   const router = useRouter();
+
+  // Sync filter when params change (navigation from home page)
+  useEffect(() => {
+    if (filterParam !== activeFilter) {
+      setActiveFilter(filterParam);
+    }
+  }, [filterParam]);
 
   const fetchPosts = async (filter: string = 'all') => {
     try {

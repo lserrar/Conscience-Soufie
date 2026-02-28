@@ -181,46 +181,41 @@ export default function Header() {
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            {/* Left: Profile Button */}
-            <TouchableOpacity
-              style={styles.sideButton}
-              onPress={() => setProfileModalVisible(true)}
-            >
-              <View style={styles.profileAvatar}>
-                <Ionicons name="person" size={18} color="#fff" />
-              </View>
-            </TouchableOpacity>
+            {/* Left: Profile + Search */}
+            <View style={styles.leftButtons}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setProfileModalVisible(true)}
+              >
+                <View style={styles.profileAvatar}>
+                  <Ionicons name="person" size={16} color="#fff" />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setSearchModalVisible(true)}
+              >
+                <Ionicons name="search" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
             
             {/* Center: Logo + Subtitle */}
-            <TouchableOpacity 
-              style={styles.centerSection}
-              onPress={() => setSearchModalVisible(true)}
-              activeOpacity={0.9}
-            >
+            <View style={styles.centerSection}>
               <Image
                 source={{ uri: LOGO_URL }}
                 style={styles.logo}
                 resizeMode="contain"
               />
               <Text style={styles.subtitle}>Association culturelle à but non lucratif</Text>
-            </TouchableOpacity>
-            
-            {/* Right: Search + Donation */}
-            <View style={styles.rightButtons}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setSearchModalVisible(true)}
-                data-testid="search-button"
-              >
-                <Ionicons name="search-outline" size={24} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setDonationModalVisible(true)}
-              >
-                <Ionicons name="gift-outline" size={24} color="#fff" />
-              </TouchableOpacity>
             </View>
+            
+            {/* Right: Donation */}
+            <TouchableOpacity
+              style={styles.sideButton}
+              onPress={() => setDonationModalVisible(true)}
+            >
+              <Ionicons name="gift-outline" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
         </View>
       </View>

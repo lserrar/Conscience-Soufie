@@ -57,8 +57,15 @@ export default function BlogScreen() {
     fetchPosts();
   }, []);
 
-  const openPost = (postId: number) => {
-    router.push(`/post/${postId}`);
+  const openPost = (post: Post) => {
+    const title = stripHTML(post.title.rendered);
+    router.push({
+      pathname: '/article',
+      params: {
+        url: post.link,
+        title: title,
+      }
+    });
   };
 
   const stripHTML = (html: string) => {

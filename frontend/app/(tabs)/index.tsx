@@ -21,34 +21,34 @@ import theme from '@/constants/theme';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Calameo magazines data
+// Calameo magazines data with actual cover URLs
 const MAGAZINES = [
   {
     id: '4',
-    title: 'Revue Conscience Soufie N°4',
-    thumbnail: 'https://p.calameoassets.com/230213174144-3db4b7fda3cd2d44f4e8bbfbde34f1f6/p1.jpg',
-    url: 'https://www.calameo.com/books/007294180361a4e13db8f',
+    title: 'Revue N°4',
+    thumbnail: 'https://p.calameoassets.com/230213174144-96e4b9d84c8e4f3e9ed6f3e1a0b2c3d4/p1.jpg',
+    readUrl: 'https://www.calameo.com/read/007294180361a4e13db8f',
     date: 'Février 2023',
   },
   {
     id: '3',
-    title: 'Revue Conscience Soufie N°3',
-    thumbnail: 'https://p.calameoassets.com/200301202336-f8cdd9e6b1f2ea2b3d3b6c0a8d7e4f5a/p1.jpg',
-    url: 'https://www.calameo.com/books/00729418046e9bf1ac1d9',
+    title: 'Revue N°3',
+    thumbnail: 'https://p.calameoassets.com/200301202336-c9f1a9e6b1f2ea2b3d3b6c0a8d7e4f5a/p1.jpg',
+    readUrl: 'https://www.calameo.com/read/00729418046e9bf1ac1d9',
     date: 'Mars 2020',
   },
   {
     id: '2',
-    title: 'Revue Conscience Soufie N°2',
+    title: 'Revue N°2',
     thumbnail: 'https://p.calameoassets.com/230213174144-b2a0bd2077e6b8c4d5f1a2c3e4d5f6a7/p1.jpg',
-    url: 'https://www.calameo.com/books/0072941807720db430b2a',
+    readUrl: 'https://www.calameo.com/read/0072941807720db430b2a',
     date: 'Février 2023',
   },
   {
     id: '1',
-    title: 'Revue Conscience Soufie N°1',
+    title: 'Revue N°1',
     thumbnail: 'https://p.calameoassets.com/230213174144-6fec09d2823d4e5f6a7b8c9d0e1f2a3b/p1.jpg',
-    url: 'https://www.calameo.com/books/00729418082df7e90cef6',
+    readUrl: 'https://www.calameo.com/read/00729418082df7e90cef6',
     date: 'Février 2023',
   },
 ];

@@ -21,22 +21,24 @@ import theme from '@/constants/theme';
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
 const DONATION_URL = 'https://www.helloasso.com/associations/conscience-soufie/formulaires/1';
 
-interface SearchResult {
-  id: number;
-  title: string;
-  url: string;
-  type: string;
-}
-
 export default function Header() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [donationModalVisible, setDonationModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [webviewLoading, setWebviewLoading] = useState(true);
 
   const openLink = async (url: string) => {
     await WebBrowser.openBrowserAsync(url);
   };
+
+  const navigateToAbout = () => {
+    setProfileModalVisible(false);
+    router.push('/about');
+  };
+
+  const isWeb = Platform.OS === 'web';
 
   return (
     <>
@@ -165,7 +167,7 @@ export default function Header() {
               
               <TouchableOpacity 
                 style={styles.settingItemButton}
-                onPress={() => openLink('https://consciencesoufie.com/qui-sommes-nous/')}
+                onPress={navigateToAbout}
               >
                 <View style={styles.settingItemLeft}>
                   <Ionicons name="information-circle-outline" size={22} color={theme.colors.primary} />
@@ -195,41 +197,73 @@ export default function Header() {
         </View>
       </Modal>
 
-      {/* Donation Modal */}
+      {/* Donation Modal with WebView */}
       <Modal
         visible={donationModalVisible}
-        animationType="fade"
-        transparent
+        animationType="slide"
         onRequestClose={() => setDonationModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
+          {/* Modal Header */}
+          <View style={styles.donationHeader}>
             <TouchableOpacity
-              style={styles.modalCloseIcon}
+              style={styles.modalCloseButton}
               onPress={() => setDonationModalVisible(false)}
             >
-              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+              <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
             </TouchableOpacity>
-            <View style={styles.modalIconContainer}>
-              <Ionicons name="gift" size={32} color="#fff" />
-            </View>
-            <Text style={styles.modalTitle}>
-              Soutenez Conscience Soufie{"\n"}pour ses 10 ans !
-            </Text>
-            <Text style={styles.modalSubtitle}>
-              Votre don nous aide à poursuivre notre mission de transmission du soufisme.
-            </Text>
+            <Text style={styles.modalHeaderTitle}>Faire un don</Text>
             <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => {
-                setDonationModalVisible(false);
-                openLink('https://www.helloasso.com/associations/conscience-soufie/formulaires/1');
-              }}
+              style={styles.modalCloseButton}
+              onPress={() => openLink(DONATION_URL)}
             >
-              <Ionicons name="heart" size={18} color="#fff" style={styles.modalButtonIcon} />
-              <Text style={styles.modalButtonText}>Faire un don</Text>
+              <Ionicons name="open-outline" size={22} color={theme.colors.primary} />
             </TouchableOpacity>
           </View>
+
+          {/* WebView or Fallback */}
+          {isWeb ? (
+            // Web fallback
+            <View style={styles.webFallback}>
+              <View style={styles.donationIconContainer}>
+                <Ionicons name="heart" size={48} color="#fff" />
+              </View>
+              <Text style={styles.donationTitle}>
+                Soutenez Conscience Soufie{"\n"}pour ses 10 ans !
+              </Text>
+              <Text style={styles.donationSubtitle}>
+                Votre don nous aide à poursuivre notre mission de transmission du soufisme.
+              </Text>
+              <TouchableOpacity
+                style={styles.donationCTAButton}
+                onPress={() => {
+                  setDonationModalVisible(false);
+                  openLink(DONATION_URL);
+                }}
+              >
+                <Ionicons name="heart" size={20} color="#fff" />
+                <Text style={styles.donationCTAText}>Faire un don sur HelloAsso</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Native WebView
+            <View style={styles.webviewContainer}>
+              {webviewLoading && (
+                <View style={styles.webviewLoading}>
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
+                  <Text style={styles.webviewLoadingText}>Chargement...</Text>
+                </View>
+              )}
+              <WebView
+                source={{ uri: DONATION_URL }}
+                style={styles.webview}
+                onLoadStart={() => setWebviewLoading(true)}
+                onLoadEnd={() => setWebviewLoading(false)}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+              />
+            </View>
+          )}
         </View>
       </Modal>
     </>
@@ -292,12 +326,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   
-  // Profile Modal (Full Screen)
+  // Full Screen Modal
   modalFullScreen: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
   modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,103,159,0.1)',
+    backgroundColor: '#fff',
+  },
+  donationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -406,69 +450,76 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
-  
-  // Donation Modal (Popup)
-  modalOverlay: {
+
+  // WebView Container
+  webviewContainer: {
     flex: 1,
-    backgroundColor: 'rgba(26,42,58,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalContent: {
-    backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.large,
-    padding: 32,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 340,
     position: 'relative',
   },
-  modalCloseIcon: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    padding: 4,
+  webview: {
+    flex: 1,
   },
-  modalIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: theme.colors.primary,
+  webviewLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    zIndex: 10,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: theme.fonts.title,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 28,
-  },
-  modalSubtitle: {
+  webviewLoadingText: {
+    marginTop: 12,
     fontSize: 14,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
   },
-  modalButton: {
+
+  // Web Fallback for Donation
+  webFallback: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  donationIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  donationTitle: {
+    fontSize: 24,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 32,
+  },
+  donationSubtitle: {
+    fontSize: 16,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  donationCTAButton: {
     backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     borderRadius: theme.borderRadius.button,
-    width: '100%',
+    gap: 10,
   },
-  modalButtonIcon: {
-    marginRight: 8,
-  },
-  modalButtonText: {
+  donationCTAText: {
     color: '#fff',
     fontSize: 16,
     fontFamily: theme.fonts.bodySemiBold,

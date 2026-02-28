@@ -145,7 +145,7 @@ export default function BlogScreen() {
           <TouchableOpacity 
             key={post.id} 
             style={styles.postCard}
-            onPress={() => openPost(post.id)}
+            onPress={() => openPost(post)}
             activeOpacity={0.9}
           >
             {post._embedded?.['wp:featuredmedia']?.[0]?.source_url && (

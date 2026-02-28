@@ -39,9 +39,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="blog"
           options={{
-            title: 'Blog',
+            title: 'Articles',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="book-outline" size={size} color={color} />
+              <Ionicons name="newspaper-outline" size={size} color={color} />
             ),
           }}
         />

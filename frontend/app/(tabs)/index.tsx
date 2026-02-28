@@ -190,47 +190,44 @@ export default function AccueilScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      {/* Hero - Highlight Event */}
+      {/* Hero - À la une */}
       {highlightEvent && (
-        <Animated.View style={[styles.heroSection, { transform: [{ scale: highlightScale }] }]}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPressIn={handleHighlightPressIn}
-            onPressOut={handleHighlightPressOut}
-            onPress={() => openEventDetail(highlightEvent)}
-          >
-            <View style={styles.heroImageContainer}>
-              {(highlightEvent.logo || highlightEvent.banner) ? (
-                <Image
-                  source={{ uri: highlightEvent.logo || highlightEvent.banner }}
-                  style={styles.heroImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <View style={[styles.heroImage, styles.heroPlaceholder]}>
-                  <Ionicons name="calendar" size={64} color={theme.colors.primary} />
-                </View>
-              )}
-            </View>
-            
-            {/* Event info below image */}
-            <View style={styles.heroInfo}>
-              <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>PROCHAIN ÉVÉNEMENT</Text>
+        <View style={styles.heroSection}>
+          {/* Section Title */}
+          <View style={styles.aLaUneHeader}>
+            <Text style={styles.aLaUneTitle}>À la une</Text>
+            <View style={styles.aLaUneUnderline} />
+          </View>
+          
+          <Animated.View style={{ transform: [{ scale: highlightScale }] }}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPressIn={handleHighlightPressIn}
+              onPressOut={handleHighlightPressOut}
+              onPress={() => openEventDetail(highlightEvent)}
+            >
+              <View style={styles.heroImageContainer}>
+                {(highlightEvent.logo || highlightEvent.banner) ? (
+                  <Image
+                    source={{ uri: highlightEvent.logo || highlightEvent.banner }}
+                    style={styles.heroImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={[styles.heroImage, styles.heroPlaceholder]}>
+                    <Ionicons name="calendar" size={64} color={theme.colors.primary} />
+                  </View>
+                )}
               </View>
-              <Text style={styles.heroTitle} numberOfLines={2}>{highlightEvent.title}</Text>
-              <Text style={styles.heroDate}>{formatDate(highlightEvent.startDate)}</Text>
               
-              <TouchableOpacity 
-                style={styles.heroButton}
-                onPress={() => openEventDetail(highlightEvent)}
-              >
-                <Text style={styles.heroButtonText}>Voir l'événement</Text>
-                <Ionicons name="chevron-forward" size={18} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
+              {/* Event info below image */}
+              <View style={styles.heroInfo}>
+                <Text style={styles.heroTitle} numberOfLines={2}>{highlightEvent.title}</Text>
+                <Text style={styles.heroDate}>{formatDateTime(highlightEvent.startDate)}</Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       )}
 
       {/* Section 1: Prochains Événements */}

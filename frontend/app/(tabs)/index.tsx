@@ -135,13 +135,12 @@ export default function AccueilScreen() {
   };
 
   const openArticle = (post: BlogPost) => {
+    // Open article website page in WebView
     router.push({
-      pathname: '/post/[id]',
+      pathname: '/article',
       params: {
-        id: post.id.toString(),
-        title: post.title.rendered,
-        content: '',
-        link: post.link,
+        url: post.link,
+        title: cleanHtml(post.title.rendered),
       }
     });
   };

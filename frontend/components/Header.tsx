@@ -10,12 +10,14 @@ import {
   Switch,
   ActivityIndicator,
   Platform,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import theme from '@/constants/theme';
 
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
@@ -28,6 +30,35 @@ export default function Header() {
   const [donationModalVisible, setDonationModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [webviewLoading, setWebviewLoading] = useState(true);
+  const [userName, setUserName] = useState('');
+  const [tempUserName, setTempUserName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+
+  React.useEffect(() => {
+    loadUserName();
+  }, []);
+
+  const loadUserName = async () => {
+    try {
+      const name = await AsyncStorage.getItem('@user_name');
+      if (name) {
+        setUserName(name);
+        setTempUserName(name);
+      }
+    } catch (e) {
+      console.log('Error loading user name');
+    }
+  };
+
+  const saveUserName = async () => {
+    try {
+      await AsyncStorage.setItem('@user_name', tempUserName);
+      setUserName(tempUserName);
+      setIsEditingName(false);
+    } catch (e) {
+      console.log('Error saving user name');
+    }
+  };
 
   const openLink = async (url: string) => {
     await WebBrowser.openBrowserAsync(url);
@@ -36,6 +67,14 @@ export default function Header() {
   const navigateToAbout = () => {
     setProfileModalVisible(false);
     router.push('/about');
+  };
+
+  const handleLogout = async () => {
+    // Clear user data
+    await AsyncStorage.removeItem('@user_name');
+    setUserName('');
+    setTempUserName('');
+    setProfileModalVisible(false);
   };
 
   const isWeb = Platform.OS === 'web';
@@ -47,7 +86,7 @@ export default function Header() {
           <View style={styles.headerContent}>
             {/* Left: Profile Button */}
             <TouchableOpacity
-              style={styles.profileButton}
+              style={styles.sideButton}
               onPress={() => setProfileModalVisible(true)}
             >
               <View style={styles.profileAvatar}>
@@ -55,26 +94,24 @@ export default function Header() {
               </View>
             </TouchableOpacity>
             
-            {/* Center: Logo */}
-            <View style={styles.logoContainer}>
+            {/* Center: Logo + Subtitle */}
+            <View style={styles.centerSection}>
               <Image
                 source={{ uri: LOGO_URL }}
                 style={styles.logo}
                 resizeMode="contain"
               />
+              <Text style={styles.subtitle}>Association culturelle à but non lucratif</Text>
             </View>
             
             {/* Right: Donation Button */}
             <TouchableOpacity
-              style={styles.donationButton}
+              style={styles.sideButton}
               onPress={() => setDonationModalVisible(true)}
             >
-              <Ionicons name="gift" size={24} color="#fff" />
+              <Ionicons name="gift" size={26} color="#fff" />
             </TouchableOpacity>
           </View>
-          
-          {/* Gold accent line */}
-          <View style={styles.goldLine} />
         </View>
       </View>
 
@@ -93,7 +130,7 @@ export default function Header() {
             >
               <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
             </TouchableOpacity>
-            <Text style={styles.modalHeaderTitle}>Profil</Text>
+            <Text style={styles.modalHeaderTitle}>Mon profil</Text>
             <View style={styles.modalCloseButton} />
           </View>
           
@@ -103,13 +140,43 @@ export default function Header() {
               <View style={styles.profileAvatarLarge}>
                 <Ionicons name="person" size={40} color="#fff" />
               </View>
-              <Text style={styles.profileName}>Adhérent</Text>
+              
+              {isEditingName ? (
+                <View style={styles.editNameContainer}>
+                  <TextInput
+                    style={styles.nameInput}
+                    value={tempUserName}
+                    onChangeText={setTempUserName}
+                    placeholder="Votre nom"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    autoFocus
+                  />
+                  <View style={styles.editNameButtons}>
+                    <TouchableOpacity style={styles.saveNameButton} onPress={saveUserName}>
+                      <Text style={styles.saveNameButtonText}>Enregistrer</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setIsEditingName(false)}>
+                      <Text style={styles.cancelText}>Annuler</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={() => setIsEditingName(true)}>
+                  <Text style={styles.profileName}>
+                    {userName || 'Ajouter votre nom'}
+                  </Text>
+                  {!userName && (
+                    <Text style={styles.profileNameHint}>Appuyez pour modifier</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              
               <Text style={styles.profileSubtext}>Membre Conscience Soufie</Text>
             </View>
 
-            {/* Settings Sections */}
+            {/* Settings */}
             <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionTitle}>Paramètres</Text>
+              <Text style={styles.settingsSectionTitle}>Préférences</Text>
               
               <View style={styles.settingItem}>
                 <View style={styles.settingItemLeft}>
@@ -135,17 +202,6 @@ export default function Header() {
                 <View style={styles.settingItemLeft}>
                   <Ionicons name="shield-checkmark-outline" size={22} color={theme.colors.primary} />
                   <Text style={styles.settingItemText}>Politique de confidentialité</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.settingItemButton}
-                onPress={() => openLink('https://consciencesoufie.com/mentions-legales/')}
-              >
-                <View style={styles.settingItemLeft}>
-                  <Ionicons name="document-text-outline" size={22} color={theme.colors.primary} />
-                  <Text style={styles.settingItemText}>Mentions légales</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
@@ -188,6 +244,12 @@ export default function Header() {
               </TouchableOpacity>
             </View>
 
+            {/* Logout */}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={22} color="#dc3545" />
+              <Text style={styles.logoutText}>Se déconnecter</Text>
+            </TouchableOpacity>
+
             {/* App Version */}
             <View style={styles.appVersion}>
               <Text style={styles.appVersionText}>Conscience Soufie</Text>
@@ -204,7 +266,6 @@ export default function Header() {
         onRequestClose={() => setDonationModalVisible(false)}
       >
         <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
-          {/* Modal Header */}
           <View style={styles.donationHeader}>
             <TouchableOpacity
               style={styles.modalCloseButton}
@@ -221,18 +282,14 @@ export default function Header() {
             </TouchableOpacity>
           </View>
 
-          {/* WebView or Fallback */}
           {isWeb ? (
-            // Web fallback
             <View style={styles.webFallback}>
               <View style={styles.donationIconContainer}>
                 <Ionicons name="heart" size={48} color="#fff" />
               </View>
-              <Text style={styles.donationTitle}>
-                Soutenez Conscience Soufie{"\n"}pour ses 10 ans !
-              </Text>
+              <Text style={styles.donationTitle}>Soutenez Conscience Soufie</Text>
               <Text style={styles.donationSubtitle}>
-                Votre don nous aide à poursuivre notre mission de transmission du soufisme.
+                Votre don nous aide à poursuivre notre mission.
               </Text>
               <TouchableOpacity
                 style={styles.donationCTAButton}
@@ -242,11 +299,10 @@ export default function Header() {
                 }}
               >
                 <Ionicons name="heart" size={20} color="#fff" />
-                <Text style={styles.donationCTAText}>Faire un don sur HelloAsso</Text>
+                <Text style={styles.donationCTAText}>Faire un don</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            // Native WebView
             <View style={styles.webviewContainer}>
               {webviewLoading && (
                 <View style={styles.webviewLoading}>
@@ -275,58 +331,48 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   header: {
-    position: 'relative',
     overflow: 'hidden',
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
-  goldLine: {
-    height: 2,
-    backgroundColor: theme.colors.gold,
-  },
-  
-  // Profile Button (Left)
-  profileButton: {
-    width: 44,
-    height: 44,
+  sideButton: {
+    width: 48,
+    height: 48,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   profileAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  
-  // Logo (Center)
-  logoContainer: {
+  centerSection: {
     flex: 1,
     alignItems: 'center',
   },
   logo: {
-    width: 140,
-    height: 40,
+    width: 180,
+    height: 50,
+  },
+  subtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontFamily: theme.fonts.body,
+    marginTop: 4,
   },
   
-  // Donation Button (Right)
-  donationButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  
-  // Full Screen Modal
+  // Modal Styles
   modalFullScreen: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -387,14 +433,60 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
     marginBottom: 4,
+    textAlign: 'center',
+  },
+  profileNameHint: {
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
   profileSubtext: {
     fontSize: 14,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
+    marginTop: 8,
+  },
+  editNameContainer: {
+    alignItems: 'center',
+    width: '80%',
+  },
+  nameInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.button,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
+    width: '100%',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  editNameButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  saveNameButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.button,
+  },
+  saveNameButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  cancelText: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
   },
   
-  // Settings Sections
+  // Settings
   settingsSection: {
     backgroundColor: '#fff',
     marginBottom: 16,
@@ -434,6 +526,26 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   
+  // Logout
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
+    backgroundColor: '#fff',
+    borderRadius: theme.borderRadius.medium,
+    borderWidth: 1,
+    borderColor: '#dc3545',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: '#dc3545',
+  },
+  
   // App Version
   appVersion: {
     alignItems: 'center',
@@ -451,7 +563,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // WebView Container
+  // WebView
   webviewContainer: {
     flex: 1,
     position: 'relative',
@@ -476,8 +588,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
   },
-
-  // Web Fallback for Donation
   webFallback: {
     flex: 1,
     justifyContent: 'center',
@@ -498,8 +608,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 32,
+    marginBottom: 12,
   },
   donationSubtitle: {
     fontSize: 16,
@@ -507,7 +616,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 24,
   },
   donationCTAButton: {
     backgroundColor: theme.colors.primary,

@@ -179,7 +179,10 @@ export default function AccueilScreen() {
                 </Text>
               )}
               
-              <View style={styles.eventButton}>
+              <TouchableOpacity 
+                style={styles.eventButton}
+                onPress={() => openEvent(event.url)}
+              >
                 <Ionicons name="ticket-outline" size={18} color="#fff" style={styles.buttonIcon} />
                 <Text style={styles.eventButtonText}>S'inscrire</Text>
                 <Ionicons name="arrow-forward" size={16} color="#fff" />

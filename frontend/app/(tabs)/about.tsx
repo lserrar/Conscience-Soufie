@@ -9,8 +9,7 @@ import {
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
-
-const PRIMARY_COLOR = '#1c679f';
+import theme from '@/constants/theme';
 
 export default function AboutScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -29,15 +28,22 @@ export default function AboutScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY_COLOR]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
       {/* 10th Anniversary Banner */}
       <View style={styles.anniversaryBanner}>
-        <Text style={styles.anniversaryText}>🎉 10 ans de Conscience Soufie !</Text>
+        <View style={styles.anniversaryIcon}>
+          <Ionicons name="sparkles" size={28} color={theme.colors.gold} />
+        </View>
+        <Text style={styles.anniversaryText}>10 ans de Conscience Soufie !</Text>
+        <Text style={styles.anniversarySubtext}>2016 - 2026</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>À Propos</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>À Propos</Text>
+        <View style={styles.goldAccent} />
+      </View>
 
       <View style={styles.contentCard}>
         <Text style={styles.heading}>Qui sommes-nous ?</Text>
@@ -46,12 +52,22 @@ export default function AboutScreen() {
         </Text>
         
         <Text style={styles.heading}>Nos missions</Text>
-        <Text style={styles.paragraph}>
-          • Organiser des conférences, séminaires et événements{"\n"}
-          • Diffuser la pensée soufie et ses enseignements{"\n"}
-          • Favoriser le dialogue interreligieux et interculturel{"\n"}
-          • Proposer un espace d'échange et de réflexion spirituelle
-        </Text>
+        <View style={styles.missionItem}>
+          <View style={styles.bulletPoint} />
+          <Text style={styles.missionText}>Organiser des conférences, séminaires et événements</Text>
+        </View>
+        <View style={styles.missionItem}>
+          <View style={styles.bulletPoint} />
+          <Text style={styles.missionText}>Diffuser la pensée soufie et ses enseignements</Text>
+        </View>
+        <View style={styles.missionItem}>
+          <View style={styles.bulletPoint} />
+          <Text style={styles.missionText}>Favoriser le dialogue interreligieux et interculturel</Text>
+        </View>
+        <View style={styles.missionItem}>
+          <View style={styles.bulletPoint} />
+          <Text style={styles.missionText}>Proposer un espace d'échange et de réflexion spirituelle</Text>
+        </View>
 
         <Text style={styles.heading}>Notre histoire</Text>
         <Text style={styles.paragraph}>
@@ -70,7 +86,7 @@ export default function AboutScreen() {
           style={styles.primaryButton}
           onPress={() => openLink('https://www.helloasso.com/associations/conscience-soufie/adhesions/campagne-d-adhesion-2026')}
         >
-          <Ionicons name="people" size={20} color="#fff" style={styles.buttonIcon} />
+          <Ionicons name="people-outline" size={20} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.primaryButtonText}>Devenir adhérent</Text>
         </TouchableOpacity>
 
@@ -78,7 +94,7 @@ export default function AboutScreen() {
           style={styles.secondaryButton}
           onPress={() => openLink('https://consciencesoufie.com/contact/')}
         >
-          <Ionicons name="mail" size={20} color={PRIMARY_COLOR} style={styles.buttonIcon} />
+          <Ionicons name="mail-outline" size={20} color={theme.colors.primary} style={styles.buttonIcon} />
           <Text style={styles.secondaryButtonText}>Nous contacter</Text>
         </TouchableOpacity>
 
@@ -86,7 +102,7 @@ export default function AboutScreen() {
           style={styles.tertiaryButton}
           onPress={() => openLink('https://consciencesoufie.com/presentation/')}
         >
-          <Ionicons name="globe" size={20} color={PRIMARY_COLOR} style={styles.buttonIcon} />
+          <Ionicons name="globe-outline" size={20} color={theme.colors.primary} style={styles.buttonIcon} />
           <Text style={styles.tertiaryButtonText}>Voir sur le site web</Text>
         </TouchableOpacity>
       </View>
@@ -97,103 +113,148 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
     padding: 16,
     paddingBottom: 32,
   },
   anniversaryBanner: {
-    backgroundColor: PRIMARY_COLOR,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    backgroundColor: theme.colors.primary,
+    padding: 24,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: 20,
     alignItems: 'center',
+    ...theme.shadows.card,
+  },
+  anniversaryIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   anniversaryText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontFamily: theme.fonts.titleBold,
+    textAlign: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+  anniversarySubtext: {
+    color: theme.colors.gold,
+    fontSize: 16,
+    fontFamily: theme.fonts.bodyMedium,
+    marginTop: 4,
+  },
+  sectionHeader: {
     marginBottom: 16,
   },
+  sectionTitle: {
+    fontSize: 28,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
+  },
+  goldAccent: {
+    width: 60,
+    height: 3,
+    backgroundColor: theme.colors.gold,
+    borderRadius: 2,
+  },
   contentCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.medium,
     padding: 20,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...theme.shadows.card,
   },
   heading: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: PRIMARY_COLOR,
-    marginBottom: 8,
-    marginTop: 16,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.primary,
+    marginBottom: 10,
+    marginTop: 20,
   },
   paragraph: {
     fontSize: 15,
-    color: '#444',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
     lineHeight: 24,
     marginBottom: 8,
+  },
+  missionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingLeft: 4,
+  },
+  bulletPoint: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.colors.gold,
+    marginTop: 8,
+    marginRight: 12,
+  },
+  missionText: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
+    lineHeight: 22,
   },
   actionButtons: {
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
     marginBottom: 12,
+    ...theme.shadows.card,
   },
   primaryButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontFamily: theme.fonts.bodySemiBold,
   },
   secondaryButton: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.cardBackground,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
     borderWidth: 2,
-    borderColor: PRIMARY_COLOR,
+    borderColor: theme.colors.primary,
     marginBottom: 12,
   },
   secondaryButtonText: {
-    color: PRIMARY_COLOR,
-    fontSize: 18,
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontSize: 17,
+    fontFamily: theme.fonts.bodySemiBold,
   },
   tertiaryButton: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: 'rgba(28,103,159,0.2)',
   },
   tertiaryButtonText: {
-    color: PRIMARY_COLOR,
-    fontSize: 16,
-    fontWeight: '500',
+    color: theme.colors.primary,
+    fontSize: 15,
+    fontFamily: theme.fonts.bodyMedium,
   },
   buttonIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
 });

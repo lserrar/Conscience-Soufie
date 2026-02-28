@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Platform,
   TextInput,
+  FlatList,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -18,21 +20,40 @@ import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import theme from '@/constants/theme';
 
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
 const DONATION_URL = 'https://www.helloasso.com/associations/conscience-soufie/formulaires/1';
+
+interface SearchResult {
+  id: number;
+  title: { rendered: string };
+  excerpt: { rendered: string };
+  link: string;
+  date: string;
+  _embedded?: {
+    'wp:featuredmedia'?: Array<{ source_url: string }>;
+  };
+}
 
 export default function Header() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [donationModalVisible, setDonationModalVisible] = useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [webviewLoading, setWebviewLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [tempUserName, setTempUserName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   React.useEffect(() => {
     loadUserName();
@@ -70,11 +91,87 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
-    // Clear user data
     await AsyncStorage.removeItem('@user_name');
     setUserName('');
     setTempUserName('');
     setProfileModalVisible(false);
+  };
+
+  // Search functions
+  const performSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    Keyboard.dismiss();
+    setIsSearching(true);
+    setHasSearched(true);
+    
+    try {
+      const response = await axios.get(
+        `https://consciencesoufie.com/wp-json/wp/v2/posts`,
+        {
+          params: {
+            search: searchQuery.trim(),
+            per_page: 20,
+            _embed: true,
+          },
+        }
+      );
+      setSearchResults(response.data);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const openSearchResult = (result: SearchResult) => {
+    setSearchModalVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setHasSearched(false);
+    
+    router.push({
+      pathname: '/article',
+      params: {
+        url: result.link,
+        title: stripHTML(result.title.rendered),
+      },
+    });
+  };
+
+  const stripHTML = (html: string) => {
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&#8217;/g, "'")
+      .replace(/&#8216;/g, "'")
+      .replace(/&#8220;/g, '"')
+      .replace(/&#8221;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&hellip;/g, '...')
+      .replace(/&rsquo;/g, "'")
+      .trim();
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  const closeSearchModal = () => {
+    setSearchModalVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setHasSearched(false);
   };
 
   const isWeb = Platform.OS === 'web';

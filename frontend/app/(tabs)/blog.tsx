@@ -30,6 +30,7 @@ export default function BlogScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchPosts = async () => {
     try {

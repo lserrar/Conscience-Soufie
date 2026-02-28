@@ -381,19 +381,36 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
-  // Hero Section - Fixed aspect ratio for event poster
+  // Hero Section - À la une
   heroSection: {
     marginBottom: 24,
-    backgroundColor: '#f0f4f8',
+    paddingTop: 20,
+  },
+  aLaUneHeader: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  aLaUneTitle: {
+    fontSize: 24,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+  },
+  aLaUneUnderline: {
+    width: 60,
+    height: 3,
+    backgroundColor: theme.colors.gold,
+    marginTop: 8,
+    borderRadius: 2,
   },
   heroImageContainer: {
-    width: SCREEN_WIDTH,
-    aspectRatio: 16 / 9,
-    backgroundColor: '#1a2a3a',
+    marginHorizontal: 16,
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    backgroundColor: '#f0f4f8',
   },
   heroImage: {
     width: '100%',
-    height: '100%',
+    aspectRatio: 16 / 9,
   },
   heroPlaceholder: {
     justifyContent: 'center',
@@ -401,50 +418,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(28,103,159,0.1)',
   },
   heroInfo: {
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  heroBadge: {
-    backgroundColor: theme.colors.gold,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-  },
-  heroBadgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontFamily: theme.fonts.bodySemiBold,
-    letterSpacing: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   heroTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
     marginBottom: 8,
-    lineHeight: 28,
+    lineHeight: 26,
   },
   heroDate: {
     fontSize: 14,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
-    marginBottom: 16,
-  },
-  heroButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignSelf: 'flex-start',
-    gap: 6,
-  },
-  heroButtonText: {
-    fontSize: 14,
-    fontFamily: theme.fonts.bodySemiBold,
-    color: '#fff',
   },
 
   // Sections

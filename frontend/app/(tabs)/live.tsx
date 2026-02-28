@@ -14,6 +14,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -78,7 +79,9 @@ export default function EvenementsScreen() {
   const [reminders, setReminders] = useState<ReminderState>({});
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   
+  const router = useRouter();
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const liveDotAnim = useRef(new Animated.Value(1)).current;
   const scaleAnims = useRef<{ [key: string]: Animated.Value }>({}).current;
 
   // Load saved reminders
@@ -93,7 +96,7 @@ export default function EvenementsScreen() {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.15,
+            toValue: 1.05,
             duration: 800,
             useNativeDriver: true,
           }),
@@ -104,10 +107,31 @@ export default function EvenementsScreen() {
           }),
         ])
       );
+      
+      const dotPulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(liveDotAnim, {
+            toValue: 0.4,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(liveDotAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      
       pulse.start();
-      return () => pulse.stop();
+      dotPulse.start();
+      
+      return () => {
+        pulse.stop();
+        dotPulse.stop();
+      };
     }
-  }, [isLive, pulseAnim]);
+  }, [isLive, pulseAnim, liveDotAnim]);
 
   const requestNotificationPermissions = async () => {
     if (Platform.OS === 'web') return;
@@ -362,8 +386,20 @@ export default function EvenementsScreen() {
     }
   };
 
-  const openEventUrl = async (url: string) => {
-    await WebBrowser.openBrowserAsync(url);
+  const openEventDetail = (event: HelloAssoEvent) => {
+    // Navigate to event detail page
+    router.push({
+      pathname: '/event-detail/[id]',
+      params: { 
+        id: event.id,
+        title: event.title,
+        description: event.description || '',
+        startDate: event.startDate,
+        endDate: event.endDate || '',
+        url: event.url,
+        place: event.place ? JSON.stringify(event.place) : '',
+      }
+    });
   };
 
   const isReminderSet = (eventId: string, isWebinar: boolean = false) => {
@@ -400,24 +436,32 @@ export default function EvenementsScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      {/* Hero Section - Conférence en Direct */}
+      {/* Hero Section - En Direct */}
       <View style={styles.heroSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
-            <Ionicons name="videocam" size={24} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Conférence en direct</Text>
+            {isLive ? (
+              <Animated.View style={[styles.liveDotContainer, { opacity: liveDotAnim }]}>
+                <View style={styles.liveDotOuter}>
+                  <View style={styles.liveDotInner} />
+                </View>
+              </Animated.View>
+            ) : (
+              <View style={styles.offlineDot} />
+            )}
+            <Text style={styles.sectionTitle}>En direct</Text>
           </View>
           <View style={styles.goldAccent} />
         </View>
 
         {webinar ? (
-          <View style={styles.liveCard}>
+          <Animated.View style={[styles.liveCard, isLive && { transform: [{ scale: pulseAnim }] }]}>
             {/* Live Badge */}
             {isLive && (
-              <Animated.View style={[styles.liveBadge, { transform: [{ scale: pulseAnim }] }]}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>EN DIRECT</Text>
-              </Animated.View>
+              <View style={styles.liveBadge}>
+                <View style={styles.liveBadgeDot} />
+                <Text style={styles.liveBadgeText}>EN DIRECT</Text>
+              </View>
             )}
 
             <Text style={styles.webinarTitle}>{webinar.topic}</Text>
@@ -438,10 +482,8 @@ export default function EvenementsScreen() {
                 style={[styles.joinButton, isLive && styles.joinButtonLive]}
                 onPress={() => joinZoomMeeting(webinar.join_url)}
               >
-                <Ionicons name="videocam" size={20} color="#fff" />
-                <Text style={styles.joinButtonText}>
-                  {isLive ? 'Rejoindre maintenant' : 'Rejoindre la conférence'}
-                </Text>
+                <Ionicons name="logo-youtube" size={20} color="#fff" />
+                <Text style={styles.joinButtonText}>Ouvrir Zoom</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -458,10 +500,10 @@ export default function EvenementsScreen() {
                 />
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         ) : (
           <View style={styles.noLiveCard}>
-            <Ionicons name="videocam-off-outline" size={40} color={theme.colors.textSecondary} />
+            <View style={styles.offlineDotLarge} />
             <Text style={styles.noLiveText}>Aucune conférence programmée</Text>
             <Text style={styles.noLiveSubtext}>Les prochaines conférences apparaîtront ici</Text>
           </View>
@@ -501,10 +543,10 @@ export default function EvenementsScreen() {
                   activeOpacity={1}
                   onPressIn={() => handleCardPressIn(eventId)}
                   onPressOut={() => handleCardPressOut(eventId)}
-                  onPress={() => openEventUrl(event.url)}
+                  onPress={() => openEventDetail(event)}
                   style={styles.eventCardInner}
                 >
-                  {/* Event Image */}
+                  {/* Event Image - Fixed size container */}
                   <View style={styles.eventImageContainer}>
                     {event.banner ? (
                       <Image
@@ -514,7 +556,7 @@ export default function EvenementsScreen() {
                       />
                     ) : (
                       <View style={[styles.eventImage, styles.placeholderImage]}>
-                        <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+                        <Ionicons name="image-outline" size={28} color={theme.colors.primary} />
                       </View>
                     )}
                     
@@ -539,16 +581,16 @@ export default function EvenementsScreen() {
 
                     <View style={styles.eventMeta}>
                       <View style={styles.metaRow}>
-                        <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
-                        <Text style={styles.eventMetaText}>
-                          {formatFullDate(event.startDate)} • {formatTime(event.startDate)}
+                        <Ionicons name="time-outline" size={13} color={theme.colors.textSecondary} />
+                        <Text style={styles.eventMetaText} numberOfLines={1}>
+                          {formatFullDate(event.startDate)}
                         </Text>
                       </View>
                       
                       {event.place?.city && (
                         <View style={styles.metaRow}>
-                          <Ionicons name="location-outline" size={14} color={theme.colors.textSecondary} />
-                          <Text style={styles.eventMetaText}>{event.place.city}</Text>
+                          <Ionicons name="location-outline" size={13} color={theme.colors.textSecondary} />
+                          <Text style={styles.eventMetaText} numberOfLines={1}>{event.place.city}</Text>
                         </View>
                       )}
                     </View>
@@ -556,11 +598,11 @@ export default function EvenementsScreen() {
                     {/* Actions */}
                     <View style={styles.eventActions}>
                       <TouchableOpacity
-                        style={styles.eventRegisterButton}
-                        onPress={() => openEventUrl(event.url)}
+                        style={styles.eventDetailButton}
+                        onPress={() => openEventDetail(event)}
                       >
-                        <Ionicons name="open-outline" size={16} color="#fff" />
-                        <Text style={styles.eventRegisterText}>Voir l'événement</Text>
+                        <Text style={styles.eventDetailText}>Voir l'événement</Text>
+                        <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -575,12 +617,6 @@ export default function EvenementsScreen() {
                           size={18} 
                           color={isReminderSet(event.id) ? "#fff" : theme.colors.primary} 
                         />
-                        <Text style={[
-                          styles.eventReminderText,
-                          isReminderSet(event.id) && styles.eventReminderTextActive
-                        ]}>
-                          {isReminderSet(event.id) ? 'Rappel activé' : 'Rappel'}
-                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -668,6 +704,42 @@ const styles = StyleSheet.create({
     marginLeft: 34,
   },
 
+  // Live Dot
+  liveDotContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  liveDotOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  liveDotInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.success,
+  },
+  offlineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.textSecondary,
+    marginRight: 6,
+  },
+  offlineDotLarge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(122, 146, 168, 0.3)',
+    marginBottom: 12,
+  },
+
   // Live Card
   liveCard: {
     backgroundColor: '#ffffff',
@@ -681,20 +753,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: '#dc3545',
+    backgroundColor: theme.colors.success,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     marginBottom: 12,
   },
-  liveDot: {
+  liveBadgeDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#fff',
     marginRight: 6,
   },
-  liveText: {
+  liveBadgeText: {
     color: '#fff',
     fontSize: 12,
     fontFamily: theme.fonts.bodySemiBold,
@@ -760,19 +832,17 @@ const styles = StyleSheet.create({
 
   // No Live Card
   noLiveCard: {
-    backgroundColor: 'rgba(28,103,159,0.05)',
+    backgroundColor: 'rgba(28,103,159,0.03)',
     borderRadius: theme.borderRadius.medium,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(28,103,159,0.1)',
-    borderStyle: 'dashed',
   },
   noLiveText: {
     fontSize: 16,
     fontFamily: theme.fonts.bodyMedium,
     color: theme.colors.textSecondary,
-    marginTop: 12,
   },
   noLiveSubtext: {
     fontSize: 14,
@@ -787,13 +857,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   emptyEventsCard: {
-    backgroundColor: 'rgba(28,103,159,0.05)',
+    backgroundColor: 'rgba(28,103,159,0.03)',
     borderRadius: theme.borderRadius.medium,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(28,103,159,0.1)',
-    borderStyle: 'dashed',
   },
   emptyEventsText: {
     fontSize: 16,
@@ -814,37 +883,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   eventImageContainer: {
-    width: 120,
-    height: 140,
+    width: 110,
+    height: 130,
     position: 'relative',
+    overflow: 'hidden',
   },
   eventImage: {
     width: '100%',
     height: '100%',
   },
   placeholderImage: {
-    backgroundColor: 'rgba(28,103,159,0.1)',
+    backgroundColor: 'rgba(28,103,159,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   dateBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
+    top: 6,
+    left: 6,
     backgroundColor: theme.colors.primary,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
     alignItems: 'center',
+    minWidth: 40,
   },
   dateDay: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: theme.fonts.titleBold,
     color: '#fff',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   dateMonth: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: theme.fonts.bodySemiBold,
     color: 'rgba(255,255,255,0.9)',
     textTransform: 'uppercase',
@@ -861,61 +932,50 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.title,
     color: theme.colors.textPrimary,
     lineHeight: 20,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   eventTitleHovered: {
     color: theme.colors.primary,
   },
   eventMeta: {
-    gap: 4,
+    gap: 2,
     marginBottom: 8,
   },
   eventMetaText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
+    flex: 1,
   },
 
   // Event Actions
   eventActions: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  eventRegisterButton: {
+  eventDetailButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: theme.borderRadius.button,
-    gap: 6,
+    gap: 4,
   },
-  eventRegisterText: {
-    color: '#fff',
-    fontSize: 12,
+  eventDetailText: {
+    color: theme.colors.primary,
+    fontSize: 13,
     fontFamily: theme.fonts.bodySemiBold,
   },
   eventReminderButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1.5,
     borderColor: theme.colors.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: theme.borderRadius.button,
-    gap: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#fff',
   },
   eventReminderButtonActive: {
     backgroundColor: theme.colors.gold,
     borderColor: theme.colors.gold,
-  },
-  eventReminderText: {
-    fontSize: 12,
-    fontFamily: theme.fonts.bodyMedium,
-    color: theme.colors.primary,
-  },
-  eventReminderTextActive: {
-    color: '#fff',
   },
 });

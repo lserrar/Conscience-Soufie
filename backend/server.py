@@ -293,6 +293,91 @@ async def get_helloasso_event_details(event_slug: str):
         logger.error(f"HelloAsso event details error: {e}")
         return {"error": str(e)}
 
+class CheckoutRequest(BaseModel):
+    event_slug: str
+    first_name: str
+    last_name: str
+    email: str
+    item_id: Optional[int] = None
+
+@api_router.post("/helloasso/checkout")
+async def create_helloasso_checkout(request: CheckoutRequest):
+    """Create a HelloAsso checkout session with pre-filled user data"""
+    try:
+        token = await get_helloasso_access_token()
+        
+        async with httpx.AsyncClient() as http_client:
+            # First get the event items to find a valid item ID
+            items_response = await http_client.get(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms/Event/{request.event_slug}/items",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            
+            if items_response.status_code != 200:
+                logger.error(f"Failed to get items: {items_response.text}")
+                return {"error": "Impossible de récupérer les tarifs de l'événement"}
+            
+            items_data = items_response.json()
+            items = items_data.get("data", [])
+            
+            if not items:
+                # If no items, return the direct URL
+                return {
+                    "checkoutUrl": f"https://www.helloasso.com/associations/{HELLOASSO_ORG_SLUG}/evenements/{request.event_slug}",
+                    "fallback": True
+                }
+            
+            # Use provided item_id or first available item
+            item_id = request.item_id or items[0].get("id")
+            
+            # Create checkout intent
+            checkout_body = {
+                "totalAmount": items[0].get("amount", 0),
+                "initialAmount": items[0].get("amount", 0),
+                "itemName": items[0].get("name", "Inscription"),
+                "backUrl": f"https://www.helloasso.com/associations/{HELLOASSO_ORG_SLUG}/evenements/{request.event_slug}",
+                "errorUrl": f"https://www.helloasso.com/associations/{HELLOASSO_ORG_SLUG}/evenements/{request.event_slug}",
+                "returnUrl": f"https://www.helloasso.com/associations/{HELLOASSO_ORG_SLUG}/evenements/{request.event_slug}",
+                "payer": {
+                    "firstName": request.first_name,
+                    "lastName": request.last_name,
+                    "email": request.email
+                }
+            }
+            
+            checkout_response = await http_client.post(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/checkout-intents",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                },
+                json=checkout_body
+            )
+            
+            if checkout_response.status_code in [200, 201]:
+                checkout_data = checkout_response.json()
+                return {
+                    "checkoutUrl": checkout_data.get("redirectUrl"),
+                    "checkoutId": checkout_data.get("id")
+                }
+            else:
+                logger.warning(f"Checkout creation failed: {checkout_response.status_code} - {checkout_response.text}")
+                # Fallback to direct URL with query params
+                base_url = f"https://www.helloasso.com/associations/{HELLOASSO_ORG_SLUG}/evenements/{request.event_slug}"
+                return {
+                    "checkoutUrl": base_url,
+                    "fallback": True,
+                    "user": {
+                        "firstName": request.first_name,
+                        "lastName": request.last_name,
+                        "email": request.email
+                    }
+                }
+                
+    except Exception as e:
+        logger.error(f"HelloAsso checkout error: {e}")
+        return {"error": str(e)}
+
 @api_router.get("/zoom/webinars")
 async def get_zoom_webinars():
     """Get upcoming webinars from Zoom"""

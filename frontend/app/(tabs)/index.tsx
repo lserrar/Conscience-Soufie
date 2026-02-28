@@ -62,8 +62,8 @@ export default function AccueilScreen() {
     fetchEvents();
   }, []);
 
-  const openEvent = (eventId: string) => {
-    router.push(`/helloasso-event/${eventId}`);
+  const openEvent = async (eventUrl: string) => {
+    await WebBrowser.openBrowserAsync(eventUrl);
   };
 
   const formatDate = (dateStr: string) => {

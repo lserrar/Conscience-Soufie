@@ -540,13 +540,12 @@ export default function EvenementsScreen() {
                 ]}
               >
                 <TouchableOpacity
-                  activeOpacity={1}
+                  activeOpacity={0.95}
                   onPressIn={() => handleCardPressIn(eventId)}
                   onPressOut={() => handleCardPressOut(eventId)}
                   onPress={() => openEventDetail(event)}
-                  style={styles.eventCardInner}
                 >
-                  {/* Event Image - Using logo (more complete poster) instead of banner */}
+                  {/* Full Width Event Image */}
                   <View style={styles.eventImageContainer}>
                     {(event.logo || event.banner) ? (
                       <Image
@@ -556,19 +555,25 @@ export default function EvenementsScreen() {
                       />
                     ) : (
                       <View style={[styles.eventImage, styles.placeholderImage]}>
-                        <Ionicons name="image-outline" size={28} color={theme.colors.primary} />
+                        <Ionicons name="image-outline" size={40} color={theme.colors.primary} />
                       </View>
                     )}
-                    
-                    {/* Date Badge */}
-                    <View style={styles.dateBadge}>
-                      <Text style={styles.dateDay}>{dateInfo.day}</Text>
-                      <Text style={styles.dateMonth}>{dateInfo.month}</Text>
-                    </View>
                   </View>
 
-                  {/* Event Content */}
+                  {/* Event Content Below Image */}
                   <View style={styles.eventContent}>
+                    {/* Date */}
+                    <View style={styles.eventDateRow}>
+                      <View style={styles.dateBadge}>
+                        <Text style={styles.dateDay}>{dateInfo.day}</Text>
+                        <Text style={styles.dateMonth}>{dateInfo.month}</Text>
+                      </View>
+                      <Text style={styles.eventDateText}>
+                        {formatFullDate(event.startDate)} • {formatTime(event.startDate)}
+                      </Text>
+                    </View>
+
+                    {/* Title */}
                     <Text 
                       style={[
                         styles.eventTitle,
@@ -579,23 +584,7 @@ export default function EvenementsScreen() {
                       {event.title}
                     </Text>
 
-                    <View style={styles.eventMeta}>
-                      <View style={styles.metaRow}>
-                        <Ionicons name="time-outline" size={13} color={theme.colors.textSecondary} />
-                        <Text style={styles.eventMetaText} numberOfLines={1}>
-                          {formatFullDate(event.startDate)}
-                        </Text>
-                      </View>
-                      
-                      {event.place?.city && (
-                        <View style={styles.metaRow}>
-                          <Ionicons name="location-outline" size={13} color={theme.colors.textSecondary} />
-                          <Text style={styles.eventMetaText} numberOfLines={1}>{event.place.city}</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Actions */}
+                    {/* Actions Row */}
                     <View style={styles.eventActions}>
                       <TouchableOpacity
                         style={styles.eventDetailButton}

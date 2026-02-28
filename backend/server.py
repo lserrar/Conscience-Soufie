@@ -546,11 +546,25 @@ async def get_podcasts():
 async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
     """Get articles from WordPress filtered by tag"""
     try:
+        # Map slugs to actual search terms (handling special characters)
+        search_term_mapping = {
+            "rumi": "Rûmî",
+            "henry-corbin": "Henry Corbin",
+            "ibn-arabi": "Ibn Arabi",
+            "eva-de-vitray": "Eva de Vitray",
+            "louis-massignon": "Louis Massignon",
+            "michel-chodkiewicz": "Michel Chodkiewicz",
+            "poesie-sama": "poésie samâ",
+            "soufisme": "soufisme",
+        }
+        
+        search_term = search_term_mapping.get(tag_slug, tag_slug.replace("-", " "))
+        
         async with httpx.AsyncClient() as http_client:
             # Search for the tag
             tag_response = await http_client.get(
                 f"https://consciencesoufie.com/wp-json/wp/v2/tags",
-                params={"search": tag_slug, "per_page": 5}
+                params={"search": search_term, "per_page": 5}
             )
             
             tag_id = None
@@ -563,7 +577,7 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
             if not tag_id:
                 cat_response = await http_client.get(
                     f"https://consciencesoufie.com/wp-json/wp/v2/categories",
-                    params={"search": tag_slug, "per_page": 5}
+                    params={"search": search_term, "per_page": 5}
                 )
                 if cat_response.status_code == 200:
                     cats = cat_response.json()
@@ -597,7 +611,7 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
             search_response = await http_client.get(
                 "https://consciencesoufie.com/wp-json/wp/v2/posts",
                 params={
-                    "search": tag_slug.replace("-", " "),
+                    "search": search_term,
                     "per_page": per_page,
                     "_embed": True
                 }

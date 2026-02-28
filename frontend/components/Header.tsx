@@ -548,10 +548,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rightButtons: {
+  leftButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   iconButton: {
     width: 44,

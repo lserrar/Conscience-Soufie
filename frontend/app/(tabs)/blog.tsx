@@ -268,10 +268,10 @@ const styles = StyleSheet.create({
   filtersContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(28,103,159,0.08)',
+    flexDirection: 'row',
   },
   filterChip: {
     paddingHorizontal: 16,
@@ -279,6 +279,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(28,103,159,0.08)',
     marginRight: 8,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterChipActive: {
     backgroundColor: theme.colors.primary,

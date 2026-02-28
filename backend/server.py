@@ -544,28 +544,43 @@ async def get_podcasts():
 
 @api_router.get("/articles/by-tag/{tag_slug}")
 async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
-    """Get articles from WordPress filtered by tag"""
+    """Get articles from WordPress filtered by tag or category"""
     try:
-        # Map slugs to actual search terms (handling special characters)
-        search_term_mapping = {
-            "rumi": "Rumi",
-            "henry-corbin": "Henry Corbin",
-            "ibn-arabi": "Ibn Arabi",
-            "eva-de-vitray": "Eva de Vitray",
-            "louis-massignon": "Louis Massignon",
-            "michel-chodkiewicz": "Michel Chodkiewicz",
-            "poesie-sama": "poésie samâ",
+        # Map slugs to WordPress category slugs (exact match)
+        # These use the actual WordPress category slugs
+        category_slug_mapping = {
             "soufisme": "soufisme",
+            "le-prophete-muhammad": "le-prophete-muhammad",
+            "ibn-arabi": "ibn-arabi",
+            "henry-corbin": "henry-corbin",
+            "eva": "eva",
+            "cheikh-ahmad-al-alawi": "cheikh-ahmad-al-alawi",
+            "hallaj": "hallaj",
+            "poesie": "poesie",
+            "philosophie": "philosophie",
+            "references-bibilographiques": "references-bibilographiques",
+            "paix": "paix",
+            "hommages": "hommages",
         }
         
-        # Tags that should use search directly (no tag/category in WordPress)
-        search_only_tags = {"rumi", "poesie-sama", "eva-de-vitray", "michel-chodkiewicz", "louis-massignon"}
+        # Tags that should use text search (no direct category in WordPress)
+        search_only_tags = {"rumi"}
         
-        search_term = search_term_mapping.get(tag_slug, tag_slug.replace("-", " "))
+        # Search terms for text search fallback
+        search_term_mapping = {
+            "rumi": "Rumi",
+            "ibn-arabi": "Ibn Arabi",
+            "henry-corbin": "Henry Corbin",
+            "eva": "Eva de Vitray",
+            "cheikh-ahmad-al-alawi": "Cheikh Alawi",
+            "hallaj": "Hallaj",
+            "le-prophete-muhammad": "Prophète Muhammad",
+        }
         
         async with httpx.AsyncClient() as http_client:
-            # For certain tags, use search directly
+            # For rumi, use search directly (no WordPress category)
             if tag_slug in search_only_tags:
+                search_term = search_term_mapping.get(tag_slug, tag_slug.replace("-", " "))
                 search_response = await http_client.get(
                     "https://consciencesoufie.com/wp-json/wp/v2/posts",
                     params={
@@ -577,57 +592,30 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
                 if search_response.status_code == 200:
                     return {"articles": search_response.json(), "source": "search"}
             
-            # Try tags first
-            tag_response = await http_client.get(
-                f"https://consciencesoufie.com/wp-json/wp/v2/tags",
-                params={"search": search_term, "per_page": 5}
+            # Try to get category by slug directly (most reliable)
+            wp_slug = category_slug_mapping.get(tag_slug, tag_slug)
+            cat_response = await http_client.get(
+                "https://consciencesoufie.com/wp-json/wp/v2/categories",
+                params={"slug": wp_slug}
             )
             
-            tag_id = None
-            if tag_response.status_code == 200:
-                tags = tag_response.json()
-                # Find a tag with articles
-                for tag in tags:
-                    if tag.get('count', 0) > 0:
-                        tag_id = tag.get('id')
-                        break
+            if cat_response.status_code == 200:
+                cats = cat_response.json()
+                if cats and len(cats) > 0:
+                    cat_id = cats[0].get('id')
+                    articles_response = await http_client.get(
+                        "https://consciencesoufie.com/wp-json/wp/v2/posts",
+                        params={
+                            "categories": cat_id,
+                            "per_page": per_page,
+                            "_embed": True
+                        }
+                    )
+                    if articles_response.status_code == 200:
+                        return {"articles": articles_response.json(), "source": "category"}
             
-            # If no tag with articles, try categories
-            if not tag_id:
-                cat_response = await http_client.get(
-                    f"https://consciencesoufie.com/wp-json/wp/v2/categories",
-                    params={"search": search_term, "per_page": 5}
-                )
-                if cat_response.status_code == 200:
-                    cats = cat_response.json()
-                    for cat in cats:
-                        if cat.get('count', 0) > 0:
-                            # Get articles by category
-                            articles_response = await http_client.get(
-                                "https://consciencesoufie.com/wp-json/wp/v2/posts",
-                                params={
-                                    "categories": cat.get('id'),
-                                    "per_page": per_page,
-                                    "_embed": True
-                                }
-                            )
-                            if articles_response.status_code == 200:
-                                return {"articles": articles_response.json(), "source": "category"}
-            
-            # Get articles by tag
-            if tag_id:
-                articles_response = await http_client.get(
-                    "https://consciencesoufie.com/wp-json/wp/v2/posts",
-                    params={
-                        "tags": tag_id,
-                        "per_page": per_page,
-                        "_embed": True
-                    }
-                )
-                if articles_response.status_code == 200:
-                    return {"articles": articles_response.json(), "source": "tag"}
-            
-            # Fallback: search by keyword in title/content
+            # Fallback: search by name
+            search_term = search_term_mapping.get(tag_slug, tag_slug.replace("-", " "))
             search_response = await http_client.get(
                 "https://consciencesoufie.com/wp-json/wp/v2/posts",
                 params={

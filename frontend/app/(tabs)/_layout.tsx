@@ -3,8 +3,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
 import Header from '../../components/Header';
-
-const PRIMARY_COLOR = '#1c679f';
+import theme from '../../constants/theme';
 
 export default function TabLayout() {
   return (
@@ -13,19 +12,18 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: PRIMARY_COLOR,
-          tabBarInactiveTintColor: '#888',
+          tabBarActiveTintColor: '#fff',
+          tabBarInactiveTintColor: 'rgba(255,255,255,0.6)',
           tabBarStyle: {
-            backgroundColor: '#fff',
-            borderTopWidth: 1,
-            borderTopColor: '#eee',
+            backgroundColor: theme.colors.primary,
+            borderTopWidth: 0,
             paddingBottom: Platform.OS === 'ios' ? 20 : 8,
             paddingTop: 8,
             height: Platform.OS === 'ios' ? 85 : 65,
           },
           tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '500',
+            fontFamily: theme.fonts.bodyMedium,
+            fontSize: 11,
           },
         }}
       >
@@ -34,7 +32,7 @@ export default function TabLayout() {
           options={{
             title: 'Accueil',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
+              <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
@@ -43,7 +41,7 @@ export default function TabLayout() {
           options={{
             title: 'Blog',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="book" size={size} color={color} />
+              <Ionicons name="book-outline" size={size} color={color} />
             ),
           }}
         />
@@ -52,7 +50,7 @@ export default function TabLayout() {
           options={{
             title: 'Live',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="radio" size={size} color={color} />
+              <Ionicons name="radio-outline" size={size} color={color} />
             ),
           }}
         />
@@ -61,7 +59,7 @@ export default function TabLayout() {
           options={{
             title: 'À Propos',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="information-circle" size={size} color={color} />
+              <Ionicons name="information-circle-outline" size={size} color={color} />
             ),
           }}
         />
@@ -73,6 +71,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
 });

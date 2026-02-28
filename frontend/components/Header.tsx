@@ -9,15 +9,18 @@ import {
   FlatList,
   ActivityIndicator,
   Image,
-  Platform,
+  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
+import theme from '../constants/theme';
 
-const PRIMARY_COLOR = '#1c679f';
 const LOGO_URL = 'https://consciencesoufie.com/wp-content/uploads/2019/07/logo-CS-Blanc.png';
+
+// SVG pattern as base64 for geometric Islamic pattern
+const GEOMETRIC_PATTERN = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ2VvbWV0cmljIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiPjxwYXRoIGQ9Ik0wIDIwTDIwIDBMNDAgMjBMMjAgNDBMMCAyMFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHBhdGggZD0iTTIwIDBMMjAgNDBNMCAyMEw0MCAyMCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNnZW9tZXRyaWMpIi8+PC9zdmc+`;
 
 interface SearchResult {
   id: number;
@@ -73,33 +76,49 @@ export default function Header() {
 
   return (
     <>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={{ uri: LOGO_URL }}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-        <View style={styles.iconContainer}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => setSearchModalVisible(true)}
-          >
-            <Ionicons name="search" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => setDonationModalVisible(true)}
-          >
-            <Ionicons name="heart" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => setMembershipModalVisible(true)}
-          >
-            <Ionicons name="card" size={24} color="#fff" />
-          </TouchableOpacity>
+      <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          {/* Geometric pattern overlay */}
+          <View style={styles.patternOverlay}>
+            <Image 
+              source={{ uri: GEOMETRIC_PATTERN }} 
+              style={styles.patternImage}
+              resizeMode="repeat"
+            />
+          </View>
+          
+          <View style={styles.headerContent}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={{ uri: LOGO_URL }}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.iconContainer}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setSearchModalVisible(true)}
+              >
+                <Ionicons name="search-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setDonationModalVisible(true)}
+              >
+                <Ionicons name="heart-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setMembershipModalVisible(true)}
+              >
+                <Ionicons name="card-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Gold accent line */}
+          <View style={styles.goldLine} />
         </View>
       </View>
 
@@ -112,11 +131,11 @@ export default function Header() {
         <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <View style={styles.searchHeader}>
             <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color="#666" />
+              <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Rechercher..."
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.colors.textSecondary}
                 value={searchQuery}
                 onChangeText={handleSearchChange}
                 autoFocus
@@ -136,7 +155,7 @@ export default function Header() {
 
           {searching ? (
             <View style={styles.searchLoading}>
-              <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
           ) : (
             <FlatList
@@ -183,11 +202,13 @@ export default function Header() {
               style={styles.modalCloseIcon}
               onPress={() => setDonationModalVisible(false)}
             >
-              <Ionicons name="close" size={24} color="#666" />
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
-            <Ionicons name="heart" size={48} color={PRIMARY_COLOR} />
+            <View style={styles.modalIconContainer}>
+              <Ionicons name="heart" size={32} color="#fff" />
+            </View>
             <Text style={styles.modalTitle}>
-              Soutenez Conscience Soufie pour ses 10 ans !
+              Soutenez Conscience Soufie{"\n"}pour ses 10 ans !
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
@@ -196,7 +217,7 @@ export default function Header() {
                 openLink('https://www.helloasso.com/associations/conscience-soufie/formulaires/1');
               }}
             >
-              <Ionicons name="heart" size={20} color="#fff" style={styles.modalButtonIcon} />
+              <Ionicons name="heart" size={18} color="#fff" style={styles.modalButtonIcon} />
               <Text style={styles.modalButtonText}>Faire un don</Text>
             </TouchableOpacity>
           </View>
@@ -216,11 +237,13 @@ export default function Header() {
               style={styles.modalCloseIcon}
               onPress={() => setMembershipModalVisible(false)}
             >
-              <Ionicons name="close" size={24} color="#666" />
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
-            <Ionicons name="people" size={48} color={PRIMARY_COLOR} />
+            <View style={styles.modalIconContainer}>
+              <Ionicons name="people" size={32} color="#fff" />
+            </View>
             <Text style={styles.modalTitle}>
-              Rejoignez la communauté Conscience Soufie !
+              Rejoignez la communauté{"\n"}Conscience Soufie !
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
@@ -229,7 +252,7 @@ export default function Header() {
                 openLink('https://www.helloasso.com/associations/conscience-soufie/adhesions/campagne-d-adhesion-2026');
               }}
             >
-              <Ionicons name="card" size={20} color="#fff" style={styles.modalButtonIcon} />
+              <Ionicons name="card" size={18} color="#fff" style={styles.modalButtonIcon} />
               <Text style={styles.modalButtonText}>Devenir adhérent</Text>
             </TouchableOpacity>
           </View>
@@ -240,13 +263,31 @@ export default function Header() {
 }
 
 const styles = StyleSheet.create({
+  headerWrapper: {
+    backgroundColor: theme.colors.primary,
+  },
   header: {
-    backgroundColor: PRIMARY_COLOR,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  patternOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 1,
+  },
+  patternImage: {
+    width: '100%',
+    height: '100%',
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingVertical: 12,
+  },
+  goldLine: {
+    height: 2,
+    backgroundColor: theme.colors.gold,
   },
   logoContainer: {
     flex: 1,
@@ -265,21 +306,22 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   searchHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    backgroundColor: theme.colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(28,103,159,0.1)',
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.medium,
     paddingHorizontal: 12,
     marginRight: 12,
   },
@@ -287,17 +329,18 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 16,
+    fontFamily: theme.fonts.body,
     marginLeft: 8,
-    color: '#333',
+    color: theme.colors.textPrimary,
   },
   closeButton: {
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
   closeButtonText: {
-    color: PRIMARY_COLOR,
+    color: theme.colors.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.fonts.bodyMedium,
   },
   searchLoading: {
     flex: 1,
@@ -306,17 +349,20 @@ const styles = StyleSheet.create({
   },
   searchResultItem: {
     padding: 16,
+    backgroundColor: theme.colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(28,103,159,0.08)',
   },
   searchResultTitle: {
     fontSize: 16,
-    color: '#333',
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   searchResultType: {
     fontSize: 12,
-    color: '#888',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
   },
   emptyResults: {
@@ -325,23 +371,25 @@ const styles = StyleSheet.create({
   },
   emptyResultsText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(26,42,58,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.large,
     padding: 32,
     alignItems: 'center',
     width: '100%',
     maxWidth: 340,
     position: 'relative',
+    ...theme.shadows.card,
   },
   modalCloseIcon: {
     position: 'absolute',
@@ -349,23 +397,31 @@ const styles = StyleSheet.create({
     right: 12,
     padding: 4,
   },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
-    marginTop: 16,
     marginBottom: 24,
-    lineHeight: 26,
+    lineHeight: 28,
   },
   modalButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingHorizontal: 28,
+    borderRadius: theme.borderRadius.button,
     width: '100%',
   },
   modalButtonIcon: {
@@ -374,6 +430,6 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.fonts.bodySemiBold,
   },
 });

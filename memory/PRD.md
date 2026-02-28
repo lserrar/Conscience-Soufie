@@ -1,63 +1,119 @@
 # Conscience Soufie - Application Mobile
 
-## Résumé
-Application mobile React Native/Expo pour l'association Conscience Soufie, célébrant son 10ème anniversaire. L'application permet de consulter les événements, les articles de blog, les conférences en direct (via Zoom) et les informations sur l'association.
+## Description du Projet
+Application mobile française pour l'association culturelle Conscience Soufie. L'application sert de hub de contenu pour les membres existants, regroupant le contenu du site web, Zoom, HelloAsso et Calameo.
 
-## Fonctionnalités
+## Spécifications Techniques
+- **Frontend**: React Native, Expo, Expo Router, TypeScript
+- **Backend**: Python, FastAPI
+- **Données**: APIs REST (WordPress, Zoom, HelloAsso, Calameo, SoundCloud)
 
-### Header (visible sur tous les écrans)
-- Logo Conscience Soufie (blanc sur fond bleu #1c679f)
-- Icône recherche 🔍 : ouvre une modal de recherche WordPress
-- Icône don ❤️ : ouvre une modal avec lien HelloAsso
-- Icône adhésion 🪪 : ouvre une modal avec lien d'adhésion
+## Identité Visuelle
+- **Couleur principale**: #1c679f
+- **Fond**: Blanc
+- **Police**: Cormorant Garamond (titres), Inter (corps)
+- **Style**: Premium, Netflix/Airbnb-like
 
-### Tab 1 - Accueil (Événements)
-- Affiche les événements à venir depuis l'API WordPress (mec-events)
-- Image, titre, date, heure pour chaque événement
-- Bouton "Voir le détail" ouvre l'événement dans le navigateur in-app
-- Pull-to-refresh activé
+## Architecture des Onglets
+1. **Accueil** - Page d'accueil style Netflix
+2. **Articles** - Liste des articles WordPress avec filtres
+3. **Podcasts** - Podcasts SoundCloud avec hero + liste
+4. **Zoom** - Conférences Zoom à venir
+5. **À Propos** - WebView de la page présentation
 
-### Tab 2 - Blog
-- Affiche les articles récents depuis l'API WordPress (posts)
-- Image, titre, date, extrait pour chaque article
-- Bouton "Lire la suite" ouvre l'article dans le navigateur in-app
-- Pull-to-refresh activé
+---
 
-### Tab 3 - Live
-- Connexion à l'API Zoom pour récupérer les webinaires à venir
-- Affiche le prochain webinaire avec titre, date, heure, durée
-- Cross-référence avec les événements WordPress pour détecter les événements payants
-- Badge "Accès libre" (vert) ou "Événement payant" (orange)
-- Bouton "Rejoindre en direct" ou "S'inscrire pour participer"
+## Fonctionnalités Implémentées
 
-### Tab 4 - À Propos
-- Présentation de l'association
-- Boutons "Devenir adhérent" et "Nous contacter"
-- Lien vers le site web
+### Phase 1 - MVP (Complété)
+- [x] Structure 4 onglets de base
+- [x] Header avec logo centré, icône profil, icône don
+- [x] Intégration HelloAsso (événements)
+- [x] Intégration Zoom (webinaires)
+- [x] Intégration WordPress (articles)
+- [x] Intégration Calameo (revues)
+- [x] WebView pour le contenu externe
+- [x] Modal profil avec paramètres
+- [x] Modal donation avec WebView HelloAsso
 
-## APIs Intégrées
-- **WordPress REST API** : consciencesoufie.com
-  - `/wp-json/wp/v2/mec-events` : événements
-  - `/wp-json/wp/v2/posts` : articles de blog
-  - `/wp-json/wp/v2/search` : recherche
-- **Zoom API** (Server-to-Server OAuth)
-  - Récupération des webinaires à venir
-  - Gestion automatique du token OAuth
+### Phase 2 - Enrichissement (Complété - 28/02/2026)
+- [x] Nouvel onglet **Podcasts** avec intégration SoundCloud RSS
+  - Hero "Dernier épisode" style Netflix
+  - Liste verticale de tous les épisodes
+  - Badge "NOUVEAU", durée, date de publication
+- [x] **Carousels thématiques** sur la page Accueil
+  - Soufisme, Rumi, Ibn Arabi, Poésie et samâ'
+  - Henri Corbin, Eva de Vitray, Louis Massignon, Michel Chodkiewicz
+- [x] **Filtres topics** style Spotify sur la page Articles
+  - Filtres scrollables horizontalement
+  - Chargement dynamique par tag/catégorie WordPress
+- [x] Section "À la une" améliorée sur l'Accueil
 
-## Design
-- Couleur primaire : #1c679f
-- Fond : blanc
-- Cards : blanc avec ombre subtile
-- Police : Sans-serif moderne
+---
 
-## Configuration requise
-- Compte Zoom avec webinaires activés
-- Credentials Zoom Server-to-Server OAuth (Account ID, Client ID, Client Secret)
-- Scopes Zoom requis : webinar:read:list_webinars:admin
+## APIs Backend
 
-## Variables d'environnement Backend
+### Endpoints Existants
+- `GET /api/` - Racine API
+- `GET /api/helloasso/events` - Événements HelloAsso
+- `GET /api/helloasso/event/{slug}` - Détails d'un événement
+- `POST /api/helloasso/checkout` - Checkout HelloAsso
+- `GET /api/zoom/webinars` - Webinaires Zoom
+- `GET /api/zoom/webinar/{id}` - Détails webinaire
+
+### Nouveaux Endpoints (Phase 2)
+- `GET /api/podcasts` - Podcasts depuis SoundCloud RSS
+- `GET /api/articles/by-tag/{tag_slug}` - Articles filtrés par tag
+
+---
+
+## Structure des Fichiers
+
 ```
-ZOOM_ACCOUNT_ID=xxx
-ZOOM_CLIENT_ID=xxx
-ZOOM_CLIENT_SECRET=xxx
+/app
+├── backend/
+│   ├── server.py              # API FastAPI
+│   └── .env                   # Credentials
+└── frontend/
+    ├── app/
+    │   ├── (tabs)/
+    │   │   ├── _layout.tsx    # Config 5 onglets
+    │   │   ├── index.tsx      # Accueil (Netflix-style)
+    │   │   ├── blog.tsx       # Articles (avec filtres)
+    │   │   ├── podcasts.tsx   # Podcasts SoundCloud
+    │   │   ├── live.tsx       # Zoom
+    │   │   └── about.tsx      # À Propos
+    │   ├── article.tsx        # WebView articles
+    │   ├── magazine.tsx       # WebView Calameo
+    │   └── event-detail/      # WebView événements
+    ├── components/
+    │   ├── Header.tsx         # Header global
+    │   └── ProfileModal.tsx   # Modal profil
+    └── constants/
+        └── theme.ts           # Design system
 ```
+
+---
+
+## Backlog
+
+### P1 - Prioritaire
+- [ ] Corriger l'affichage des filtres Articles sur web (étirement vertical)
+- [ ] Implémenter la fonctionnalité de recherche
+
+### P2 - Important
+- [ ] Compléter les préférences utilisateur dans le profil
+- [ ] Notifications push pour les nouveaux contenus
+
+### P3 - Nice to have
+- [ ] Mode hors-ligne pour les podcasts
+- [ ] Favoris/Bookmarks
+
+---
+
+## Tests
+- **Backend**: 14/14 tests passés (100%)
+- **Frontend**: Fonctionnel, problème mineur de rendu web
+
+## Dernière mise à jour
+28 février 2026 - Phase 2 complétée

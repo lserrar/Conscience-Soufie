@@ -20,6 +20,18 @@ import theme from '@/constants/theme';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Thematic tags for article carousels
+const THEMATIC_TAGS = [
+  { slug: 'soufisme', label: 'Soufisme' },
+  { slug: 'rumi', label: 'Rumi' },
+  { slug: 'ibn-arabi', label: 'Ibn Arabi' },
+  { slug: 'poesie-sama', label: 'Poésie et samâ\'' },
+  { slug: 'henri-corbin', label: 'Henri Corbin' },
+  { slug: 'eva-de-vitray', label: 'Eva de Vitray' },
+  { slug: 'louis-massignon', label: 'Louis Massignon' },
+  { slug: 'michel-chodkiewicz', label: 'Michel Chodkiewicz' },
+];
+
 // Calameo magazines with actual cover images
 const MAGAZINES = [
   {
@@ -76,6 +88,10 @@ interface HelloAssoEvent {
   };
 }
 
+interface ThemedArticles {
+  [key: string]: BlogPost[];
+}
+
 export default function AccueilScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -83,8 +99,29 @@ export default function AccueilScreen() {
   const [articles, setArticles] = useState<BlogPost[]>([]);
   const [events, setEvents] = useState<HelloAssoEvent[]>([]);
   const [highlightEvent, setHighlightEvent] = useState<HelloAssoEvent | null>(null);
+  const [themedArticles, setThemedArticles] = useState<ThemedArticles>({});
   
   const highlightScale = useRef(new Animated.Value(1)).current;
+
+  const fetchThemedArticles = async () => {
+    const results: ThemedArticles = {};
+    
+    // Fetch articles for each theme in parallel
+    await Promise.all(
+      THEMATIC_TAGS.map(async (tag) => {
+        try {
+          const response = await axios.get(`${BACKEND_URL}/api/articles/by-tag/${tag.slug}`);
+          if (response.data.articles && response.data.articles.length > 0) {
+            results[tag.slug] = response.data.articles.slice(0, 8);
+          }
+        } catch (err) {
+          console.log(`No articles for ${tag.slug}`);
+        }
+      })
+    );
+    
+    setThemedArticles(results);
+  };
 
   const fetchData = async () => {
     try {
@@ -104,6 +141,9 @@ export default function AccueilScreen() {
           setHighlightEvent(eventList[0]);
         }
       }
+      
+      // Fetch themed articles
+      await fetchThemedArticles();
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -135,7 +175,6 @@ export default function AccueilScreen() {
   };
 
   const openArticle = (post: BlogPost) => {
-    // Open article website page in WebView
     router.push({
       pathname: '/article',
       params: {
@@ -189,6 +228,30 @@ export default function AccueilScreen() {
 
   const handleHighlightPressOut = () => {
     Animated.spring(highlightScale, { toValue: 1, useNativeDriver: true }).start();
+  };
+
+  const renderArticleCard = (item: BlogPost) => {
+    const thumbnail = item._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.articleCard}
+        onPress={() => openArticle(item)}
+        activeOpacity={0.9}
+      >
+        {thumbnail ? (
+          <Image source={{ uri: thumbnail }} style={styles.articleImage} resizeMode="cover" />
+        ) : (
+          <View style={[styles.articleImage, styles.articlePlaceholder]}>
+            <Ionicons name="document-text" size={32} color={theme.colors.primary} />
+          </View>
+        )}
+        <View style={styles.articleContent}>
+          <Text style={styles.articleTitle} numberOfLines={2}>{cleanHtml(item.title.rendered)}</Text>
+          <Text style={styles.articleDate}>{formatDate(item.date)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   if (loading) {
@@ -254,7 +317,7 @@ export default function AccueilScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Prochains événements</Text>
             <TouchableOpacity onPress={() => router.push('/live')}>
-              <Text style={styles.sectionLink}>Voir tout →</Text>
+              <Text style={styles.sectionLink}>Voir tout</Text>
             </TouchableOpacity>
           </View>
           
@@ -292,7 +355,7 @@ export default function AccueilScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Derniers articles</Text>
           <TouchableOpacity onPress={() => router.push('/blog')}>
-            <Text style={styles.sectionLink}>Voir tout →</Text>
+            <Text style={styles.sectionLink}>Voir tout</Text>
           </TouchableOpacity>
         </View>
         
@@ -302,32 +365,37 @@ export default function AccueilScreen() {
           keyExtractor={(item) => item.id.toString()}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
-          renderItem={({ item }) => {
-            const thumbnail = item._embedded?.['wp:featuredmedia']?.[0]?.source_url;
-            return (
-              <TouchableOpacity
-                style={styles.articleCard}
-                onPress={() => openArticle(item)}
-                activeOpacity={0.9}
-              >
-                {thumbnail ? (
-                  <Image source={{ uri: thumbnail }} style={styles.articleImage} resizeMode="cover" />
-                ) : (
-                  <View style={[styles.articleImage, styles.articlePlaceholder]}>
-                    <Ionicons name="document-text" size={32} color={theme.colors.primary} />
-                  </View>
-                )}
-                <View style={styles.articleContent}>
-                  <Text style={styles.articleTitle} numberOfLines={2}>{cleanHtml(item.title.rendered)}</Text>
-                  <Text style={styles.articleDate}>{formatDate(item.date)}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={({ item }) => renderArticleCard(item)}
         />
       </View>
 
-      {/* Section 3: Revues Conscience Soufie */}
+      {/* Thematic Article Sections */}
+      {THEMATIC_TAGS.map((tag) => {
+        const tagArticles = themedArticles[tag.slug];
+        if (!tagArticles || tagArticles.length === 0) return null;
+        
+        return (
+          <View key={tag.slug} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{tag.label}</Text>
+              <TouchableOpacity onPress={() => router.push({ pathname: '/blog', params: { filter: tag.slug } })}>
+                <Text style={styles.sectionLink}>Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              horizontal
+              data={tagArticles}
+              keyExtractor={(item) => `${tag.slug}-${item.id}`}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+              renderItem={({ item }) => renderArticleCard(item)}
+            />
+          </View>
+        );
+      })}
+
+      {/* Section: Revues Conscience Soufie */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Revues Conscience Soufie</Text>

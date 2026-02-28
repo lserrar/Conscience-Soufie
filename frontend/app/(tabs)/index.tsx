@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import { useRouter } from 'expo-router';
 import axios from 'axios';
 
 const PRIMARY_COLOR = '#1c679f';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,8 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  ActivityIndicator,
-  useWindowDimensions,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import axios from 'axios';
-import RenderHtml from 'react-native-render-html';
 import { Ionicons } from '@expo/vector-icons';
 
 const PRIMARY_COLOR = '#1c679f';

@@ -168,6 +168,128 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+@api_router.get("/helloasso/events")
+async def get_helloasso_events():
+    """Get upcoming events from HelloAsso"""
+    try:
+        token = await get_helloasso_access_token()
+        
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.get(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms",
+                headers={"Authorization": f"Bearer {token}"},
+                params={
+                    "formTypes": "Event",
+                    "states": "Public",
+                    "pageSize": 20
+                }
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"HelloAsso events error: {response.status_code} - {response.text}")
+                return {"events": [], "error": "Impossible de récupérer les événements"}
+            
+            data = response.json()
+            events = []
+            
+            now = datetime.utcnow()
+            
+            for event in data.get("data", []):
+                # Parse start date to filter future events
+                start_date_str = event.get("startDate")
+                if start_date_str:
+                    try:
+                        # Parse ISO format with timezone
+                        start_date = datetime.fromisoformat(start_date_str.replace("+02:00", "").replace("+01:00", ""))
+                        # Include events that haven't ended yet
+                        end_date_str = event.get("endDate")
+                        if end_date_str:
+                            end_date = datetime.fromisoformat(end_date_str.replace("+02:00", "").replace("+01:00", ""))
+                            if end_date < now:
+                                continue
+                        elif start_date < now:
+                            continue
+                    except Exception as e:
+                        logger.warning(f"Date parsing error: {e}")
+                
+                events.append({
+                    "id": event.get("formSlug"),
+                    "title": event.get("title"),
+                    "description": event.get("description"),
+                    "startDate": event.get("startDate"),
+                    "endDate": event.get("endDate"),
+                    "banner": event.get("banner", {}).get("publicUrl") if event.get("banner") else None,
+                    "logo": event.get("logo", {}).get("publicUrl") if event.get("logo") else None,
+                    "url": event.get("url"),
+                    "state": event.get("state"),
+                    "organizationSlug": event.get("organizationSlug")
+                })
+            
+            # Sort by start date (ascending - earliest first)
+            events.sort(key=lambda x: x.get("startDate") or "9999")
+            
+            return {"events": events}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"HelloAsso events error: {e}")
+        return {"events": [], "error": str(e)}
+
+@api_router.get("/helloasso/event/{event_slug}")
+async def get_helloasso_event_details(event_slug: str):
+    """Get details of a specific HelloAsso event"""
+    try:
+        token = await get_helloasso_access_token()
+        
+        async with httpx.AsyncClient() as http_client:
+            # Get event details
+            response = await http_client.get(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms/Event/{event_slug}",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            
+            if response.status_code != 200:
+                return {"error": "Événement non trouvé"}
+            
+            event = response.json()
+            
+            # Get event items (tickets/tariffs)
+            items_response = await http_client.get(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms/Event/{event_slug}/items",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            
+            items = []
+            if items_response.status_code == 200:
+                items_data = items_response.json()
+                for item in items_data.get("data", []):
+                    items.append({
+                        "id": item.get("id"),
+                        "name": item.get("name"),
+                        "description": item.get("description"),
+                        "price": item.get("amount", 0) / 100,  # Convert cents to euros
+                        "currency": "EUR"
+                    })
+            
+            return {
+                "id": event.get("formSlug"),
+                "title": event.get("title"),
+                "description": event.get("description"),
+                "startDate": event.get("startDate"),
+                "endDate": event.get("endDate"),
+                "banner": event.get("banner", {}).get("publicUrl") if event.get("banner") else None,
+                "logo": event.get("logo", {}).get("publicUrl") if event.get("logo") else None,
+                "url": event.get("url"),
+                "widgetUrl": event.get("widgetFullUrl"),
+                "state": event.get("state"),
+                "place": event.get("place"),
+                "items": items
+            }
+    except Exception as e:
+        logger.error(f"HelloAsso event details error: {e}")
+        return {"error": str(e)}
+
 @api_router.get("/zoom/webinars")
 async def get_zoom_webinars():
     """Get upcoming webinars from Zoom"""

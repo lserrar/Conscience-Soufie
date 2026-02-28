@@ -472,17 +472,6 @@ async def get_webinar_details(webinar_id: str):
         logger.error(f"Webinar details error: {e}")
         return {"error": str(e)}
 
-# Include the router in the main app
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # SoundCloud RSS Feed URL
 SOUNDCLOUD_RSS_URL = "https://feeds.soundcloud.com/users/soundcloud:users:522380445/sounds.rss"
 
@@ -553,23 +542,10 @@ async def get_podcasts():
         logger.error(f"Podcasts error: {e}")
         return {"podcasts": [], "error": str(e)}
 
-# WordPress tags for themed articles
-WORDPRESS_TAGS = {
-    "soufisme": 7,
-    "rumi": 89,
-    "ibn-arabi": 88,
-    "poesie-sama": 91,
-    "henri-corbin": 92,
-    "eva-de-vitray": 93,
-    "louis-massignon": 94,
-    "michel-chodkiewicz": 95,
-}
-
 @api_router.get("/articles/by-tag/{tag_slug}")
 async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
     """Get articles from WordPress filtered by tag"""
     try:
-        # First, try to get tag ID from our mapping or search WordPress
         async with httpx.AsyncClient() as http_client:
             # Search for the tag
             tag_response = await http_client.get(
@@ -634,6 +610,17 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
     except Exception as e:
         logger.error(f"Articles by tag error: {e}")
         return {"articles": [], "error": str(e)}
+
+# Include the router in the main app
+app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

@@ -12,8 +12,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import axios from 'axios';
+import { useAudio } from '@/contexts/AudioContext';
+import MiniPlayer from '@/components/MiniPlayer';
+import FullPlayer from '@/components/FullPlayer';
 import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -34,13 +36,14 @@ interface Podcast {
 }
 
 export default function PodcastsScreen() {
-  const router = useRouter();
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [heroPodcast, setHeroPodcast] = useState<Podcast | null>(null);
+  const [showFullPlayer, setShowFullPlayer] = useState(false);
   
+  const { currentPodcast, playPodcast, isPlaying } = useAudio();
   const heroScale = useRef(new Animated.Value(1)).current;
 
   const fetchPodcasts = async () => {
@@ -119,17 +122,12 @@ export default function PodcastsScreen() {
       .substring(0, 200);
   };
 
-  const openPodcast = (podcast: Podcast) => {
-    router.push({
-      pathname: '/podcast-player',
-      params: {
-        title: podcast.title,
-        url: podcast.link,
-        image: podcast.imageUrl || DEFAULT_COVER,
-        duration: podcast.duration || '',
-        pubDate: podcast.pubDate,
-      }
-    });
+  const handlePlayPodcast = async (podcast: Podcast, index: number) => {
+    if (!podcast.audioUrl) {
+      console.error('No audio URL for podcast');
+      return;
+    }
+    await playPodcast(podcast, podcasts, index);
   };
 
   const handleHeroPressIn = () => {
@@ -138,6 +136,10 @@ export default function PodcastsScreen() {
 
   const handleHeroPressOut = () => {
     Animated.spring(heroScale, { toValue: 1, useNativeDriver: true }).start();
+  };
+
+  const isCurrentlyPlaying = (podcast: Podcast) => {
+    return currentPodcast?.id === podcast.id;
   };
 
   if (loading) {
@@ -162,112 +164,142 @@ export default function PodcastsScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-      }
-    >
-      {/* Hero - Dernier Podcast */}
-      {heroPodcast && (
-        <View style={styles.heroSection}>
-          <View style={styles.heroHeader}>
-            <Text style={styles.heroHeaderTitle}>Dernier épisode</Text>
-            <View style={styles.heroHeaderUnderline} />
-          </View>
-          
-          <Animated.View style={{ transform: [{ scale: heroScale }] }}>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPressIn={handleHeroPressIn}
-              onPressOut={handleHeroPressOut}
-              onPress={() => openPodcast(heroPodcast)}
-              style={styles.heroCard}
-            >
-              <Image
-                source={{ uri: heroPodcast.imageUrl || DEFAULT_COVER }}
-                style={styles.heroImage}
-                resizeMode="cover"
-              />
-              <View style={styles.heroOverlay} />
-              <View style={styles.heroContent}>
-                <View style={styles.heroBadge}>
-                  <Ionicons name="headset" size={14} color="#fff" />
-                  <Text style={styles.heroBadgeText}>NOUVEAU</Text>
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
+        contentContainerStyle={[
+          styles.scrollContent,
+          currentPodcast && { paddingBottom: 80 }
+        ]}
+      >
+        {/* Hero - Dernier Podcast */}
+        {heroPodcast && (
+          <View style={styles.heroSection}>
+            <View style={styles.heroHeader}>
+              <Text style={styles.heroHeaderTitle}>Dernier épisode</Text>
+              <View style={styles.heroHeaderUnderline} />
+            </View>
+            
+            <Animated.View style={{ transform: [{ scale: heroScale }] }}>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPressIn={handleHeroPressIn}
+                onPressOut={handleHeroPressOut}
+                onPress={() => handlePlayPodcast(heroPodcast, 0)}
+                style={styles.heroCard}
+              >
+                <Image
+                  source={{ uri: heroPodcast.imageUrl || DEFAULT_COVER }}
+                  style={styles.heroImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.heroOverlay} />
+                <View style={styles.heroContent}>
+                  <View style={styles.heroBadge}>
+                    <Ionicons name="headset" size={14} color="#fff" />
+                    <Text style={styles.heroBadgeText}>NOUVEAU</Text>
+                  </View>
+                  <Text style={styles.heroTitle} numberOfLines={3}>{heroPodcast.title}</Text>
+                  <View style={styles.heroMeta}>
+                    <Text style={styles.heroDate}>{formatDate(heroPodcast.pubDate)}</Text>
+                    {heroPodcast.duration && (
+                      <>
+                        <View style={styles.heroDot} />
+                        <Text style={styles.heroDuration}>{formatDuration(heroPodcast.duration)}</Text>
+                      </>
+                    )}
+                  </View>
+                  <View style={styles.heroPlayButton}>
+                    <Ionicons 
+                      name={isCurrentlyPlaying(heroPodcast) && isPlaying ? "pause" : "play"} 
+                      size={20} 
+                      color={theme.colors.primary} 
+                    />
+                    <Text style={styles.heroPlayText}>
+                      {isCurrentlyPlaying(heroPodcast) && isPlaying ? "En lecture" : "Écouter"}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.heroTitle} numberOfLines={3}>{heroPodcast.title}</Text>
-                <View style={styles.heroMeta}>
-                  <Text style={styles.heroDate}>{formatDate(heroPodcast.pubDate)}</Text>
-                  {heroPodcast.duration && (
-                    <>
-                      <View style={styles.heroDot} />
-                      <Text style={styles.heroDuration}>{formatDuration(heroPodcast.duration)}</Text>
-                    </>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        )}
+
+        {/* Liste des podcasts */}
+        {podcasts.length > 1 && (
+          <View style={styles.listSection}>
+            <View style={styles.listHeader}>
+              <Ionicons name="list" size={20} color={theme.colors.primary} />
+              <Text style={styles.listTitle}>Tous les épisodes</Text>
+            </View>
+
+            {podcasts.slice(1).map((podcast, index) => (
+              <TouchableOpacity
+                key={podcast.id || index}
+                style={[
+                  styles.podcastCard,
+                  isCurrentlyPlaying(podcast) && styles.podcastCardActive
+                ]}
+                onPress={() => handlePlayPodcast(podcast, index + 1)}
+                activeOpacity={0.9}
+              >
+                <Image
+                  source={{ uri: podcast.imageUrl || DEFAULT_COVER }}
+                  style={styles.podcastImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.podcastContent}>
+                  <Text style={styles.podcastTitle} numberOfLines={2}>{podcast.title}</Text>
+                  <Text style={styles.podcastDescription} numberOfLines={2}>
+                    {cleanDescription(podcast.description)}
+                  </Text>
+                  <View style={styles.podcastMeta}>
+                    <Text style={styles.podcastDate}>{formatDate(podcast.pubDate)}</Text>
+                    {podcast.duration && (
+                      <>
+                        <View style={styles.podcastDot} />
+                        <Text style={styles.podcastDuration}>{formatDuration(podcast.duration)}</Text>
+                      </>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.podcastPlayIcon}>
+                  {isCurrentlyPlaying(podcast) && isPlaying ? (
+                    <View style={styles.nowPlayingIndicator}>
+                      <Ionicons name="pause-circle" size={36} color={theme.colors.primary} />
+                    </View>
+                  ) : (
+                    <Ionicons name="play-circle" size={36} color={theme.colors.primary} />
                   )}
                 </View>
-                <View style={styles.heroPlayButton}>
-                  <Ionicons name="play" size={20} color={theme.colors.primary} />
-                  <Text style={styles.heroPlayText}>Écouter sur SoundCloud</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      )}
-
-      {/* Liste des podcasts */}
-      {podcasts.length > 1 && (
-        <View style={styles.listSection}>
-          <View style={styles.listHeader}>
-            <Ionicons name="list" size={20} color={theme.colors.primary} />
-            <Text style={styles.listTitle}>Tous les épisodes</Text>
+              </TouchableOpacity>
+            ))}
           </View>
+        )}
 
-          {podcasts.slice(1).map((podcast, index) => (
-            <TouchableOpacity
-              key={podcast.id || index}
-              style={styles.podcastCard}
-              onPress={() => openPodcast(podcast)}
-              activeOpacity={0.9}
-            >
-              <Image
-                source={{ uri: podcast.imageUrl || DEFAULT_COVER }}
-                style={styles.podcastImage}
-                resizeMode="cover"
-              />
-              <View style={styles.podcastContent}>
-                <Text style={styles.podcastTitle} numberOfLines={2}>{podcast.title}</Text>
-                <Text style={styles.podcastDescription} numberOfLines={2}>
-                  {cleanDescription(podcast.description)}
-                </Text>
-                <View style={styles.podcastMeta}>
-                  <Text style={styles.podcastDate}>{formatDate(podcast.pubDate)}</Text>
-                  {podcast.duration && (
-                    <>
-                      <View style={styles.podcastDot} />
-                      <Text style={styles.podcastDuration}>{formatDuration(podcast.duration)}</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-              <View style={styles.podcastPlayIcon}>
-                <Ionicons name="play-circle" size={36} color={theme.colors.primary} />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {podcasts.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="headset-outline" size={48} color={theme.colors.textSecondary} />
+            <Text style={styles.emptyText}>Aucun podcast disponible</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Mini Player */}
+      {currentPodcast && (
+        <MiniPlayer onPress={() => setShowFullPlayer(true)} />
       )}
 
-      {podcasts.length === 0 && (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="headset-outline" size={48} color={theme.colors.textSecondary} />
-          <Text style={styles.emptyText}>Aucun podcast disponible</Text>
-        </View>
-      )}
-
-      <View style={styles.bottomSpacer} />
-    </ScrollView>
+      {/* Full Player Modal */}
+      <FullPlayer 
+        visible={showFullPlayer} 
+        onClose={() => setShowFullPlayer(false)} 
+      />
+    </View>
   );
 }
 
@@ -275,6 +307,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -446,10 +484,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(28,103,159,0.1)',
     alignItems: 'center',
   },
+  podcastCardActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: 'rgba(28,103,159,0.05)',
+  },
   podcastImage: {
     width: 80,
     height: 80,
-    borderRadius: theme.borderRadius.small,
+    borderRadius: 3,
     backgroundColor: '#f0f0f0',
   },
   podcastContent: {
@@ -495,6 +537,9 @@ const styles = StyleSheet.create({
   podcastPlayIcon: {
     padding: 4,
   },
+  nowPlayingIndicator: {
+    position: 'relative',
+  },
 
   // Empty
   emptyContainer: {
@@ -507,9 +552,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: 12,
-  },
-
-  bottomSpacer: {
-    height: 40,
   },
 });

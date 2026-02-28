@@ -784,23 +784,17 @@ const styles = StyleSheet.create({
   },
   liveActions: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  joinButton: {
-    flex: 1,
+  zoomLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
-    borderRadius: theme.borderRadius.button,
-    gap: 8,
+    gap: 4,
   },
-  joinButtonLive: {
-    backgroundColor: theme.colors.success,
-  },
-  joinButtonText: {
-    color: '#fff',
+  zoomLinkText: {
+    color: theme.colors.primary,
     fontSize: 15,
     fontFamily: theme.fonts.bodySemiBold,
   },

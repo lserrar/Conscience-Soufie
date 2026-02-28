@@ -115,5 +115,11 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - **Backend**: 14/14 tests passés (100%)
 - **Frontend**: Fonctionnel, problème mineur de rendu web
 
+## Corrections récentes (28/02/2026)
+- Corrigé le label "Henri Corbin" → "Henry Corbin"
+- Corrigé la recherche pour "Rûmî" (utilise recherche textuelle)
+- Ajouté page lecteur audio podcast avec embed SoundCloud
+- Corrigé le lien "Voir tout" sur Accueil pour passer le bon filtre
+
 ## Dernière mise à jour
-28 février 2026 - Phase 2 complétée
+28 février 2026 - Phase 2 complétée + corrections

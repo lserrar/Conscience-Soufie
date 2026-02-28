@@ -10,9 +10,9 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-
-const PRIMARY_COLOR = '#1c679f';
+import theme from '../../constants/theme';
 
 interface Event {
   id: number;
@@ -112,7 +112,7 @@ export default function AccueilScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Chargement des événements...</Text>
       </View>
     );
@@ -121,6 +121,7 @@ export default function AccueilScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
+        <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
           <Text style={styles.retryButtonText}>Réessayer</Text>
@@ -134,38 +135,55 @@ export default function AccueilScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY_COLOR]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      <Text style={styles.sectionTitle}>Événements à venir</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Événements à venir</Text>
+        <View style={styles.goldAccent} />
+      </View>
+      
       {events.length === 0 ? (
         <View style={styles.emptyContainer}>
+          <Ionicons name="calendar-outline" size={48} color={theme.colors.textSecondary} />
           <Text style={styles.emptyText}>Aucun événement à venir pour le moment.</Text>
         </View>
       ) : (
         events.map((event) => (
-          <View key={event.id} style={styles.eventCard}>
+          <TouchableOpacity 
+            key={event.id} 
+            style={styles.eventCard}
+            onPress={() => openEvent(event.id)}
+            activeOpacity={0.9}
+          >
             {event._embedded?.['wp:featuredmedia']?.[0]?.source_url && (
-              <Image
-                source={{ uri: event._embedded['wp:featuredmedia'][0].source_url }}
-                style={styles.eventImage}
-                resizeMode="cover"
-              />
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: event._embedded['wp:featuredmedia'][0].source_url }}
+                  style={styles.eventImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.imageOverlay} />
+              </View>
             )}
             <View style={styles.eventContent}>
               <Text style={styles.eventTitle}>{decodeHTML(event.title.rendered)}</Text>
               <View style={styles.eventMeta}>
-                <Text style={styles.eventDate}>{formatDate(event.date)}</Text>
-                <Text style={styles.eventTime}>{formatTime(event.date)}</Text>
+                <View style={styles.metaRow}>
+                  <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
+                  <Text style={styles.eventDate}>{formatDate(event.date)}</Text>
+                </View>
+                <View style={styles.metaRow}>
+                  <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
+                  <Text style={styles.eventTime}>{formatTime(event.date)}</Text>
+                </View>
               </View>
-              <TouchableOpacity
-                style={styles.eventButton}
-                onPress={() => openEvent(event.id)}
-              >
+              <View style={styles.eventButton}>
                 <Text style={styles.eventButtonText}>Voir le détail</Text>
-              </TouchableOpacity>
+                <Ionicons name="arrow-forward" size={16} color="#fff" />
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))
       )}
     </ScrollView>
@@ -175,7 +193,7 @@ export default function AccueilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
     padding: 16,
@@ -185,99 +203,127 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
     padding: 24,
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    paddingHorizontal: 24,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 28,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
   },
   retryButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  sectionHeader: {
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 28,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
+  },
+  goldAccent: {
+    width: 60,
+    height: 3,
+    backgroundColor: theme.colors.gold,
+    borderRadius: 2,
   },
   emptyContainer: {
-    padding: 32,
+    padding: 48,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
+    marginTop: 12,
   },
   eventCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.medium,
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...theme.shadows.card,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   eventImage: {
     width: '100%',
     height: 180,
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: theme.colors.primaryLight,
   },
   eventContent: {
     padding: 16,
   },
   eventTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    marginBottom: 12,
+    lineHeight: 24,
   },
   eventMeta: {
+    marginBottom: 16,
+  },
+  metaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   eventDate: {
     fontSize: 14,
-    color: PRIMARY_COLOR,
-    fontWeight: '500',
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.textPrimary,
+    marginLeft: 8,
   },
   eventTime: {
     fontSize: 14,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    marginLeft: 8,
   },
   eventButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 20,
+    borderRadius: theme.borderRadius.button,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   eventButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: theme.fonts.bodySemiBold,
+    marginRight: 8,
   },
 });

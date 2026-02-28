@@ -12,10 +12,7 @@ import {
 import * as WebBrowser from 'expo-web-browser';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
-
-const PRIMARY_COLOR = '#1c679f';
-const GREEN_COLOR = '#28a745';
-const ORANGE_COLOR = '#f0ad4e';
+import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -53,13 +50,13 @@ export default function LiveScreen() {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.1,
-            duration: 500,
+            toValue: 1.05,
+            duration: 800,
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
-            duration: 500,
+            duration: 800,
             useNativeDriver: true,
           }),
         ])
@@ -70,7 +67,6 @@ export default function LiveScreen() {
   }, [isLive, pulseAnim]);
 
   const findRegistrationLink = (content: string): string | null => {
-    // Look for registration links
     const patterns = [
       /href=["']([^"']*helloasso[^"']*)["']/i,
       /href=["']([^"']*eventbrite[^"']*)["']/i,
@@ -91,7 +87,6 @@ export default function LiveScreen() {
     try {
       setError(null);
       
-      // Fetch webinars from backend
       const webinarResponse = await axios.get(`${BACKEND_URL}/api/zoom/webinars`);
       const webinars = webinarResponse.data.webinars || [];
       
@@ -102,25 +97,21 @@ export default function LiveScreen() {
         return;
       }
 
-      // Get the first upcoming webinar
       const nextWebinar = webinars[0];
       setWebinar(nextWebinar);
 
-      // Check if live or starting soon
       const now = new Date();
       const startTime = new Date(nextWebinar.start_time);
-      const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60); // in minutes
+      const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
       const endTime = new Date(startTime.getTime() + nextWebinar.duration * 60000);
       
       setIsLive(timeDiff <= 30 && now <= endTime);
 
-      // Fetch WordPress events to cross-reference
       const wpResponse = await axios.get(
         'https://consciencesoufie.com/wp-json/wp/v2/mec-events?per_page=10&_embed'
       );
       const wpEvents: WordPressEvent[] = wpResponse.data;
 
-      // Try to match webinar with WordPress event
       const webinarTitle = nextWebinar.topic.toLowerCase();
       const webinarDate = new Date(nextWebinar.start_time).toDateString();
 
@@ -128,7 +119,6 @@ export default function LiveScreen() {
         const eventTitle = event.title.rendered.toLowerCase();
         const eventDate = new Date(event.date).toDateString();
 
-        // Match by title similarity or date
         if (
           eventTitle.includes(webinarTitle.substring(0, 20)) ||
           webinarTitle.includes(eventTitle.substring(0, 20)) ||
@@ -136,7 +126,6 @@ export default function LiveScreen() {
         ) {
           setMatchedEvent(event);
           
-          // Look for registration link in content
           const regLink = findRegistrationLink(event.content.rendered);
           if (regLink) {
             setRegistrationLink(regLink);
@@ -198,7 +187,7 @@ export default function LiveScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Chargement...</Text>
       </View>
     );
@@ -207,6 +196,7 @@ export default function LiveScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
+        <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchLiveData}>
           <Text style={styles.retryButtonText}>Réessayer</Text>
@@ -221,11 +211,13 @@ export default function LiveScreen() {
         style={styles.container}
         contentContainerStyle={styles.emptyContentContainer}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY_COLOR]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
         }
       >
         <View style={styles.noSessionContainer}>
-          <Ionicons name="videocam-off" size={64} color="#ccc" />
+          <View style={styles.noSessionIcon}>
+            <Ionicons name="videocam-off-outline" size={48} color={theme.colors.primary} />
+          </View>
           <Text style={styles.noSessionTitle}>Aucune conférence en direct</Text>
           <Text style={styles.noSessionText}>
             Aucune conférence en direct pour le moment.{"\n"}
@@ -241,19 +233,15 @@ export default function LiveScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY_COLOR]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      <Text style={styles.sectionTitle}>Conférence en direct</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Conférence en direct</Text>
+        <View style={styles.goldAccent} />
+      </View>
       
       <View style={styles.webinarCard}>
-        {/* Badge */}
-        <View style={[styles.badge, isPaid ? styles.paidBadge : styles.freeBadge]}>
-          <Text style={styles.badgeText}>
-            {isPaid ? 'Événement payant' : 'Accès libre'}
-          </Text>
-        </View>
-
         {/* Live indicator */}
         {isLive && (
           <View style={styles.liveIndicator}>
@@ -262,22 +250,37 @@ export default function LiveScreen() {
           </View>
         )}
 
+        {/* Badge */}
+        <View style={[styles.badge, isPaid ? styles.paidBadge : styles.freeBadge]}>
+          <Ionicons 
+            name={isPaid ? "ticket-outline" : "checkmark-circle-outline"} 
+            size={14} 
+            color="#fff" 
+            style={styles.badgeIcon}
+          />
+          <Text style={styles.badgeText}>
+            {isPaid ? 'Événement payant' : 'Accès libre'}
+          </Text>
+        </View>
+
         <Text style={styles.webinarTitle}>{webinar.topic}</Text>
         
         <View style={styles.webinarMeta}>
           <View style={styles.metaItem}>
-            <Ionicons name="calendar" size={18} color={PRIMARY_COLOR} />
+            <Ionicons name="calendar-outline" size={18} color={theme.colors.primary} />
             <Text style={styles.metaText}>{formatDate(webinar.start_time)}</Text>
           </View>
           <View style={styles.metaItem}>
-            <Ionicons name="time" size={18} color={PRIMARY_COLOR} />
+            <Ionicons name="time-outline" size={18} color={theme.colors.primary} />
             <Text style={styles.metaText}>{formatTime(webinar.start_time)}</Text>
           </View>
           <View style={styles.metaItem}>
-            <Ionicons name="hourglass" size={18} color={PRIMARY_COLOR} />
+            <Ionicons name="hourglass-outline" size={18} color={theme.colors.primary} />
             <Text style={styles.metaText}>{webinar.duration} min</Text>
           </View>
         </View>
+
+        <View style={styles.divider} />
 
         {isPaid ? (
           <>
@@ -285,7 +288,7 @@ export default function LiveScreen() {
               style={styles.registerButton}
               onPress={() => registrationLink && openLink(registrationLink)}
             >
-              <Ionicons name="ticket" size={20} color="#fff" style={styles.buttonIcon} />
+              <Ionicons name="ticket-outline" size={20} color="#fff" style={styles.buttonIcon} />
               <Text style={styles.registerButtonText}>S'inscrire pour participer</Text>
             </TouchableOpacity>
             <Text style={styles.infoText}>
@@ -298,7 +301,7 @@ export default function LiveScreen() {
               style={[styles.joinButton, isLive ? styles.joinButtonLive : styles.joinButtonNormal]}
               onPress={() => openLink(webinar.join_url)}
             >
-              <Ionicons name="videocam" size={20} color="#fff" style={styles.buttonIcon} />
+              <Ionicons name="videocam-outline" size={20} color="#fff" style={styles.buttonIcon} />
               <Text style={styles.joinButtonText}>Rejoindre en direct</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -311,7 +314,7 @@ export default function LiveScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
     padding: 16,
@@ -325,42 +328,54 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
     padding: 24,
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    paddingHorizontal: 24,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 28,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
   },
   retryButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  sectionHeader: {
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 28,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
+  },
+  goldAccent: {
+    width: 60,
+    height: 3,
+    backgroundColor: theme.colors.gold,
+    borderRadius: 2,
   },
   noSessionContainer: {
     flex: 1,
@@ -368,46 +383,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
+  noSessionIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.cardBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    ...theme.shadows.card,
+  },
   noSessionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: 22,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    marginBottom: 12,
   },
   noSessionText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
   webinarCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.medium,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 12,
-  },
-  paidBadge: {
-    backgroundColor: ORANGE_COLOR,
-  },
-  freeBadge: {
-    backgroundColor: GREEN_COLOR,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    ...theme.shadows.card,
   },
   liveIndicator: {
     flexDirection: 'row',
@@ -418,53 +421,85 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#ff0000',
+    backgroundColor: '#ff3b30',
     marginRight: 8,
   },
   liveText: {
-    color: '#ff0000',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: '#ff3b30',
+    fontSize: 13,
+    fontFamily: theme.fonts.bodySemiBold,
+    letterSpacing: 1,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.borderRadius.button,
+    marginBottom: 16,
+  },
+  paidBadge: {
+    backgroundColor: theme.colors.warning,
+  },
+  freeBadge: {
+    backgroundColor: theme.colors.success,
+  },
+  badgeIcon: {
+    marginRight: 6,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 13,
+    fontFamily: theme.fonts.bodySemiBold,
   },
   webinarTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
     marginBottom: 16,
+    lineHeight: 30,
   },
   webinarMeta: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   metaText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
     marginLeft: 10,
   },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(28,103,159,0.1)',
+    marginVertical: 16,
+  },
   registerButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
     marginBottom: 12,
   },
   registerButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontFamily: theme.fonts.bodySemiBold,
   },
   buttonIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -473,17 +508,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
   },
   joinButtonLive: {
-    backgroundColor: GREEN_COLOR,
+    backgroundColor: theme.colors.success,
   },
   joinButtonNormal: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: theme.colors.primary,
   },
   joinButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontFamily: theme.fonts.bodySemiBold,
   },
 });

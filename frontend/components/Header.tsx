@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import theme from '@/constants/theme';
 
-const LOGO_URL = 'https://consciencesoufie.com/wp-content/uploads/2019/07/logo-CS-Blanc.png';
+const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
 
 interface SearchResult {
   id: number;

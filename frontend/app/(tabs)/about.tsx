@@ -12,12 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 const PRIMARY_COLOR = '#1c679f';
 
-interface Page {
-  id: number;
-  title: { rendered: string };
-  content: { rendered: string };
-}
-
 export default function AboutScreen() {
   const [refreshing, setRefreshing] = useState(false);
 

@@ -202,18 +202,20 @@ export default function Header() {
             </View>
             
             {/* Right: Search + Donation */}
-            <TouchableOpacity
-              style={styles.sideButton}
-              onPress={() => setSearchModalVisible(true)}
-            >
-              <Ionicons name="search" size={22} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.sideButton}
-              onPress={() => setDonationModalVisible(true)}
-            >
-              <Ionicons name="gift-outline" size={22} color="#fff" />
-            </TouchableOpacity>
+            <View style={styles.rightIcons}>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => setSearchModalVisible(true)}
+              >
+                <Ionicons name="search" size={20} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => setDonationModalVisible(true)}
+              >
+                <Ionicons name="gift-outline" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>

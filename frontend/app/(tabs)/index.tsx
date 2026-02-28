@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,63 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
+  Animated,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { WebView } from 'react-native-webview';
+import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import axios from 'axios';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUser } from '@/contexts/UserContext';
 import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Calameo magazines data
+const MAGAZINES = [
+  {
+    id: '4',
+    title: 'Revue Conscience Soufie N°4',
+    thumbnail: 'https://p.calameoassets.com/230213174144-3db4b7fda3cd2d44f4e8bbfbde34f1f6/p1.jpg',
+    url: 'https://www.calameo.com/books/007294180361a4e13db8f',
+    date: 'Février 2023',
+  },
+  {
+    id: '3',
+    title: 'Revue Conscience Soufie N°3',
+    thumbnail: 'https://p.calameoassets.com/200301202336-f8cdd9e6b1f2ea2b3d3b6c0a8d7e4f5a/p1.jpg',
+    url: 'https://www.calameo.com/books/00729418046e9bf1ac1d9',
+    date: 'Mars 2020',
+  },
+  {
+    id: '2',
+    title: 'Revue Conscience Soufie N°2',
+    thumbnail: 'https://p.calameoassets.com/230213174144-b2a0bd2077e6b8c4d5f1a2c3e4d5f6a7/p1.jpg',
+    url: 'https://www.calameo.com/books/0072941807720db430b2a',
+    date: 'Février 2023',
+  },
+  {
+    id: '1',
+    title: 'Revue Conscience Soufie N°1',
+    thumbnail: 'https://p.calameoassets.com/230213174144-6fec09d2823d4e5f6a7b8c9d0e1f2a3b/p1.jpg',
+    url: 'https://www.calameo.com/books/00729418082df7e90cef6',
+    date: 'Février 2023',
+  },
+];
+
+interface BlogPost {
+  id: number;
+  title: { rendered: string };
+  excerpt: { rendered: string };
+  date: string;
+  link: string;
+  _embedded?: {
+    'wp:featuredmedia'?: Array<{
+      source_url: string;
+    }>;
+  };
+}
 
 interface HelloAssoEvent {
   id: string;
@@ -34,41 +75,47 @@ interface HelloAssoEvent {
   banner: string | null;
   logo: string | null;
   url: string;
-  widgetUrl: string | null;
-  state: string;
+  place?: {
+    name?: string;
+    city?: string;
+  };
 }
 
 export default function AccueilScreen() {
-  const [events, setEvents] = useState<HelloAssoEvent[]>([]);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<HelloAssoEvent | null>(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showWebViewModal, setShowWebViewModal] = useState(false);
-  const [webViewUrl, setWebViewUrl] = useState('');
-  const [webViewLoading, setWebViewLoading] = useState(true);
+  const [articles, setArticles] = useState<BlogPost[]>([]);
+  const [events, setEvents] = useState<HelloAssoEvent[]>([]);
+  const [highlightEvent, setHighlightEvent] = useState<HelloAssoEvent | null>(null);
   
-  // Profile form
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  
-  const { profile, saveProfile, hasProfile } = useUser();
-  const insets = useSafeAreaInsets();
+  const highlightScale = useRef(new Animated.Value(1)).current;
 
-  const fetchEvents = async () => {
+  const fetchData = async () => {
     try {
-      setError(null);
-      const response = await axios.get(`${BACKEND_URL}/api/helloasso/events`);
-      if (response.data.events) {
-        setEvents(response.data.events);
-      } else if (response.data.error) {
-        setError(response.data.error);
+      // Fetch articles from WordPress
+      const articlesResponse = await axios.get(
+        'https://consciencesoufie.com/wp-json/wp/v2/posts?per_page=10&_embed'
+      ).catch(() => ({ data: [] }));
+      
+      // Fetch events from HelloAsso
+      const eventsResponse = await axios.get(
+        `${BACKEND_URL}/api/helloasso/events`
+      ).catch(() => ({ data: { events: [] } }));
+      
+      if (articlesResponse.data) {
+        setArticles(articlesResponse.data);
       }
-    } catch (err) {
-      console.error('Error fetching events:', err);
-      setError('Impossible de charger le contenu. Vérifiez votre connexion.');
+      
+      if (eventsResponse.data.events) {
+        const eventList = eventsResponse.data.events;
+        setEvents(eventList);
+        if (eventList.length > 0) {
+          setHighlightEvent(eventList[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -76,608 +123,492 @@ export default function AccueilScreen() {
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchData();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchEvents();
+    fetchData();
   }, []);
+
+  const openEventDetail = (event: HelloAssoEvent) => {
+    router.push({
+      pathname: '/event-detail/[id]',
+      params: {
+        id: event.id,
+        title: event.title,
+        description: event.description || '',
+        startDate: event.startDate,
+        url: event.url,
+      }
+    });
+  };
+
+  const openArticle = (post: BlogPost) => {
+    router.push({
+      pathname: '/post/[id]',
+      params: {
+        id: post.id.toString(),
+        title: post.title.rendered,
+        content: '',
+        link: post.link,
+      }
+    });
+  };
+
+  const openMagazine = async (url: string) => {
+    await WebBrowser.openBrowserAsync(url);
+  };
 
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      const day = date.getDate();
-      const month = date.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase();
-      return { day, month };
-    } catch {
-      return { day: '', month: '' };
-    }
-  };
-
-  const formatFullDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
       return date.toLocaleDateString('fr-FR', {
-        weekday: 'long',
         day: 'numeric',
         month: 'long',
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatTime = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
       });
     } catch {
       return '';
     }
   };
 
-  const handleEventPress = (event: HelloAssoEvent) => {
-    setSelectedEvent(event);
-    if (hasProfile) {
-      openCheckout(event);
-    } else {
-      setShowProfileModal(true);
-    }
+  const cleanHtml = (html: string) => {
+    return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim();
   };
 
-  const handleProfileSubmit = async () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      return;
-    }
-    
-    try {
-      await saveProfile({ firstName, lastName, email });
-      setShowProfileModal(false);
-      if (selectedEvent) {
-        openCheckout(selectedEvent);
-      }
-    } catch (error) {
-      console.error('Error saving profile:', error);
-    }
+  const handleHighlightPressIn = () => {
+    Animated.spring(highlightScale, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
   };
 
-  const openCheckout = async (event: HelloAssoEvent) => {
-    const userProfile = profile || { firstName, lastName, email };
-    
-    // On web, open in browser directly due to WebView limitations
-    if (Platform.OS === 'web') {
-      await WebBrowser.openBrowserAsync(event.url);
-      return;
-    }
-    
-    // On native, try to create checkout with pre-filled data
-    try {
-      const response = await axios.post(`${BACKEND_URL}/api/helloasso/checkout`, {
-        event_slug: event.id,
-        first_name: userProfile.firstName,
-        last_name: userProfile.lastName,
-        email: userProfile.email,
-      });
-      
-      if (response.data.checkoutUrl) {
-        setWebViewUrl(response.data.checkoutUrl);
-        setShowWebViewModal(true);
-      } else {
-        // Fallback to direct URL
-        setWebViewUrl(event.url);
-        setShowWebViewModal(true);
-      }
-    } catch (error) {
-      // Fallback to direct URL
-      setWebViewUrl(event.url);
-      setShowWebViewModal(true);
-    }
+  const handleHighlightPressOut = () => {
+    Animated.spring(highlightScale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Chargement des événements...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
-          <Text style={styles.retryButtonText}>Réessayer</Text>
-        </TouchableOpacity>
+        <Text style={styles.loadingText}>Chargement...</Text>
       </View>
     );
   }
 
   return (
-    <>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-        }
-      >
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+      }
+    >
+      {/* Hero - Highlight Event */}
+      {highlightEvent && (
+        <Animated.View style={[styles.heroSection, { transform: [{ scale: highlightScale }] }]}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPressIn={handleHighlightPressIn}
+            onPressOut={handleHighlightPressOut}
+            onPress={() => openEventDetail(highlightEvent)}
+          >
+            <View style={styles.heroImageContainer}>
+              {(highlightEvent.logo || highlightEvent.banner) ? (
+                <Image
+                  source={{ uri: highlightEvent.logo || highlightEvent.banner }}
+                  style={styles.heroImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.heroImage, styles.heroPlaceholder]}>
+                  <Ionicons name="calendar" size={64} color={theme.colors.primary} />
+                </View>
+              )}
+              
+              {/* Gradient overlay */}
+              <View style={styles.heroGradient} />
+              
+              {/* Event info overlay */}
+              <View style={styles.heroContent}>
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>PROCHAIN ÉVÉNEMENT</Text>
+                </View>
+                <Text style={styles.heroTitle} numberOfLines={2}>{highlightEvent.title}</Text>
+                <Text style={styles.heroDate}>{formatDate(highlightEvent.startDate)}</Text>
+                
+                <TouchableOpacity 
+                  style={styles.heroButton}
+                  onPress={() => openEventDetail(highlightEvent)}
+                >
+                  <Text style={styles.heroButtonText}>Voir l'événement</Text>
+                  <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+
+      {/* Section: Derniers Articles */}
+      <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Événements</Text>
-          <View style={styles.goldAccent} />
+          <Text style={styles.sectionTitle}>Derniers articles</Text>
+          <TouchableOpacity onPress={() => router.push('/blog')}>
+            <Text style={styles.sectionLink}>Voir tout →</Text>
+          </TouchableOpacity>
         </View>
         
-        {events.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={48} color={theme.colors.textSecondary} />
-            <Text style={styles.emptyText}>Aucun événement à venir pour le moment.</Text>
-          </View>
-        ) : (
-          events.map((event) => {
-            const dateInfo = formatDate(event.startDate);
+        <FlatList
+          horizontal
+          data={articles.slice(0, 8)}
+          keyExtractor={(item) => item.id.toString()}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }) => {
+            const thumbnail = item._embedded?.['wp:featuredmedia']?.[0]?.source_url;
             return (
-              <TouchableOpacity 
-                key={event.id} 
-                style={styles.eventCard}
-                onPress={() => handleEventPress(event)}
-                activeOpacity={0.95}
+              <TouchableOpacity
+                style={styles.articleCard}
+                onPress={() => openArticle(item)}
+                activeOpacity={0.9}
               >
-                {/* Image avec ratio 16:9 */}
-                <View style={styles.imageContainer}>
-                  {event.banner ? (
-                    <Image
-                      source={{ uri: event.banner }}
-                      style={styles.eventImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.eventImage, styles.placeholderImage]}>
-                      <Ionicons name="calendar" size={40} color={theme.colors.primary} />
-                    </View>
-                  )}
-                  <View style={styles.imageOverlay} />
-                  
-                  {/* Date badge */}
-                  <View style={styles.dateBadge}>
-                    <Text style={styles.dateDay}>{dateInfo.day}</Text>
-                    <Text style={styles.dateMonth}>{dateInfo.month}</Text>
+                {thumbnail ? (
+                  <Image source={{ uri: thumbnail }} style={styles.articleImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.articleImage, styles.articlePlaceholder]}>
+                    <Ionicons name="document-text" size={32} color={theme.colors.primary} />
                   </View>
-                </View>
-                
-                {/* Content */}
-                <View style={styles.eventContent}>
-                  <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
-                  
-                  <View style={styles.eventMeta}>
-                    <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
-                    <Text style={styles.eventTime}>
-                      {formatFullDate(event.startDate)} • {formatTime(event.startDate)}
-                    </Text>
-                  </View>
-                  
-                  <TouchableOpacity 
-                    style={styles.registerButton}
-                    onPress={() => handleEventPress(event)}
-                  >
-                    <Ionicons name="ticket-outline" size={18} color="#fff" />
-                    <Text style={styles.registerButtonText}>S'inscrire</Text>
-                  </TouchableOpacity>
+                )}
+                <View style={styles.articleContent}>
+                  <Text style={styles.articleTitle} numberOfLines={2}>
+                    {cleanHtml(item.title.rendered)}
+                  </Text>
+                  <Text style={styles.articleDate}>{formatDate(item.date)}</Text>
                 </View>
               </TouchableOpacity>
             );
-          })
-        )}
-      </ScrollView>
+          }}
+        />
+      </View>
 
-      {/* Profile Modal */}
-      <Modal
-        visible={showProfileModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowProfileModal(false)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.profileModal}>
-            <TouchableOpacity 
-              style={styles.modalCloseButton}
-              onPress={() => setShowProfileModal(false)}
+      {/* Section: Revues Conscience Soufie */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Revues Conscience Soufie</Text>
+        </View>
+        
+        <FlatList
+          horizontal
+          data={MAGAZINES}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.magazineCard}
+              onPress={() => openMagazine(item.url)}
+              activeOpacity={0.9}
             >
-              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+              <View style={styles.magazineImageContainer}>
+                <View style={[styles.magazineImage, styles.magazinePlaceholder]}>
+                  <Ionicons name="book" size={40} color={theme.colors.primary} />
+                  <Text style={styles.magazineNumber}>N°{item.id}</Text>
+                </View>
+              </View>
+              <Text style={styles.magazineTitle} numberOfLines={2}>{item.title}</Text>
             </TouchableOpacity>
-            
-            <View style={styles.modalIconContainer}>
-              <Ionicons name="person" size={32} color="#fff" />
-            </View>
-            
-            <Text style={styles.modalTitle}>Vos coordonnées</Text>
-            <Text style={styles.modalSubtitle}>
-              Pour faciliter votre inscription aux événements
-            </Text>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Prénom</Text>
-              <TextInput
-                style={styles.input}
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholder="Votre prénom"
-                placeholderTextColor={theme.colors.textSecondary}
-                autoCapitalize="words"
-              />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Nom</Text>
-              <TextInput
-                style={styles.input}
-                value={lastName}
-                onChangeText={setLastName}
-                placeholder="Votre nom"
-                placeholderTextColor={theme.colors.textSecondary}
-                autoCapitalize="words"
-              />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="votre@email.com"
-                placeholderTextColor={theme.colors.textSecondary}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-            
-            <TouchableOpacity 
-              style={[
-                styles.submitButton,
-                (!firstName.trim() || !lastName.trim() || !email.trim()) && styles.submitButtonDisabled
-              ]}
-              onPress={handleProfileSubmit}
-              disabled={!firstName.trim() || !lastName.trim() || !email.trim()}
-            >
-              <Text style={styles.submitButtonText}>Continuer</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* WebView Modal for HelloAsso checkout */}
-      <Modal
-        visible={showWebViewModal}
-        animationType="slide"
-        onRequestClose={() => setShowWebViewModal(false)}
-      >
-        <View style={[styles.webViewContainer, { paddingTop: insets.top }]}>
-          <View style={styles.webViewHeader}>
-            <TouchableOpacity 
-              style={styles.webViewCloseButton}
-              onPress={() => {
-                setShowWebViewModal(false);
-                setWebViewLoading(true);
-              }}
-            >
-              <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
-            </TouchableOpacity>
-            <Text style={styles.webViewTitle}>Inscription</Text>
-            <View style={styles.webViewCloseButton} />
-          </View>
-          
-          <View style={styles.webViewGoldLine} />
-          
-          {webViewLoading && (
-            <View style={styles.webViewLoading}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={styles.webViewLoadingText}>Chargement...</Text>
-            </View>
           )}
+        />
+      </View>
+
+      {/* Section: Prochains Événements */}
+      {events.length > 1 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Prochains événements</Text>
+            <TouchableOpacity onPress={() => router.push('/live')}>
+              <Text style={styles.sectionLink}>Voir tout →</Text>
+            </TouchableOpacity>
+          </View>
           
-          <WebView
-            source={{ uri: webViewUrl }}
-            style={styles.webView}
-            onLoadEnd={() => setWebViewLoading(false)}
-            onLoadStart={() => setWebViewLoading(true)}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={false}
-            originWhitelist={['*']}
+          <FlatList
+            horizontal
+            data={events.slice(1, 6)}
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.eventCard}
+                onPress={() => openEventDetail(item)}
+                activeOpacity={0.9}
+              >
+                {(item.logo || item.banner) ? (
+                  <Image source={{ uri: item.logo || item.banner }} style={styles.eventImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.eventImage, styles.eventPlaceholder]}>
+                    <Ionicons name="calendar" size={32} color={theme.colors.primary} />
+                  </View>
+                )}
+                <View style={styles.eventContent}>
+                  <Text style={styles.eventTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.eventDate}>{formatDate(item.startDate)}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           />
         </View>
-      </Modal>
-    </>
+      )}
+
+      <View style={styles.bottomSpacer} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  contentContainer: {
-    padding: 16,
-    paddingBottom: 32,
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#ffffff',
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 16,
-    fontFamily: theme.fonts.body,
+    fontSize: 14,
+    fontFamily: theme.fonts.title,
     color: theme.colors.textSecondary,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-    padding: 24,
+
+  // Hero Section
+  heroSection: {
+    marginBottom: 24,
   },
-  errorText: {
-    fontSize: 16,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: theme.borderRadius.button,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  sectionHeader: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontFamily: theme.fonts.titleBold,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
-  },
-  goldAccent: {
-    width: 60,
-    height: 3,
-    backgroundColor: theme.colors.gold,
-    borderRadius: 2,
-  },
-  emptyContainer: {
-    padding: 48,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  eventCard: {
-    backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.medium,
-    marginBottom: 20,
-    overflow: 'hidden',
-    ...theme.shadows.card,
-  },
-  imageContainer: {
+  heroImageContainer: {
+    width: SCREEN_WIDTH,
+    aspectRatio: 4 / 5,
     position: 'relative',
-    width: '100%',
-    aspectRatio: 16 / 9,
   },
-  eventImage: {
+  heroImage: {
     width: '100%',
     height: '100%',
   },
-  placeholderImage: {
+  heroPlaceholder: {
     backgroundColor: 'rgba(28,103,159,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(28,103,159,0.08)',
-  },
-  dateBadge: {
+  heroGradient: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 8,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '60%',
+    backgroundColor: 'transparent',
+    backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+  },
+  heroContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 24,
+  },
+  heroBadge: {
+    backgroundColor: theme.colors.gold,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: 'center',
-    minWidth: 50,
+    paddingVertical: 6,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
   },
-  dateDay: {
-    fontSize: 22,
-    fontFamily: theme.fonts.titleBold,
+  heroBadgeText: {
     color: '#fff',
-    lineHeight: 24,
-  },
-  dateMonth: {
     fontSize: 11,
     fontFamily: theme.fonts.bodySemiBold,
-    color: 'rgba(255,255,255,0.9)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
-  eventContent: {
-    padding: 16,
-  },
-  eventTitle: {
-    fontSize: 18,
-    fontFamily: theme.fonts.title,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
-    lineHeight: 24,
-  },
-  eventMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  eventTime: {
-    fontSize: 13,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    marginLeft: 6,
-  },
-  registerButton: {
-    backgroundColor: theme.colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: theme.borderRadius.button,
-    gap: 8,
-  },
-  registerButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  // Profile Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(26,42,58,0.6)',
-    justifyContent: 'flex-end',
-  },
-  profileModal: {
-    backgroundColor: theme.colors.cardBackground,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    padding: 4,
-    zIndex: 1,
-  },
-  modalIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
+  heroTitle: {
     fontSize: 24,
     fontFamily: theme.fonts.titleBold,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
+    color: '#fff',
     marginBottom: 8,
+    lineHeight: 30,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  modalSubtitle: {
-    fontSize: 15,
+  heroDate: {
+    fontSize: 14,
     fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  inputContainer: {
+    color: 'rgba(255,255,255,0.9)',
     marginBottom: 16,
   },
-  inputLabel: {
-    fontSize: 14,
-    fontFamily: theme.fonts.bodyMedium,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.medium,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textPrimary,
-    borderWidth: 1,
-    borderColor: 'rgba(28,103,159,0.15)',
-  },
-  submitButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 16,
-    borderRadius: theme.borderRadius.button,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonDisabled: {
-    backgroundColor: 'rgba(28,103,159,0.4)',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  // WebView Modal
-  webViewContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  webViewHeader: {
-    backgroundColor: theme.colors.cardBackground,
+  heroButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
     paddingVertical: 12,
+    borderRadius: 25,
+    alignSelf: 'flex-start',
+    gap: 6,
   },
-  webViewGoldLine: {
-    height: 2,
-    backgroundColor: theme.colors.gold,
+  heroButtonText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: theme.colors.primary,
   },
-  webViewCloseButton: {
-    padding: 8,
-    width: 44,
+
+  // Sections
+  section: {
+    marginBottom: 28,
   },
-  webViewTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontFamily: theme.fonts.title,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
-    textAlign: 'center',
   },
-  webView: {
-    flex: 1,
+  sectionLink: {
+    fontSize: 14,
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.primary,
   },
-  webViewLoading: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.colors.background,
+  horizontalList: {
+    paddingHorizontal: 16,
+    gap: 14,
+  },
+
+  // Article Card
+  articleCard: {
+    width: 200,
+    backgroundColor: '#fff',
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  articleImage: {
+    width: '100%',
+    height: 120,
+  },
+  articlePlaceholder: {
+    backgroundColor: 'rgba(28,103,159,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
   },
-  webViewLoadingText: {
-    marginTop: 12,
-    fontSize: 16,
+  articleContent: {
+    padding: 12,
+  },
+  articleTitle: {
+    fontSize: 14,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  articleDate: {
+    fontSize: 12,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
+  },
+
+  // Magazine Card
+  magazineCard: {
+    width: 140,
+    alignItems: 'center',
+  },
+  magazineImageContainer: {
+    width: 140,
+    height: 180,
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  magazineImage: {
+    width: '100%',
+    height: '100%',
+  },
+  magazinePlaceholder: {
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  magazineNumber: {
+    color: '#fff',
+    fontSize: 24,
+    fontFamily: theme.fonts.titleBold,
+    marginTop: 8,
+  },
+  magazineTitle: {
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+
+  // Event Card
+  eventCard: {
+    width: 180,
+    backgroundColor: '#fff',
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  eventImage: {
+    width: '100%',
+    height: 100,
+  },
+  eventPlaceholder: {
+    backgroundColor: 'rgba(28,103,159,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eventContent: {
+    padding: 12,
+  },
+  eventTitle: {
+    fontSize: 13,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    lineHeight: 17,
+    marginBottom: 4,
+  },
+  eventDate: {
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+  },
+
+  bottomSpacer: {
+    height: 40,
   },
 });

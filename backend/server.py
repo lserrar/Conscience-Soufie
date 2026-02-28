@@ -483,6 +483,158 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# SoundCloud RSS Feed URL
+SOUNDCLOUD_RSS_URL = "https://feeds.soundcloud.com/users/soundcloud:users:522380445/sounds.rss"
+
+@api_router.get("/podcasts")
+async def get_podcasts():
+    """Get podcasts from SoundCloud RSS feed"""
+    try:
+        import xml.etree.ElementTree as ET
+        
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.get(SOUNDCLOUD_RSS_URL, timeout=15.0)
+            
+            if response.status_code != 200:
+                logger.error(f"SoundCloud RSS error: {response.status_code}")
+                return {"podcasts": [], "error": "Impossible de récupérer les podcasts"}
+            
+            # Parse XML
+            root = ET.fromstring(response.text)
+            channel = root.find('channel')
+            
+            podcasts = []
+            items = channel.findall('item') if channel is not None else []
+            
+            for item in items:
+                title = item.find('title')
+                description = item.find('description')
+                pub_date = item.find('pubDate')
+                link = item.find('link')
+                enclosure = item.find('enclosure')
+                
+                # Get iTunes image or channel image
+                itunes_image = item.find('{http://www.itunes.com/dtds/podcast-1.0.dtd}image')
+                image_url = None
+                if itunes_image is not None:
+                    image_url = itunes_image.get('href')
+                
+                # Fallback to channel image
+                if not image_url and channel is not None:
+                    channel_image = channel.find('{http://www.itunes.com/dtds/podcast-1.0.dtd}image')
+                    if channel_image is not None:
+                        image_url = channel_image.get('href')
+                    else:
+                        # Try regular image
+                        img = channel.find('image')
+                        if img is not None:
+                            url_elem = img.find('url')
+                            if url_elem is not None:
+                                image_url = url_elem.text
+                
+                # Get duration
+                duration = item.find('{http://www.itunes.com/dtds/podcast-1.0.dtd}duration')
+                
+                podcast = {
+                    "id": link.text if link is not None else str(len(podcasts)),
+                    "title": title.text if title is not None else "Sans titre",
+                    "description": description.text if description is not None else "",
+                    "pubDate": pub_date.text if pub_date is not None else "",
+                    "link": link.text if link is not None else "",
+                    "audioUrl": enclosure.get('url') if enclosure is not None else None,
+                    "imageUrl": image_url,
+                    "duration": duration.text if duration is not None else None,
+                }
+                podcasts.append(podcast)
+            
+            return {"podcasts": podcasts}
+            
+    except Exception as e:
+        logger.error(f"Podcasts error: {e}")
+        return {"podcasts": [], "error": str(e)}
+
+# WordPress tags for themed articles
+WORDPRESS_TAGS = {
+    "soufisme": 7,
+    "rumi": 89,
+    "ibn-arabi": 88,
+    "poesie-sama": 91,
+    "henri-corbin": 92,
+    "eva-de-vitray": 93,
+    "louis-massignon": 94,
+    "michel-chodkiewicz": 95,
+}
+
+@api_router.get("/articles/by-tag/{tag_slug}")
+async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
+    """Get articles from WordPress filtered by tag"""
+    try:
+        # First, try to get tag ID from our mapping or search WordPress
+        async with httpx.AsyncClient() as http_client:
+            # Search for the tag
+            tag_response = await http_client.get(
+                f"https://consciencesoufie.com/wp-json/wp/v2/tags",
+                params={"search": tag_slug, "per_page": 5}
+            )
+            
+            tag_id = None
+            if tag_response.status_code == 200:
+                tags = tag_response.json()
+                if tags:
+                    tag_id = tags[0].get('id')
+            
+            # If no tag found, try categories
+            if not tag_id:
+                cat_response = await http_client.get(
+                    f"https://consciencesoufie.com/wp-json/wp/v2/categories",
+                    params={"search": tag_slug, "per_page": 5}
+                )
+                if cat_response.status_code == 200:
+                    cats = cat_response.json()
+                    if cats:
+                        # Get articles by category
+                        articles_response = await http_client.get(
+                            "https://consciencesoufie.com/wp-json/wp/v2/posts",
+                            params={
+                                "categories": cats[0].get('id'),
+                                "per_page": per_page,
+                                "_embed": True
+                            }
+                        )
+                        if articles_response.status_code == 200:
+                            return {"articles": articles_response.json(), "source": "category"}
+            
+            # Get articles by tag
+            if tag_id:
+                articles_response = await http_client.get(
+                    "https://consciencesoufie.com/wp-json/wp/v2/posts",
+                    params={
+                        "tags": tag_id,
+                        "per_page": per_page,
+                        "_embed": True
+                    }
+                )
+                if articles_response.status_code == 200:
+                    return {"articles": articles_response.json(), "source": "tag"}
+            
+            # Fallback: search by keyword in title/content
+            search_response = await http_client.get(
+                "https://consciencesoufie.com/wp-json/wp/v2/posts",
+                params={
+                    "search": tag_slug.replace("-", " "),
+                    "per_page": per_page,
+                    "_embed": True
+                }
+            )
+            if search_response.status_code == 200:
+                return {"articles": search_response.json(), "source": "search"}
+            
+            return {"articles": [], "source": "none"}
+            
+    except Exception as e:
+        logger.error(f"Articles by tag error: {e}")
+        return {"articles": [], "error": str(e)}
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

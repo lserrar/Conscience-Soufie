@@ -548,7 +548,7 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
     try:
         # Map slugs to actual search terms (handling special characters)
         search_term_mapping = {
-            "rumi": "Rûmî",
+            "rumi": "Rumi",
             "henry-corbin": "Henry Corbin",
             "ibn-arabi": "Ibn Arabi",
             "eva-de-vitray": "Eva de Vitray",
@@ -558,10 +558,26 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
             "soufisme": "soufisme",
         }
         
+        # Tags that should use search directly (no tag/category in WordPress)
+        search_only_tags = {"rumi", "poesie-sama", "eva-de-vitray", "michel-chodkiewicz", "louis-massignon"}
+        
         search_term = search_term_mapping.get(tag_slug, tag_slug.replace("-", " "))
         
         async with httpx.AsyncClient() as http_client:
-            # Search for the tag
+            # For certain tags, use search directly
+            if tag_slug in search_only_tags:
+                search_response = await http_client.get(
+                    "https://consciencesoufie.com/wp-json/wp/v2/posts",
+                    params={
+                        "search": search_term,
+                        "per_page": per_page,
+                        "_embed": True
+                    }
+                )
+                if search_response.status_code == 200:
+                    return {"articles": search_response.json(), "source": "search"}
+            
+            # Try tags first
             tag_response = await http_client.get(
                 f"https://consciencesoufie.com/wp-json/wp/v2/tags",
                 params={"search": search_term, "per_page": 5}
@@ -570,10 +586,13 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
             tag_id = None
             if tag_response.status_code == 200:
                 tags = tag_response.json()
-                if tags:
-                    tag_id = tags[0].get('id')
+                # Find a tag with articles
+                for tag in tags:
+                    if tag.get('count', 0) > 0:
+                        tag_id = tag.get('id')
+                        break
             
-            # If no tag found, try categories
+            # If no tag with articles, try categories
             if not tag_id:
                 cat_response = await http_client.get(
                     f"https://consciencesoufie.com/wp-json/wp/v2/categories",
@@ -581,18 +600,19 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
                 )
                 if cat_response.status_code == 200:
                     cats = cat_response.json()
-                    if cats:
-                        # Get articles by category
-                        articles_response = await http_client.get(
-                            "https://consciencesoufie.com/wp-json/wp/v2/posts",
-                            params={
-                                "categories": cats[0].get('id'),
-                                "per_page": per_page,
-                                "_embed": True
-                            }
-                        )
-                        if articles_response.status_code == 200:
-                            return {"articles": articles_response.json(), "source": "category"}
+                    for cat in cats:
+                        if cat.get('count', 0) > 0:
+                            # Get articles by category
+                            articles_response = await http_client.get(
+                                "https://consciencesoufie.com/wp-json/wp/v2/posts",
+                                params={
+                                    "categories": cat.get('id'),
+                                    "per_page": per_page,
+                                    "_embed": True
+                                }
+                            )
+                            if articles_response.status_code == 200:
+                                return {"articles": articles_response.json(), "source": "category"}
             
             # Get articles by tag
             if tag_id:

@@ -10,9 +10,9 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-
-const PRIMARY_COLOR = '#1c679f';
+import theme from '../../constants/theme';
 
 interface Post {
   id: number;
@@ -76,6 +76,8 @@ export default function BlogScreen() {
       .replace(/&#8212;/g, '—')
       .replace(/\[&hellip;\]/g, '...')
       .replace(/&hellip;/g, '...')
+      .replace(/&rsquo;/g, "'")
+      .replace(/&lsquo;/g, "'")
       .trim();
   };
 
@@ -95,7 +97,7 @@ export default function BlogScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Chargement des articles...</Text>
       </View>
     );
@@ -104,6 +106,7 @@ export default function BlogScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
+        <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchPosts}>
           <Text style={styles.retryButtonText}>Réessayer</Text>
@@ -117,23 +120,36 @@ export default function BlogScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY_COLOR]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      <Text style={styles.sectionTitle}>Articles récents</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Articles récents</Text>
+        <View style={styles.goldAccent} />
+      </View>
+      
       {posts.length === 0 ? (
         <View style={styles.emptyContainer}>
+          <Ionicons name="document-text-outline" size={48} color={theme.colors.textSecondary} />
           <Text style={styles.emptyText}>Aucun article disponible.</Text>
         </View>
       ) : (
         posts.map((post) => (
-          <View key={post.id} style={styles.postCard}>
+          <TouchableOpacity 
+            key={post.id} 
+            style={styles.postCard}
+            onPress={() => openPost(post.id)}
+            activeOpacity={0.9}
+          >
             {post._embedded?.['wp:featuredmedia']?.[0]?.source_url && (
-              <Image
-                source={{ uri: post._embedded['wp:featuredmedia'][0].source_url }}
-                style={styles.postImage}
-                resizeMode="cover"
-              />
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: post._embedded['wp:featuredmedia'][0].source_url }}
+                  style={styles.postImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.imageOverlay} />
+              </View>
             )}
             <View style={styles.postContent}>
               <Text style={styles.postDate}>{formatDate(post.date)}</Text>
@@ -141,14 +157,12 @@ export default function BlogScreen() {
               <Text style={styles.postExcerpt} numberOfLines={3}>
                 {stripHTML(post.excerpt.rendered)}
               </Text>
-              <TouchableOpacity
-                style={styles.postButton}
-                onPress={() => openPost(post.id)}
-              >
-                <Text style={styles.postButtonText}>Lire la suite</Text>
-              </TouchableOpacity>
+              <View style={styles.readMoreContainer}>
+                <Text style={styles.readMoreText}>Lire la suite</Text>
+                <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} />
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))
       )}
     </ScrollView>
@@ -158,7 +172,7 @@ export default function BlogScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
     padding: 16,
@@ -168,96 +182,120 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
     padding: 24,
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    paddingHorizontal: 24,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 28,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.button,
   },
   retryButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  sectionHeader: {
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 28,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
+  },
+  goldAccent: {
+    width: 60,
+    height: 3,
+    backgroundColor: theme.colors.gold,
+    borderRadius: 2,
   },
   emptyContainer: {
-    padding: 32,
+    padding: 48,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
+    marginTop: 12,
   },
   postCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.medium,
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...theme.shadows.card,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   postImage: {
     width: '100%',
     height: 180,
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: theme.colors.primaryLight,
   },
   postContent: {
     padding: 16,
   },
   postDate: {
     fontSize: 12,
-    color: '#888',
-    marginBottom: 4,
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.gold,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   postTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
     marginBottom: 8,
+    lineHeight: 24,
   },
   postExcerpt: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    lineHeight: 22,
     marginBottom: 12,
   },
-  postButton: {
-    backgroundColor: PRIMARY_COLOR,
-    paddingVertical: 12,
-    borderRadius: 8,
+  readMoreContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(28,103,159,0.08)',
   },
-  postButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  readMoreText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: theme.colors.primary,
+    marginRight: 6,
   },
 });

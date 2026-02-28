@@ -138,32 +138,34 @@ export default function BlogScreen() {
   };
 
   const renderFilters = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.filtersContainer}
-    >
-      {TOPIC_FILTERS.map((filter) => (
-        <TouchableOpacity
-          key={filter.slug}
-          style={[
-            styles.filterChip,
-            activeFilter === filter.slug && styles.filterChipActive,
-          ]}
-          onPress={() => handleFilterChange(filter.slug)}
-          activeOpacity={0.8}
-        >
-          <Text
+    <View style={styles.filtersWrapper}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContainer}
+      >
+        {TOPIC_FILTERS.map((filter) => (
+          <TouchableOpacity
+            key={filter.slug}
             style={[
-              styles.filterChipText,
-              activeFilter === filter.slug && styles.filterChipTextActive,
+              styles.filterChip,
+              activeFilter === filter.slug && styles.filterChipActive,
             ]}
+            onPress={() => handleFilterChange(filter.slug)}
+            activeOpacity={0.8}
           >
-            {filter.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+            <Text
+              style={[
+                styles.filterChipText,
+                activeFilter === filter.slug && styles.filterChipTextActive,
+              ]}
+            >
+              {filter.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 
   if (error && !loading) {

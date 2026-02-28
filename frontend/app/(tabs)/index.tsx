@@ -161,6 +161,24 @@ export default function AccueilScreen() {
     }
   };
 
+  const formatDateTime = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const dateFormatted = date.toLocaleDateString('fr-FR', { 
+        weekday: 'long',
+        day: 'numeric', 
+        month: 'long' 
+      });
+      const timeFormatted = date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      return `${dateFormatted} à ${timeFormatted}`;
+    } catch {
+      return '';
+    }
+  };
+
   const cleanHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim();
   };

@@ -479,11 +479,11 @@ export default function EvenementsScreen() {
 
             <View style={styles.liveActions}>
               <TouchableOpacity
-                style={[styles.joinButton, isLive && styles.joinButtonLive]}
+                style={styles.zoomLink}
                 onPress={() => joinZoomMeeting(webinar.join_url)}
               >
-                <Ionicons name="logo-youtube" size={20} color="#fff" />
-                <Text style={styles.joinButtonText}>Ouvrir Zoom</Text>
+                <Text style={styles.zoomLinkText}>Ouvrir Zoom</Text>
+                <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity

@@ -104,33 +104,6 @@ export default function EventDetailScreen() {
     ? formatDateRange(params.startDate, params.endDate) 
     : { date: '', time: null };
 
-  // Custom HTML wrapper for better styling of HelloAsso widget
-  const widgetHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <style>
-        * { box-sizing: border-box; }
-        body { 
-          margin: 0; 
-          padding: 0; 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: #f5f7fa;
-        }
-        iframe {
-          width: 100%;
-          height: 100vh;
-          border: none;
-        }
-      </style>
-    </head>
-    <body>
-      <iframe src="${params.widgetUrl}" allow="payment"></iframe>
-    </body>
-    </html>
-  `;
-
   return (
     <View style={styles.container}>
       {/* Header */}

@@ -236,15 +236,18 @@ export default function EventDetailScreen() {
           )}
           
           <WebView
-            source={{ html: widgetHtml }}
+            source={{ uri: params.widgetUrl || params.url }}
             style={styles.webview}
             onLoadEnd={() => setLoading(false)}
+            onLoadStart={() => setLoading(true)}
             javaScriptEnabled={true}
             domStorageEnabled={true}
             startInLoadingState={false}
             scalesPageToFit={true}
             allowsInlineMediaPlayback={true}
             mixedContentMode="compatibility"
+            originWhitelist={['*']}
+            userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
           />
         </Animated.View>
       )}

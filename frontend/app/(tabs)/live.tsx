@@ -558,20 +558,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.title,
     color: theme.colors.primary,
   },
-  reminderIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  reminderIconActive: {
-    backgroundColor: theme.colors.gold,
-    borderColor: theme.colors.gold,
-  },
 
   // No Live
   noLiveCard: {

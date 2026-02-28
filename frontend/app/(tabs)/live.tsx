@@ -854,20 +854,17 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  // Event Card
+  // Event Card - Full Width Image Layout
   eventCard: {
-    marginBottom: 16,
+    marginBottom: 20,
     borderRadius: theme.borderRadius.medium,
     backgroundColor: '#ffffff',
     ...theme.shadows.card,
     overflow: 'hidden',
   },
-  eventCardInner: {
-    flexDirection: 'row',
-  },
   eventImageContainer: {
-    width: 130,
-    height: 150,
+    width: '100%',
+    aspectRatio: 16 / 9,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -880,55 +877,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dateBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+
+  // Event Content Below Image
+  eventContent: {
+    padding: 16,
+  },
+  eventDateRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 40,
+    marginBottom: 10,
+    gap: 12,
+  },
+  dateBadge: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignItems: 'center',
+    minWidth: 48,
   },
   dateDay: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: theme.fonts.titleBold,
     color: '#fff',
-    lineHeight: 18,
+    lineHeight: 20,
   },
   dateMonth: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: theme.fonts.bodySemiBold,
     color: 'rgba(255,255,255,0.9)',
     textTransform: 'uppercase',
   },
-
-  // Event Content
-  eventContent: {
+  eventDateText: {
     flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
   },
   eventTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: theme.fonts.title,
     color: theme.colors.textPrimary,
-    lineHeight: 20,
-    marginBottom: 4,
+    lineHeight: 24,
+    marginBottom: 12,
   },
   eventTitleHovered: {
     color: theme.colors.primary,
-  },
-  eventMeta: {
-    gap: 2,
-    marginBottom: 8,
-  },
-  eventMetaText: {
-    fontSize: 11,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    flex: 1,
   },
 
   // Event Actions
@@ -944,13 +938,13 @@ const styles = StyleSheet.create({
   },
   eventDetailText: {
     color: theme.colors.primary,
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: theme.fonts.bodySemiBold,
   },
   eventReminderButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1.5,
     borderColor: theme.colors.primary,
     justifyContent: 'center',

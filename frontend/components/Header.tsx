@@ -9,18 +9,15 @@ import {
   FlatList,
   ActivityIndicator,
   Image,
-  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import theme from '@/constants/theme';
 
 const LOGO_URL = 'https://consciencesoufie.com/wp-content/uploads/2019/07/logo-CS-Blanc.png';
-
-// SVG pattern as base64 for geometric Islamic pattern
-const GEOMETRIC_PATTERN = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ2VvbWV0cmljIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiPjxwYXRoIGQ9Ik0wIDIwTDIwIDBMNDAgMjBMMjAgNDBMMCAyMFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHBhdGggZD0iTTIwIDBMMjAgNDBNMCAyMEw0MCAyMCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNnZW9tZXRyaWMpIi8+PC9zdmc+`;
 
 interface SearchResult {
   id: number;
@@ -31,9 +28,9 @@ interface SearchResult {
 
 export default function Header() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [donationModalVisible, setDonationModalVisible] = useState(false);
-  const [membershipModalVisible, setMembershipModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -74,45 +71,47 @@ export default function Header() {
     performSearch(text);
   };
 
+  const openProfile = () => {
+    // Navigate to profile or show profile modal
+    // For now, we can navigate to the about page or create a profile page later
+    router.push('/about');
+  };
+
   return (
     <>
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          {/* Geometric pattern overlay */}
-          <View style={styles.patternOverlay}>
-            <Image 
-              source={{ uri: GEOMETRIC_PATTERN }} 
-              style={styles.patternImage}
-              resizeMode="repeat"
-            />
-          </View>
-          
           <View style={styles.headerContent}>
-            <View style={styles.logoContainer}>
+            {/* Left side: Profile + Logo */}
+            <View style={styles.leftSection}>
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={openProfile}
+              >
+                <Ionicons name="person-circle" size={32} color="#fff" />
+              </TouchableOpacity>
+              
               <Image
                 source={{ uri: LOGO_URL }}
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
-            <View style={styles.iconContainer}>
+            
+            {/* Right side: Search + Donation */}
+            <View style={styles.rightSection}>
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => setSearchModalVisible(true)}
               >
-                <Ionicons name="search-outline" size={24} color="#fff" />
+                <Ionicons name="search" size={22} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.iconButton}
+                style={styles.donationButton}
                 onPress={() => setDonationModalVisible(true)}
               >
-                <Ionicons name="heart-outline" size={24} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setMembershipModalVisible(true)}
-              >
-                <Ionicons name="card-outline" size={24} color="#fff" />
+                <Ionicons name="heart" size={18} color={theme.colors.primary} />
+                <Text style={styles.donationText}>Don</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -223,41 +222,6 @@ export default function Header() {
           </View>
         </View>
       </Modal>
-
-      {/* Membership Modal */}
-      <Modal
-        visible={membershipModalVisible}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setMembershipModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.modalCloseIcon}
-              onPress={() => setMembershipModalVisible(false)}
-            >
-              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
-            </TouchableOpacity>
-            <View style={styles.modalIconContainer}>
-              <Ionicons name="people" size={32} color="#fff" />
-            </View>
-            <Text style={styles.modalTitle}>
-              Rejoignez la communauté{"\n"}Conscience Soufie !
-            </Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => {
-                setMembershipModalVisible(false);
-                openLink('https://www.helloasso.com/associations/conscience-soufie/adhesions/campagne-d-adhesion-2026');
-              }}
-            >
-              <Ionicons name="card" size={18} color="#fff" style={styles.modalButtonIcon} />
-              <Text style={styles.modalButtonText}>Devenir adhérent</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </>
   );
 }
@@ -270,39 +234,51 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
-  patternOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 1,
-  },
-  patternImage: {
-    width: '100%',
-    height: '100%',
-  },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   goldLine: {
     height: 2,
     backgroundColor: theme.colors.gold,
   },
-  logoContainer: {
-    flex: 1,
-  },
-  logo: {
-    width: 150,
-    height: 40,
-  },
-  iconContainer: {
+  leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  profileButton: {
+    padding: 4,
+    marginRight: 8,
+  },
+  logo: {
+    width: 160,
+    height: 44,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   iconButton: {
-    padding: 8,
-    marginLeft: 4,
+    padding: 10,
+  },
+  donationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  donationText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
   },
   modalContainer: {
     flex: 1,

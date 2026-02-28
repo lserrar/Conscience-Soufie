@@ -221,8 +221,11 @@ async def get_helloasso_events():
                     "banner": event.get("banner", {}).get("publicUrl") if event.get("banner") else None,
                     "logo": event.get("logo", {}).get("publicUrl") if event.get("logo") else None,
                     "url": event.get("url"),
+                    "widgetUrl": event.get("widgetFullUrl"),
+                    "widgetButtonUrl": event.get("widgetButtonUrl"),
                     "state": event.get("state"),
-                    "organizationSlug": event.get("organizationSlug")
+                    "organizationSlug": event.get("organizationSlug"),
+                    "place": event.get("place")
                 })
             
             # Sort by start date (ascending - earliest first)

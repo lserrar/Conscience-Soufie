@@ -148,7 +148,7 @@ export default function AccueilScreen() {
           <TouchableOpacity 
             key={event.id} 
             style={styles.eventCard}
-            onPress={() => openEvent(event.id)}
+            onPress={() => openEvent(event.url)}
             activeOpacity={0.9}
           >
             {event.banner && (

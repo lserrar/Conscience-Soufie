@@ -128,45 +128,34 @@ async def get_zoom_webinars():
         token = await get_zoom_access_token()
         
         async with httpx.AsyncClient() as http_client:
-            # First get the list of users
-            users_response = await http_client.get(
-                "https://api.zoom.us/v2/users",
-                headers={"Authorization": f"Bearer {token}"}
+            # Use 'me' to get webinars for the authenticated user
+            # This works with webinar:read:list_webinars:admin scope
+            webinars_response = await http_client.get(
+                "https://api.zoom.us/v2/users/me/webinars",
+                headers={"Authorization": f"Bearer {token}"},
+                params={"page_size": 30, "type": "scheduled"}
             )
             
-            if users_response.status_code != 200:
-                logger.error(f"Zoom users error: {users_response.status_code} - {users_response.text}")
-                return {"webinars": [], "error": "Impossible de récupérer les utilisateurs Zoom"}
-            
-            users_data = users_response.json()
             all_webinars = []
             
-            for user in users_data.get("users", []):
-                user_id = user.get("id")
-                
-                # Get webinars for this user
-                webinars_response = await http_client.get(
-                    f"https://api.zoom.us/v2/users/{user_id}/webinars",
-                    headers={"Authorization": f"Bearer {token}"},
-                    params={"page_size": 10}
-                )
-                
-                if webinars_response.status_code == 200:
-                    webinars_data = webinars_response.json()
-                    for webinar in webinars_data.get("webinars", []):
-                        all_webinars.append({
-                            "id": str(webinar.get("id")),
-                            "uuid": webinar.get("uuid"),
-                            "topic": webinar.get("topic"),
-                            "start_time": webinar.get("start_time"),
-                            "duration": webinar.get("duration"),
-                            "timezone": webinar.get("timezone"),
-                            "join_url": webinar.get("join_url"),
-                            "status": webinar.get("status", "scheduled")
-                        })
+            if webinars_response.status_code == 200:
+                webinars_data = webinars_response.json()
+                for webinar in webinars_data.get("webinars", []):
+                    all_webinars.append({
+                        "id": str(webinar.get("id")),
+                        "uuid": webinar.get("uuid"),
+                        "topic": webinar.get("topic"),
+                        "start_time": webinar.get("start_time"),
+                        "duration": webinar.get("duration"),
+                        "timezone": webinar.get("timezone"),
+                        "join_url": webinar.get("join_url"),
+                        "status": webinar.get("status", "scheduled")
+                    })
+            else:
+                logger.warning(f"Zoom webinars response: {webinars_response.status_code} - {webinars_response.text}")
             
             # Sort by start_time and get upcoming ones
-            from datetime import datetime
+            from datetime import datetime, timedelta
             now = datetime.utcnow()
             
             upcoming_webinars = []
@@ -175,7 +164,6 @@ async def get_zoom_webinars():
                     try:
                         start = datetime.fromisoformat(w["start_time"].replace("Z", "+00:00"))
                         # Include webinars that haven't ended yet (start_time + duration)
-                        from datetime import timedelta
                         duration_minutes = w.get("duration", 60)
                         end_time = start + timedelta(minutes=duration_minutes)
                         if end_time.replace(tzinfo=None) >= now:

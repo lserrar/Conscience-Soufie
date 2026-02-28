@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-import theme from '../../constants/theme';
+import theme from '@/constants/theme';
 
 interface Event {
   id: number;

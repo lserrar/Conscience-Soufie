@@ -186,7 +186,7 @@ export default function AccueilScreen() {
                 <Ionicons name="ticket-outline" size={18} color="#fff" style={styles.buttonIcon} />
                 <Text style={styles.eventButtonText}>S'inscrire</Text>
                 <Ionicons name="arrow-forward" size={16} color="#fff" />
-              </View>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         ))

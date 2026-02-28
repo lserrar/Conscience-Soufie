@@ -119,10 +119,17 @@ export default function PodcastsScreen() {
       .substring(0, 200);
   };
 
-  const openPodcast = async (podcast: Podcast) => {
-    if (podcast.link) {
-      await WebBrowser.openBrowserAsync(podcast.link);
-    }
+  const openPodcast = (podcast: Podcast) => {
+    router.push({
+      pathname: '/podcast-player',
+      params: {
+        title: podcast.title,
+        url: podcast.link,
+        image: podcast.imageUrl || DEFAULT_COVER,
+        duration: podcast.duration || '',
+        pubDate: podcast.pubDate,
+      }
+    });
   };
 
   const handleHeroPressIn = () => {

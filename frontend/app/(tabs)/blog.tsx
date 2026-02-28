@@ -267,13 +267,16 @@ const styles = StyleSheet.create({
   },
   
   // Filters
-  filtersContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  filtersWrapper: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(28,103,159,0.08)',
+  },
+  filtersContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
+    alignItems: 'center',
   },
   filterChip: {
     paddingHorizontal: 16,
@@ -281,9 +284,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(28,103,159,0.08)',
     marginRight: 8,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   filterChipActive: {
     backgroundColor: theme.colors.primary,

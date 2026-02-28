@@ -25,6 +25,7 @@ interface HelloAssoEvent {
   banner: string | null;
   logo: string | null;
   url: string;
+  widgetUrl: string | null;
   state: string;
 }
 

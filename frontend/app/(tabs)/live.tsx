@@ -546,11 +546,11 @@ export default function EvenementsScreen() {
                   onPress={() => openEventDetail(event)}
                   style={styles.eventCardInner}
                 >
-                  {/* Event Image - Fixed size container */}
+                  {/* Event Image - Using logo (more complete poster) instead of banner */}
                   <View style={styles.eventImageContainer}>
-                    {event.banner ? (
+                    {(event.logo || event.banner) ? (
                       <Image
-                        source={{ uri: event.banner }}
+                        source={{ uri: event.logo || event.banner }}
                         style={styles.eventImage}
                         resizeMode="cover"
                       />

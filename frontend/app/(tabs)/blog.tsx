@@ -20,10 +20,10 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const TOPIC_FILTERS = [
   { slug: 'all', label: 'Tous' },
   { slug: 'soufisme', label: 'Soufisme' },
-  { slug: 'rumi', label: 'Rumi' },
+  { slug: 'rumi', label: 'Rûmî' },
   { slug: 'ibn-arabi', label: 'Ibn Arabi' },
   { slug: 'poesie-sama', label: 'Poésie et samâ\'' },
-  { slug: 'henri-corbin', label: 'Henri Corbin' },
+  { slug: 'henry-corbin', label: 'Henry Corbin' },
   { slug: 'eva-de-vitray', label: 'Eva de Vitray' },
   { slug: 'louis-massignon', label: 'Louis Massignon' },
   { slug: 'michel-chodkiewicz', label: 'Michel Chodkiewicz' },

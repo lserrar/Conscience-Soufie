@@ -23,10 +23,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Thematic tags for article carousels
 const THEMATIC_TAGS = [
   { slug: 'soufisme', label: 'Soufisme' },
-  { slug: 'rumi', label: 'Rumi' },
+  { slug: 'rumi', label: 'Rûmî' },
   { slug: 'ibn-arabi', label: 'Ibn Arabi' },
   { slug: 'poesie-sama', label: 'Poésie et samâ\'' },
-  { slug: 'henri-corbin', label: 'Henri Corbin' },
+  { slug: 'henry-corbin', label: 'Henry Corbin' },
   { slug: 'eva-de-vitray', label: 'Eva de Vitray' },
   { slug: 'louis-massignon', label: 'Louis Massignon' },
   { slug: 'michel-chodkiewicz', label: 'Michel Chodkiewicz' },

@@ -14,22 +14,22 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import theme from '@/constants/theme';
 
-interface Event {
-  id: number;
-  title: { rendered: string };
-  link: string;
-  date: string;
-  _embedded?: {
-    'wp:featuredmedia'?: Array<{ source_url: string }>;
-  };
-  meta?: {
-    _EventStartDate?: string;
-    _EventEndDate?: string;
-  };
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+interface HelloAssoEvent {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  banner: string | null;
+  logo: string | null;
+  url: string;
+  state: string;
 }
 
 export default function AccueilScreen() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<HelloAssoEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +38,12 @@ export default function AccueilScreen() {
   const fetchEvents = async () => {
     try {
       setError(null);
-      const response = await axios.get(
-        'https://consciencesoufie.com/wp-json/wp/v2/mec-events?per_page=10&_embed'
-      );
-      setEvents(response.data);
+      const response = await axios.get(`${BACKEND_URL}/api/helloasso/events`);
+      if (response.data.events) {
+        setEvents(response.data.events);
+      } else if (response.data.error) {
+        setError(response.data.error);
+      }
     } catch (err) {
       console.error('Error fetching events:', err);
       setError('Impossible de charger le contenu. Vérifiez votre connexion.');
@@ -60,8 +62,8 @@ export default function AccueilScreen() {
     fetchEvents();
   }, []);
 
-  const openEvent = (eventId: number) => {
-    router.push(`/event/${eventId}`);
+  const openEvent = (eventId: string) => {
+    router.push(`/helloasso-event/${eventId}`);
   };
 
   const formatDate = (dateStr: string) => {
@@ -90,23 +92,17 @@ export default function AccueilScreen() {
     }
   };
 
-  const decodeHTML = (html: string) => {
-    return html
-      .replace(/&#8217;/g, "'")
-      .replace(/&#8216;/g, "'")
-      .replace(/&#8220;/g, '"')
-      .replace(/&#8221;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#8211;/g, '–')
-      .replace(/&#8212;/g, '—')
-      .replace(/&rsquo;/g, "'")
-      .replace(/&lsquo;/g, "'")
-      .replace(/&rdquo;/g, '"')
-      .replace(/&ldquo;/g, '"')
-      .replace(/&hellip;/g, '...');
+  const formatDateRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Same day event
+    if (start.toDateString() === end.toDateString()) {
+      return `${formatDate(startDate)} • ${formatTime(startDate)} - ${formatTime(endDate)}`;
+    }
+    
+    // Multi-day event
+    return `Du ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} au ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
   };
 
   if (loading) {
@@ -156,10 +152,10 @@ export default function AccueilScreen() {
             onPress={() => openEvent(event.id)}
             activeOpacity={0.9}
           >
-            {event._embedded?.['wp:featuredmedia']?.[0]?.source_url && (
+            {event.banner && (
               <View style={styles.imageContainer}>
                 <Image
-                  source={{ uri: event._embedded['wp:featuredmedia'][0].source_url }}
+                  source={{ uri: event.banner }}
                   style={styles.eventImage}
                   resizeMode="cover"
                 />
@@ -167,19 +163,26 @@ export default function AccueilScreen() {
               </View>
             )}
             <View style={styles.eventContent}>
-              <Text style={styles.eventTitle}>{decodeHTML(event.title.rendered)}</Text>
+              <Text style={styles.eventTitle}>{event.title}</Text>
+              
               <View style={styles.eventMeta}>
                 <View style={styles.metaRow}>
-                  <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
-                  <Text style={styles.eventDate}>{formatDate(event.date)}</Text>
-                </View>
-                <View style={styles.metaRow}>
-                  <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
-                  <Text style={styles.eventTime}>{formatTime(event.date)}</Text>
+                  <View style={styles.metaIconContainer}>
+                    <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
+                  </View>
+                  <Text style={styles.eventDate}>{formatDateRange(event.startDate, event.endDate)}</Text>
                 </View>
               </View>
+              
+              {event.description && (
+                <Text style={styles.eventDescription} numberOfLines={2}>
+                  {event.description.replace(/\n/g, ' ').trim()}
+                </Text>
+              )}
+              
               <View style={styles.eventButton}>
-                <Text style={styles.eventButtonText}>Voir le détail</Text>
+                <Ionicons name="ticket-outline" size={18} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.eventButtonText}>S'inscrire</Text>
                 <Ionicons name="arrow-forward" size={16} color="#fff" />
               </View>
             </View>
@@ -292,24 +295,33 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   eventMeta: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+  },
+  metaIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(28,103,159,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   eventDate: {
+    flex: 1,
     fontSize: 14,
     fontFamily: theme.fonts.bodyMedium,
     color: theme.colors.textPrimary,
-    marginLeft: 8,
   },
-  eventTime: {
+  eventDescription: {
     fontSize: 14,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
-    marginLeft: 8,
+    lineHeight: 20,
+    marginBottom: 16,
   },
   eventButton: {
     backgroundColor: theme.colors.primary,
@@ -319,6 +331,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   eventButtonText: {
     color: '#fff',

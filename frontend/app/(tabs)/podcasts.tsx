@@ -34,6 +34,7 @@ interface Podcast {
 }
 
 export default function PodcastsScreen() {
+  const router = useRouter();
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

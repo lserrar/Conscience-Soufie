@@ -5,20 +5,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  TextInput,
-  FlatList,
-  ActivityIndicator,
   Image,
   ScrollView,
   Switch,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import axios from 'axios';
+import { WebView } from 'react-native-webview';
 import theme from '@/constants/theme';
 
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
+const DONATION_URL = 'https://www.helloasso.com/associations/conscience-soufie/formulaires/1';
 
 interface SearchResult {
   id: number;

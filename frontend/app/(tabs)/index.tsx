@@ -22,6 +22,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Thematic tags for article carousels (from WordPress categories)
 const THEMATIC_TAGS = [
+  { slug: 'references-bibilographiques', label: 'Bibliographie' },
   { slug: 'soufisme', label: 'Soufisme' },
   { slug: 'le-prophete-muhammad', label: 'Le Prophète Muhammad' },
   { slug: 'ibn-arabi', label: 'Ibn \'Arabî' },
@@ -32,7 +33,6 @@ const THEMATIC_TAGS = [
   { slug: 'hallaj', label: 'Hallâj' },
   { slug: 'poesie', label: 'Poésie' },
   { slug: 'philosophie', label: 'Philosophie' },
-  { slug: 'references-bibilographiques', label: 'Bibliographie' },
   { slug: 'paix', label: 'Paix' },
   { slug: 'hommages', label: 'Hommages' },
 ];

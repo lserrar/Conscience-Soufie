@@ -143,7 +143,7 @@ export default function BlogScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.postButton}
-                onPress={() => openPost(post.link)}
+                onPress={() => openPost(post.id)}
               >
                 <Text style={styles.postButtonText}>Lire la suite</Text>
               </TouchableOpacity>

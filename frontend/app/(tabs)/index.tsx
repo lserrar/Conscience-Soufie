@@ -20,26 +20,30 @@ import theme from '@/constants/theme';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Calameo magazines with read URLs for in-app viewing
+// Calameo magazines with actual cover images
 const MAGAZINES = [
   {
     id: '4',
-    title: 'Revue N°4',
+    title: 'Présence du Prophète',
+    cover: 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/43f2ucto_Une-de-Couv-Revue-CS4-Newsletter%402x-100.jpg',
     readUrl: 'https://www.calameo.com/read/007294180361a4e13db8f',
   },
   {
     id: '3',
-    title: 'Revue N°3',
+    title: 'Soufisme et Poésie',
+    cover: 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/lly4v3er_Revue-Conscience-Soufie-N3-web.pdf',
     readUrl: 'https://www.calameo.com/read/00729418046e9bf1ac1d9',
   },
   {
     id: '2',
-    title: 'Revue N°2',
+    title: 'Soufisme et Poésie',
+    cover: 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/w39zxa8f_Image-23-03-2019-a%CC%80-21.38.jpg',
     readUrl: 'https://www.calameo.com/read/0072941807720db430b2a',
   },
   {
     id: '1',
     title: 'Revue N°1',
+    cover: 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/9vdxekwg_Revue-Conscience-Soufie-N1-web.jpg',
     readUrl: 'https://www.calameo.com/read/00729418082df7e90cef6',
   },
 ];

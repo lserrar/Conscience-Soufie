@@ -370,17 +370,6 @@ export default function EvenementsScreen() {
               <TouchableOpacity onPress={() => joinZoomMeeting(webinar.join_url)}>
                 <Text style={styles.linkText}>Ouvrir Zoom →</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.reminderIcon, isReminderSet(webinar.id, true) && styles.reminderIconActive]}
-                onPress={() => scheduleReminder(webinar, true)}
-              >
-                <Ionicons 
-                  name={isReminderSet(webinar.id, true) ? "notifications" : "notifications-outline"} 
-                  size={20} 
-                  color={isReminderSet(webinar.id, true) ? "#fff" : theme.colors.primary} 
-                />
-              </TouchableOpacity>
             </View>
           </View>
         ) : (

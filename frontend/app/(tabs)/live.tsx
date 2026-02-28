@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,32 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
   Animated,
+  Platform,
+  Linking,
+  Alert,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
+import * as WebBrowser from 'expo-web-browser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const REMINDERS_STORAGE_KEY = '@conscience_soufie_reminders';
+
+// Configure notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 interface Webinar {
   id: string;
@@ -25,32 +43,57 @@ interface Webinar {
   status: string;
 }
 
-interface WordPressEvent {
-  id: number;
-  title: { rendered: string };
-  content: { rendered: string };
-  link: string;
-  date: string;
+interface HelloAssoEvent {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  banner: string | null;
+  logo: string | null;
+  url: string;
+  widgetUrl: string | null;
+  state: string;
+  place?: {
+    name?: string;
+    address?: string;
+    city?: string;
+  };
 }
 
-export default function LiveScreen() {
+interface ReminderState {
+  [eventId: string]: {
+    notificationIds: string[];
+    eventTitle: string;
+  };
+}
+
+export default function EvenementsScreen() {
   const [webinar, setWebinar] = useState<Webinar | null>(null);
-  const [matchedEvent, setMatchedEvent] = useState<WordPressEvent | null>(null);
-  const [registrationLink, setRegistrationLink] = useState<string | null>(null);
+  const [events, setEvents] = useState<HelloAssoEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
+  const [reminders, setReminders] = useState<ReminderState>({});
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   
-  const pulseAnim = useState(new Animated.Value(1))[0];
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnims = useRef<{ [key: string]: Animated.Value }>({}).current;
 
+  // Load saved reminders
+  useEffect(() => {
+    loadReminders();
+    requestNotificationPermissions();
+  }, []);
+
+  // Pulse animation for live indicator
   useEffect(() => {
     if (isLive) {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.05,
+            toValue: 1.15,
             duration: 800,
             useNativeDriver: true,
           }),
@@ -66,78 +109,100 @@ export default function LiveScreen() {
     }
   }, [isLive, pulseAnim]);
 
-  const findRegistrationLink = (content: string): string | null => {
-    const patterns = [
-      /href=["']([^"']*helloasso[^"']*)["']/i,
-      /href=["']([^"']*eventbrite[^"']*)["']/i,
-      /href=["']([^"']*billetweb[^"']*)["']/i,
-      /<a[^>]*href=["']([^"']+)["'][^>]*>\s*(?:inscription|s'inscrire|réserver|participer)[^<]*<\/a>/i,
-    ];
-
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
+  const requestNotificationPermissions = async () => {
+    if (Platform.OS === 'web') return;
+    
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
     }
-    return null;
+    
+    if (finalStatus !== 'granted') {
+      console.log('Notification permissions not granted');
+    }
   };
 
-  const fetchLiveData = async () => {
+  const loadReminders = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(REMINDERS_STORAGE_KEY);
+      if (stored) {
+        setReminders(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading reminders:', error);
+    }
+  };
+
+  const saveReminders = async (newReminders: ReminderState) => {
+    try {
+      await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(newReminders));
+      setReminders(newReminders);
+    } catch (error) {
+      console.error('Error saving reminders:', error);
+    }
+  };
+
+  const getScaleAnim = (eventId: string) => {
+    if (!scaleAnims[eventId]) {
+      scaleAnims[eventId] = new Animated.Value(1);
+    }
+    return scaleAnims[eventId];
+  };
+
+  const handleCardPressIn = (eventId: string) => {
+    setHoveredCard(eventId);
+    Animated.spring(getScaleAnim(eventId), {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleCardPressOut = (eventId: string) => {
+    setHoveredCard(null);
+    Animated.spring(getScaleAnim(eventId), {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const fetchData = async () => {
     try {
       setError(null);
       
-      const webinarResponse = await axios.get(`${BACKEND_URL}/api/zoom/webinars`);
+      // Fetch webinar and events in parallel
+      const [webinarResponse, eventsResponse] = await Promise.all([
+        axios.get(`${BACKEND_URL}/api/zoom/webinars`).catch(() => ({ data: { webinars: [] } })),
+        axios.get(`${BACKEND_URL}/api/helloasso/events`).catch(() => ({ data: { events: [] } })),
+      ]);
+      
+      // Process webinar
       const webinars = webinarResponse.data.webinars || [];
-      
-      if (webinars.length === 0) {
+      if (webinars.length > 0) {
+        const nextWebinar = webinars[0];
+        setWebinar(nextWebinar);
+        
+        // Check if live
+        const now = new Date();
+        const startTime = new Date(nextWebinar.start_time);
+        const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
+        const endTime = new Date(startTime.getTime() + nextWebinar.duration * 60000);
+        
+        setIsLive(timeDiff <= 30 && now <= endTime);
+      } else {
         setWebinar(null);
-        setLoading(false);
-        setRefreshing(false);
-        return;
+        setIsLive(false);
       }
-
-      const nextWebinar = webinars[0];
-      setWebinar(nextWebinar);
-
-      const now = new Date();
-      const startTime = new Date(nextWebinar.start_time);
-      const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
-      const endTime = new Date(startTime.getTime() + nextWebinar.duration * 60000);
       
-      setIsLive(timeDiff <= 30 && now <= endTime);
-
-      const wpResponse = await axios.get(
-        'https://consciencesoufie.com/wp-json/wp/v2/mec-events?per_page=10&_embed'
-      );
-      const wpEvents: WordPressEvent[] = wpResponse.data;
-
-      const webinarTitle = nextWebinar.topic.toLowerCase();
-      const webinarDate = new Date(nextWebinar.start_time).toDateString();
-
-      for (const event of wpEvents) {
-        const eventTitle = event.title.rendered.toLowerCase();
-        const eventDate = new Date(event.date).toDateString();
-
-        if (
-          eventTitle.includes(webinarTitle.substring(0, 20)) ||
-          webinarTitle.includes(eventTitle.substring(0, 20)) ||
-          eventDate === webinarDate
-        ) {
-          setMatchedEvent(event);
-          
-          const regLink = findRegistrationLink(event.content.rendered);
-          if (regLink) {
-            setRegistrationLink(regLink);
-            setIsPaid(true);
-          } else {
-            setIsPaid(false);
-          }
-          break;
-        }
+      // Process events
+      if (eventsResponse.data.events) {
+        setEvents(eventsResponse.data.events);
       }
+      
     } catch (err) {
-      console.error('Error fetching live data:', err);
+      console.error('Error fetching data:', err);
       setError('Impossible de charger le contenu. Vérifiez votre connexion.');
     } finally {
       setLoading(false);
@@ -146,26 +211,32 @@ export default function LiveScreen() {
   };
 
   useEffect(() => {
-    fetchLiveData();
+    fetchData();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchLiveData();
+    fetchData();
   }, []);
 
-  const openLink = async (url: string) => {
-    await WebBrowser.openBrowserAsync(url);
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const day = date.getDate();
+      const month = date.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase();
+      return { day, month };
+    } catch {
+      return { day: '', month: '' };
+    }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatFullDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
       return date.toLocaleDateString('fr-FR', {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-        year: 'numeric',
       });
     } catch {
       return dateStr;
@@ -184,6 +255,122 @@ export default function LiveScreen() {
     }
   };
 
+  const joinZoomMeeting = async (joinUrl: string) => {
+    // Extract meeting number from URL
+    const meetingMatch = joinUrl.match(/\/j\/(\d+)/);
+    const meetingNumber = meetingMatch ? meetingMatch[1] : null;
+    
+    if (meetingNumber) {
+      // Try to open in Zoom app first
+      const zoomDeepLink = `zoomus://zoom.us/join?confno=${meetingNumber}`;
+      
+      try {
+        const canOpen = await Linking.canOpenURL(zoomDeepLink);
+        if (canOpen) {
+          await Linking.openURL(zoomDeepLink);
+          return;
+        }
+      } catch (e) {
+        console.log('Cannot open Zoom app, falling back to browser');
+      }
+    }
+    
+    // Fallback to web browser
+    await WebBrowser.openBrowserAsync(joinUrl);
+  };
+
+  const scheduleReminder = async (event: HelloAssoEvent | Webinar, isWebinar: boolean = false) => {
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Rappels non disponibles',
+        'Les notifications ne sont pas disponibles sur le web. Utilisez l\'application mobile pour activer les rappels.'
+      );
+      return;
+    }
+
+    const eventId = isWebinar ? `webinar_${(event as Webinar).id}` : `event_${(event as HelloAssoEvent).id}`;
+    const eventTitle = isWebinar ? (event as Webinar).topic : (event as HelloAssoEvent).title;
+    const startDateStr = isWebinar ? (event as Webinar).start_time : (event as HelloAssoEvent).startDate;
+    const startDate = new Date(startDateStr);
+    const now = new Date();
+
+    // Check if reminder already set
+    if (reminders[eventId]) {
+      // Cancel existing reminders
+      for (const notifId of reminders[eventId].notificationIds) {
+        await Notifications.cancelScheduledNotificationAsync(notifId);
+      }
+      
+      const newReminders = { ...reminders };
+      delete newReminders[eventId];
+      await saveReminders(newReminders);
+      
+      Alert.alert('Rappel annulé', `Le rappel pour "${eventTitle}" a été annulé.`);
+      return;
+    }
+
+    // Schedule reminders at 24h, 2h, and 10min before
+    const reminderTimes = [
+      { label: '24 heures', ms: 24 * 60 * 60 * 1000 },
+      { label: '2 heures', ms: 2 * 60 * 60 * 1000 },
+      { label: '10 minutes', ms: 10 * 60 * 1000 },
+    ];
+
+    const notificationIds: string[] = [];
+
+    for (const reminder of reminderTimes) {
+      const triggerDate = new Date(startDate.getTime() - reminder.ms);
+      
+      // Only schedule if trigger date is in the future
+      if (triggerDate > now) {
+        try {
+          const notifId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `${isWebinar ? 'Conférence' : 'Événement'} dans ${reminder.label}`,
+              body: eventTitle,
+              sound: true,
+              data: { eventId, isWebinar },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: triggerDate,
+            },
+          });
+          notificationIds.push(notifId);
+        } catch (error) {
+          console.error('Error scheduling notification:', error);
+        }
+      }
+    }
+
+    if (notificationIds.length > 0) {
+      const newReminders = {
+        ...reminders,
+        [eventId]: { notificationIds, eventTitle },
+      };
+      await saveReminders(newReminders);
+      
+      Alert.alert(
+        'Rappel activé',
+        `Vous serez notifié 24h, 2h et 10min avant "${eventTitle}".`
+      );
+    } else {
+      Alert.alert(
+        'Impossible de programmer le rappel',
+        'L\'événement est trop proche ou déjà passé.'
+      );
+    }
+  };
+
+  const openEventUrl = async (url: string) => {
+    await WebBrowser.openBrowserAsync(url);
+  };
+
+  const isReminderSet = (eventId: string, isWebinar: boolean = false) => {
+    const key = isWebinar ? `webinar_${eventId}` : `event_${eventId}`;
+    return !!reminders[key];
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -198,33 +385,10 @@ export default function LiveScreen() {
       <View style={styles.errorContainer}>
         <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchLiveData}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
           <Text style={styles.retryButtonText}>Réessayer</Text>
         </TouchableOpacity>
       </View>
-    );
-  }
-
-  if (!webinar) {
-    return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.emptyContentContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-        }
-      >
-        <View style={styles.noSessionContainer}>
-          <View style={styles.noSessionIcon}>
-            <Ionicons name="videocam-off-outline" size={48} color={theme.colors.primary} />
-          </View>
-          <Text style={styles.noSessionTitle}>Aucune conférence en direct</Text>
-          <Text style={styles.noSessionText}>
-            Aucune conférence en direct pour le moment.{"\n"}
-            Consultez les événements à venir.
-          </Text>
-        </View>
-      </ScrollView>
     );
   }
 
@@ -236,75 +400,194 @@ export default function LiveScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Conférence en direct</Text>
-        <View style={styles.goldAccent} />
-      </View>
-      
-      <View style={styles.webinarCard}>
-        {/* Live indicator */}
-        {isLive && (
-          <View style={styles.liveIndicator}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>EN DIRECT</Text>
+      {/* Hero Section - Conférence en Direct */}
+      <View style={styles.heroSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <Ionicons name="videocam" size={24} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Conférence en direct</Text>
+          </View>
+          <View style={styles.goldAccent} />
+        </View>
+
+        {webinar ? (
+          <View style={styles.liveCard}>
+            {/* Live Badge */}
+            {isLive && (
+              <Animated.View style={[styles.liveBadge, { transform: [{ scale: pulseAnim }] }]}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>EN DIRECT</Text>
+              </Animated.View>
+            )}
+
+            <Text style={styles.webinarTitle}>{webinar.topic}</Text>
+            
+            <View style={styles.webinarMeta}>
+              <View style={styles.metaRow}>
+                <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.metaText}>{formatFullDate(webinar.start_time)}</Text>
+              </View>
+              <View style={styles.metaRow}>
+                <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.metaText}>{formatTime(webinar.start_time)} • {webinar.duration} min</Text>
+              </View>
+            </View>
+
+            <View style={styles.liveActions}>
+              <TouchableOpacity
+                style={[styles.joinButton, isLive && styles.joinButtonLive]}
+                onPress={() => joinZoomMeeting(webinar.join_url)}
+              >
+                <Ionicons name="videocam" size={20} color="#fff" />
+                <Text style={styles.joinButtonText}>
+                  {isLive ? 'Rejoindre maintenant' : 'Rejoindre la conférence'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.reminderButton,
+                  isReminderSet(webinar.id, true) && styles.reminderButtonActive
+                ]}
+                onPress={() => scheduleReminder(webinar, true)}
+              >
+                <Ionicons 
+                  name={isReminderSet(webinar.id, true) ? "notifications" : "notifications-outline"} 
+                  size={20} 
+                  color={isReminderSet(webinar.id, true) ? "#fff" : theme.colors.primary} 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.noLiveCard}>
+            <Ionicons name="videocam-off-outline" size={40} color={theme.colors.textSecondary} />
+            <Text style={styles.noLiveText}>Aucune conférence programmée</Text>
+            <Text style={styles.noLiveSubtext}>Les prochaines conférences apparaîtront ici</Text>
           </View>
         )}
+      </View>
 
-        {/* Badge */}
-        <View style={[styles.badge, isPaid ? styles.paidBadge : styles.freeBadge]}>
-          <Ionicons 
-            name={isPaid ? "ticket-outline" : "checkmark-circle-outline"} 
-            size={14} 
-            color="#fff" 
-            style={styles.badgeIcon}
-          />
-          <Text style={styles.badgeText}>
-            {isPaid ? 'Événement payant' : 'Accès libre'}
-          </Text>
+      {/* Prochains Événements Section */}
+      <View style={styles.eventsSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <Ionicons name="calendar" size={24} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Prochains événements</Text>
+          </View>
+          <View style={styles.goldAccent} />
         </View>
 
-        <Text style={styles.webinarTitle}>{webinar.topic}</Text>
-        
-        <View style={styles.webinarMeta}>
-          <View style={styles.metaItem}>
-            <Ionicons name="calendar-outline" size={18} color={theme.colors.primary} />
-            <Text style={styles.metaText}>{formatDate(webinar.start_time)}</Text>
+        {events.length === 0 ? (
+          <View style={styles.emptyEventsCard}>
+            <Ionicons name="calendar-outline" size={40} color={theme.colors.textSecondary} />
+            <Text style={styles.emptyEventsText}>Aucun événement à venir</Text>
           </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={18} color={theme.colors.primary} />
-            <Text style={styles.metaText}>{formatTime(webinar.start_time)}</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="hourglass-outline" size={18} color={theme.colors.primary} />
-            <Text style={styles.metaText}>{webinar.duration} min</Text>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {isPaid ? (
-          <>
-            <TouchableOpacity
-              style={styles.registerButton}
-              onPress={() => registrationLink && openLink(registrationLink)}
-            >
-              <Ionicons name="ticket-outline" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.registerButtonText}>S'inscrire pour participer</Text>
-            </TouchableOpacity>
-            <Text style={styles.infoText}>
-              Un lien Zoom vous sera envoyé après votre inscription.
-            </Text>
-          </>
         ) : (
-          <Animated.View style={{ transform: [{ scale: isLive ? pulseAnim : 1 }] }}>
-            <TouchableOpacity
-              style={[styles.joinButton, isLive ? styles.joinButtonLive : styles.joinButtonNormal]}
-              onPress={() => openLink(webinar.join_url)}
-            >
-              <Ionicons name="videocam-outline" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.joinButtonText}>Rejoindre en direct</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          events.map((event) => {
+            const dateInfo = formatDate(event.startDate);
+            const eventId = event.id;
+            const isHovered = hoveredCard === eventId;
+            
+            return (
+              <Animated.View
+                key={eventId}
+                style={[
+                  styles.eventCard,
+                  { transform: [{ scale: getScaleAnim(eventId) }] },
+                ]}
+              >
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPressIn={() => handleCardPressIn(eventId)}
+                  onPressOut={() => handleCardPressOut(eventId)}
+                  onPress={() => openEventUrl(event.url)}
+                  style={styles.eventCardInner}
+                >
+                  {/* Event Image */}
+                  <View style={styles.eventImageContainer}>
+                    {event.banner ? (
+                      <Image
+                        source={{ uri: event.banner }}
+                        style={styles.eventImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.eventImage, styles.placeholderImage]}>
+                        <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+                      </View>
+                    )}
+                    
+                    {/* Date Badge */}
+                    <View style={styles.dateBadge}>
+                      <Text style={styles.dateDay}>{dateInfo.day}</Text>
+                      <Text style={styles.dateMonth}>{dateInfo.month}</Text>
+                    </View>
+                  </View>
+
+                  {/* Event Content */}
+                  <View style={styles.eventContent}>
+                    <Text 
+                      style={[
+                        styles.eventTitle,
+                        isHovered && styles.eventTitleHovered
+                      ]} 
+                      numberOfLines={2}
+                    >
+                      {event.title}
+                    </Text>
+
+                    <View style={styles.eventMeta}>
+                      <View style={styles.metaRow}>
+                        <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
+                        <Text style={styles.eventMetaText}>
+                          {formatFullDate(event.startDate)} • {formatTime(event.startDate)}
+                        </Text>
+                      </View>
+                      
+                      {event.place?.city && (
+                        <View style={styles.metaRow}>
+                          <Ionicons name="location-outline" size={14} color={theme.colors.textSecondary} />
+                          <Text style={styles.eventMetaText}>{event.place.city}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Actions */}
+                    <View style={styles.eventActions}>
+                      <TouchableOpacity
+                        style={styles.eventRegisterButton}
+                        onPress={() => openEventUrl(event.url)}
+                      >
+                        <Ionicons name="open-outline" size={16} color="#fff" />
+                        <Text style={styles.eventRegisterText}>Voir l'événement</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.eventReminderButton,
+                          isReminderSet(event.id) && styles.eventReminderButtonActive
+                        ]}
+                        onPress={() => scheduleReminder(event)}
+                      >
+                        <Ionicons 
+                          name={isReminderSet(event.id) ? "notifications" : "notifications-outline"} 
+                          size={18} 
+                          color={isReminderSet(event.id) ? "#fff" : theme.colors.primary} 
+                        />
+                        <Text style={[
+                          styles.eventReminderText,
+                          isReminderSet(event.id) && styles.eventReminderTextActive
+                        ]}>
+                          {isReminderSet(event.id) ? 'Rappel activé' : 'Rappel'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })
         )}
       </View>
     </ScrollView>
@@ -314,21 +597,16 @@ export default function LiveScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#ffffff',
   },
   contentContainer: {
-    padding: 16,
     paddingBottom: 32,
-  },
-  emptyContentContainer: {
-    flex: 1,
-    padding: 16,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#ffffff',
   },
   loadingText: {
     marginTop: 12,
@@ -340,7 +618,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#ffffff',
     padding: 24,
   },
   errorText: {
@@ -362,163 +640,282 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: theme.fonts.bodySemiBold,
   },
-  sectionHeader: {
-    marginBottom: 20,
+
+  // Hero Section
+  heroSection: {
+    padding: 16,
+    paddingTop: 20,
   },
-  sectionTitle: {
-    fontSize: 28,
-    fontFamily: theme.fonts.titleBold,
-    color: theme.colors.textPrimary,
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 8,
   },
+  sectionTitle: {
+    fontSize: 24,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+  },
   goldAccent: {
-    width: 60,
+    width: 50,
     height: 3,
     backgroundColor: theme.colors.gold,
     borderRadius: 2,
+    marginLeft: 34,
   },
-  noSessionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  noSessionIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.cardBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    ...theme.shadows.card,
-  },
-  noSessionTitle: {
-    fontSize: 22,
-    fontFamily: theme.fonts.title,
-    color: theme.colors.textPrimary,
-    marginBottom: 12,
-  },
-  noSessionText: {
-    fontSize: 16,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  webinarCard: {
-    backgroundColor: theme.colors.cardBackground,
+
+  // Live Card
+  liveCard: {
+    backgroundColor: '#ffffff',
     borderRadius: theme.borderRadius.medium,
     padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.15)',
     ...theme.shadows.card,
   },
-  liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  liveDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#ff3b30',
-    marginRight: 8,
-  },
-  liveText: {
-    color: '#ff3b30',
-    fontSize: 13,
-    fontFamily: theme.fonts.bodySemiBold,
-    letterSpacing: 1,
-  },
-  badge: {
+  liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
+    backgroundColor: '#dc3545',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: theme.borderRadius.button,
-    marginBottom: 16,
+    borderRadius: 20,
+    marginBottom: 12,
   },
-  paidBadge: {
-    backgroundColor: theme.colors.warning,
-  },
-  freeBadge: {
-    backgroundColor: theme.colors.success,
-  },
-  badgeIcon: {
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
     marginRight: 6,
   },
-  badgeText: {
+  liveText: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: theme.fonts.bodySemiBold,
+    letterSpacing: 1,
   },
   webinarTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: theme.fonts.title,
     color: theme.colors.textPrimary,
-    marginBottom: 16,
-    lineHeight: 30,
+    marginBottom: 12,
+    lineHeight: 26,
   },
   webinarMeta: {
     marginBottom: 16,
+    gap: 8,
   },
-  metaItem: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    gap: 8,
   },
   metaText: {
-    fontSize: 15,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textPrimary,
-    marginLeft: 10,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(28,103,159,0.1)',
-    marginVertical: 16,
-  },
-  registerButton: {
-    backgroundColor: theme.colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: theme.borderRadius.button,
-    marginBottom: 12,
-  },
-  registerButtonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  buttonIcon: {
-    marginRight: 10,
-  },
-  infoText: {
     fontSize: 14,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
+  },
+  liveActions: {
+    flexDirection: 'row',
+    gap: 12,
   },
   joinButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 14,
     borderRadius: theme.borderRadius.button,
+    gap: 8,
   },
   joinButtonLive: {
     backgroundColor: theme.colors.success,
   },
-  joinButtonNormal: {
-    backgroundColor: theme.colors.primary,
-  },
   joinButtonText: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: theme.fonts.bodySemiBold,
+  },
+  reminderButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  reminderButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+
+  // No Live Card
+  noLiveCard: {
+    backgroundColor: 'rgba(28,103,159,0.05)',
+    borderRadius: theme.borderRadius.medium,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
+    borderStyle: 'dashed',
+  },
+  noLiveText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.textSecondary,
+    marginTop: 12,
+  },
+  noLiveSubtext: {
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+  },
+
+  // Events Section
+  eventsSection: {
+    padding: 16,
+    paddingTop: 8,
+  },
+  emptyEventsCard: {
+    backgroundColor: 'rgba(28,103,159,0.05)',
+    borderRadius: theme.borderRadius.medium,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
+    borderStyle: 'dashed',
+  },
+  emptyEventsText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    marginTop: 12,
+  },
+
+  // Event Card
+  eventCard: {
+    marginBottom: 16,
+    borderRadius: theme.borderRadius.medium,
+    backgroundColor: '#ffffff',
+    ...theme.shadows.card,
+    overflow: 'hidden',
+  },
+  eventCardInner: {
+    flexDirection: 'row',
+  },
+  eventImageContainer: {
+    width: 120,
+    height: 140,
+    position: 'relative',
+  },
+  eventImage: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderImage: {
+    backgroundColor: 'rgba(28,103,159,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  dateDay: {
+    fontSize: 18,
+    fontFamily: theme.fonts.titleBold,
+    color: '#fff',
+    lineHeight: 20,
+  },
+  dateMonth: {
+    fontSize: 10,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: 'rgba(255,255,255,0.9)',
+    textTransform: 'uppercase',
+  },
+
+  // Event Content
+  eventContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  eventTitle: {
+    fontSize: 15,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  eventTitleHovered: {
+    color: theme.colors.primary,
+  },
+  eventMeta: {
+    gap: 4,
+    marginBottom: 8,
+  },
+  eventMetaText: {
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+  },
+
+  // Event Actions
+  eventActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  eventRegisterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: theme.borderRadius.button,
+    gap: 6,
+  },
+  eventRegisterText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  eventReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: theme.borderRadius.button,
+    gap: 4,
+    backgroundColor: '#fff',
+  },
+  eventReminderButtonActive: {
+    backgroundColor: theme.colors.gold,
+    borderColor: theme.colors.gold,
+  },
+  eventReminderText: {
+    fontSize: 12,
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.primary,
+  },
+  eventReminderTextActive: {
+    color: '#fff',
   },
 });

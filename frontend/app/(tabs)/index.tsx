@@ -63,8 +63,19 @@ export default function AccueilScreen() {
     fetchEvents();
   }, []);
 
-  const openEvent = async (eventUrl: string) => {
-    await WebBrowser.openBrowserAsync(eventUrl);
+  const openEvent = (event: HelloAssoEvent) => {
+    router.push({
+      pathname: `/event-detail/${event.id}`,
+      params: {
+        title: event.title,
+        description: event.description || '',
+        startDate: event.startDate,
+        endDate: event.endDate,
+        banner: event.banner || '',
+        url: event.url,
+        widgetUrl: event.widgetUrl || event.url + '/widget',
+      },
+    });
   };
 
   const formatDate = (dateStr: string) => {

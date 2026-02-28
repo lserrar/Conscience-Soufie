@@ -60,8 +60,8 @@ export default function AccueilScreen() {
     fetchEvents();
   }, []);
 
-  const openEvent = async (url: string) => {
-    await WebBrowser.openBrowserAsync(url);
+  const openEvent = (eventId: number) => {
+    router.push(`/event/${eventId}`);
   };
 
   const formatDate = (dateStr: string) => {

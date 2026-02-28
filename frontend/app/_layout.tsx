@@ -17,6 +17,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import { UserProvider } from '@/contexts/UserContext';
+import { AudioProvider } from '@/contexts/AudioContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,12 +49,14 @@ export default function RootLayout() {
 
   return (
     <UserProvider>
-      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-      </View>
+      <AudioProvider>
+        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </View>
+      </AudioProvider>
     </UserProvider>
   );
 }

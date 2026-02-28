@@ -552,7 +552,6 @@ const styles = StyleSheet.create({
   liveActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   linkText: {
     fontSize: 14,

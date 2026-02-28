@@ -48,9 +48,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="live"
           options={{
-            title: 'Événements',
+            title: 'Zoom',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="calendar-outline" size={size} color={color} />
+              <Ionicons name="videocam-outline" size={size} color={color} />
             ),
           }}
         />

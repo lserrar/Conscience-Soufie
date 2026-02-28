@@ -82,13 +82,20 @@ export default function EventDetailScreen() {
   };
 
   const openWidget = () => {
-    setShowWidget(true);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start();
+    // On web, WebView doesn't work well with external sites due to CORS/iframe restrictions
+    // So we use WebBrowser instead. On native (iOS/Android), WebView works perfectly.
+    if (Platform.OS === 'web') {
+      const url = params.widgetUrl || params.url;
+      WebBrowser.openBrowserAsync(url);
+    } else {
+      setShowWidget(true);
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    }
   };
 
   const closeWidget = () => {

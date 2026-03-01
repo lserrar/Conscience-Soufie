@@ -481,8 +481,7 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: undefined,
-    aspectRatio: 1,
+    height: SCREEN_WIDTH * 0.9,
     backgroundColor: '#f8f8f8',
   },
   heroInfo: {

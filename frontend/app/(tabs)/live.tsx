@@ -595,21 +595,20 @@ const styles = StyleSheet.create({
   },
   heroWithImage: {
     width: '100%',
-    aspectRatio: 0.85,
+    aspectRatio: 0.8,
   },
   heroImageStyle: {
     resizeMode: 'cover',
   },
   heroOverlay: {
     flex: 1,
-    padding: 20,
+    padding: 16,
     justifyContent: 'space-between',
   },
   heroGradient: {
-    padding: 28,
-    alignItems: 'center',
-    aspectRatio: 0.85,
-    justifyContent: 'center',
+    padding: 20,
+    aspectRatio: 0.8,
+    justifyContent: 'space-between',
   },
   liveBadge: {
     flexDirection: 'row',

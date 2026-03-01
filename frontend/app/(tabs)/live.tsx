@@ -10,6 +10,7 @@ import {
   Image,
   Animated,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -19,23 +20,18 @@ import theme from '@/constants/theme';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-interface HelloAssoEvent {
+interface Webinar {
   id: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  banner: string | null;
-  logo: string | null;
-  url: string;
-  place?: {
-    name?: string;
-    city?: string;
-  };
+  topic: string;
+  start_time: string;
+  duration: number;
+  join_url: string;
+  status: string;
+  agenda?: string;
 }
 
 export default function ZoomScreen() {
-  const [events, setEvents] = useState<HelloAssoEvent[]>([]);
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,15 +57,15 @@ export default function ZoomScreen() {
     return () => dotPulse.stop();
   }, [liveDotAnim]);
 
-  const fetchEvents = async () => {
+  const fetchWebinars = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${BACKEND_URL}/api/helloasso/events`);
-      const eventList = response.data.events || [];
-      setEvents(eventList);
+      const response = await axios.get(`${BACKEND_URL}/api/zoom/webinars`);
+      const webinarList = response.data.webinars || [];
+      setWebinars(webinarList);
     } catch (err) {
-      console.error('Error fetching events:', err);
-      setError('Impossible de charger les événements.');
+      console.error('Error fetching webinars:', err);
+      setError('Impossible de charger les conférences Zoom.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,12 +73,12 @@ export default function ZoomScreen() {
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchWebinars();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchEvents();
+    fetchWebinars();
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -110,33 +106,47 @@ export default function ZoomScreen() {
     }
   };
 
-  const isLive = (event: HelloAssoEvent) => {
+  const isLive = (webinar: Webinar) => {
     const now = new Date();
-    const startTime = new Date(event.startDate);
-    const endTime = new Date(event.endDate);
+    const startTime = new Date(webinar.start_time);
+    const endTime = new Date(startTime.getTime() + webinar.duration * 60000);
     return now >= startTime && now <= endTime;
   };
 
-  const isSoon = (event: HelloAssoEvent) => {
+  const isSoon = (webinar: Webinar) => {
     const now = new Date();
-    const startTime = new Date(event.startDate);
+    const startTime = new Date(webinar.start_time);
     const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
     return timeDiff <= 30 && timeDiff > 0;
   };
 
-  const joinEvent = async (url: string) => {
-    await WebBrowser.openBrowserAsync(url);
-  };
-
-  const getEventImage = (event: HelloAssoEvent) => {
-    return event.banner || event.logo || null;
+  const joinZoom = async (joinUrl: string) => {
+    // Try to open in Zoom app first
+    const meetingMatch = joinUrl.match(/\/j\/(\d+)/);
+    const meetingNumber = meetingMatch ? meetingMatch[1] : null;
+    
+    if (meetingNumber) {
+      const zoomDeepLink = `zoomus://zoom.us/join?confno=${meetingNumber}`;
+      try {
+        const canOpen = await Linking.canOpenURL(zoomDeepLink);
+        if (canOpen) {
+          await Linking.openURL(zoomDeepLink);
+          return;
+        }
+      } catch (e) {
+        console.log('Cannot open Zoom app, falling back to browser');
+      }
+    }
+    
+    // Fallback to browser
+    await WebBrowser.openBrowserAsync(joinUrl);
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Chargement...</Text>
+        <Text style={styles.loadingText}>Chargement des conférences...</Text>
       </View>
     );
   }
@@ -146,14 +156,14 @@ export default function ZoomScreen() {
       <View style={styles.errorContainer}>
         <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchWebinars}>
           <Text style={styles.retryButtonText}>Réessayer</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  if (events.length === 0) {
+  if (webinars.length === 0) {
     return (
       <ScrollView
         style={styles.container}
@@ -166,19 +176,24 @@ export default function ZoomScreen() {
           <View style={styles.emptyIconContainer}>
             <Ionicons name="videocam-outline" size={48} color={theme.colors.primary} />
           </View>
-          <Text style={styles.emptyTitle}>Aucun événement programmé</Text>
+          <Text style={styles.emptyTitle}>Aucune conférence programmée</Text>
           <Text style={styles.emptySubtitle}>
             Les prochains événements Zoom apparaîtront ici.
             Revenez bientôt !
           </Text>
         </View>
+        
+        {/* Help section even when empty */}
+        <View style={styles.helpSection}>
+          <Text style={styles.helpTitle}>Comment ça marche ?</Text>
+          <HelpContent />
+        </View>
       </ScrollView>
     );
   }
 
-  const nextEvent = events[0];
-  const upcomingEvents = events.slice(1);
-  const nextEventImage = getEventImage(nextEvent);
+  const nextWebinar = webinars[0];
+  const upcomingWebinars = webinars.slice(1);
 
   return (
     <ScrollView
@@ -190,194 +205,187 @@ export default function ZoomScreen() {
     >
       {/* Hero - Prochain événement */}
       <View style={styles.heroSection}>
-        <Text style={styles.sectionTitle}>Prochain événement</Text>
+        <Text style={styles.sectionTitle}>Prochain événement Zoom</Text>
         
-        <TouchableOpacity 
-          style={styles.heroCard}
-          onPress={() => joinEvent(nextEvent.url)}
-          activeOpacity={0.95}
-        >
-          {nextEventImage && (
-            <Image
-              source={{ uri: nextEventImage }}
-              style={styles.heroImage}
-              resizeMode="contain"
-            />
-          )}
-          
-          <View style={styles.heroInfo}>
-            {(isLive(nextEvent) || isSoon(nextEvent)) && (
-              <View style={[styles.liveBadge, isSoon(nextEvent) && !isLive(nextEvent) && styles.soonBadge]}>
-                <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-                <Text style={styles.liveBadgeText}>
-                  {isLive(nextEvent) ? 'EN DIRECT' : 'BIENTÔT'}
-                </Text>
-              </View>
-            )}
-            
-            <Text style={styles.heroTitle} numberOfLines={3}>
-              {nextEvent.title}
-            </Text>
-            
-            <View style={styles.heroMeta}>
-              <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
-              <Text style={styles.heroMetaText}>
-                {formatDate(nextEvent.startDate)} à {formatTime(nextEvent.startDate)}
+        <View style={styles.heroCard}>
+          {/* Live/Soon Badge */}
+          {(isLive(nextWebinar) || isSoon(nextWebinar)) && (
+            <View style={[styles.liveBadge, isSoon(nextWebinar) && !isLive(nextWebinar) && styles.soonBadge]}>
+              <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+              <Text style={styles.liveBadgeText}>
+                {isLive(nextWebinar) ? 'EN DIRECT' : 'DANS MOINS DE 30 MIN'}
               </Text>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.joinButton}
-              onPress={() => joinEvent(nextEvent.url)}
-            >
-              <Ionicons name="videocam" size={18} color="#fff" />
-              <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
-            </TouchableOpacity>
+          )}
+          
+          <View style={styles.heroIcon}>
+            <Ionicons name="videocam" size={40} color={theme.colors.primary} />
           </View>
-        </TouchableOpacity>
+          
+          <Text style={styles.heroTitle}>{nextWebinar.topic}</Text>
+          
+          <View style={styles.heroMeta}>
+            <View style={styles.metaRow}>
+              <Ionicons name="calendar-outline" size={18} color={theme.colors.textSecondary} />
+              <Text style={styles.heroMetaText}>{formatDate(nextWebinar.start_time)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Ionicons name="time-outline" size={18} color={theme.colors.textSecondary} />
+              <Text style={styles.heroMetaText}>{formatTime(nextWebinar.start_time)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Ionicons name="hourglass-outline" size={18} color={theme.colors.textSecondary} />
+              <Text style={styles.heroMetaText}>{nextWebinar.duration} minutes</Text>
+            </View>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.joinButton}
+            onPress={() => joinZoom(nextWebinar.join_url)}
+          >
+            <Ionicons name="videocam" size={20} color="#fff" />
+            <Text style={styles.joinButtonText}>Rejoindre la conférence Zoom</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Liste - Événements à venir */}
-      {upcomingEvents.length > 0 && (
+      {upcomingWebinars.length > 0 && (
         <View style={styles.upcomingSection}>
           <Text style={styles.sectionTitle}>À venir</Text>
           
-          {upcomingEvents.map((event) => {
-            const eventImage = getEventImage(event);
-            return (
-              <TouchableOpacity
-                key={event.id}
-                style={styles.eventCard}
-                onPress={() => joinEvent(event.url)}
-                activeOpacity={0.9}
-              >
-                {eventImage && (
-                  <Image
-                    source={{ uri: eventImage }}
-                    style={styles.eventImage}
-                    resizeMode="contain"
-                  />
-                )}
+          {upcomingWebinars.map((webinar) => (
+            <TouchableOpacity
+              key={webinar.id}
+              style={styles.eventCard}
+              onPress={() => joinZoom(webinar.join_url)}
+              activeOpacity={0.9}
+            >
+              <View style={styles.eventIcon}>
+                <Ionicons name="videocam-outline" size={24} color={theme.colors.primary} />
+              </View>
+              
+              <View style={styles.eventInfo}>
+                <Text style={styles.eventTitle} numberOfLines={2}>
+                  {webinar.topic}
+                </Text>
                 
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle} numberOfLines={2}>
-                    {event.title}
+                <View style={styles.eventMeta}>
+                  <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} />
+                  <Text style={styles.eventMetaText}>
+                    {formatDate(webinar.start_time)} à {formatTime(webinar.start_time)}
                   </Text>
-                  
-                  <View style={styles.eventMeta}>
-                    <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} />
-                    <Text style={styles.eventMetaText}>
-                      {formatDate(event.startDate)}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.eventMeta}>
-                    <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
-                    <Text style={styles.eventMetaText}>
-                      {formatTime(event.startDate)}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.zoomLink}>
-                    <Ionicons name="videocam" size={14} color={theme.colors.primary} />
-                    <Text style={styles.zoomLinkText}>Rejoindre Zoom</Text>
-                  </View>
                 </View>
-              </TouchableOpacity>
-            );
-          })}
+                
+                <View style={styles.zoomLink}>
+                  <Ionicons name="log-in-outline" size={14} color={theme.colors.primary} />
+                  <Text style={styles.zoomLinkText}>Rejoindre Zoom</Text>
+                </View>
+              </View>
+              
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
       {/* Section Comment ça marche */}
       <View style={styles.helpSection}>
         <Text style={styles.helpTitle}>Comment ça marche ?</Text>
-        
-        <Text style={styles.helpIntro}>
-          Un lien personnalisé vous permettra, à l'heure prévue, de vous connecter au site sur lequel est retransmise la réunion (Zoom). En cas de retard, vous pouvez tout de même accéder à la conférence en cours.
-        </Text>
-
-        <View style={styles.helpBlock}>
-          <Text style={styles.helpSubtitle}>Se connecter</Text>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Vous pouvez participer à la réunion depuis l'appli Zoom, une tablette ou votre téléphone, connecté à internet.
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Entrez les informations demandées (prénom, ville) puis cliquez sur « Connexion ».
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Vous visualisez en direct la retransmission de la conférence en vidéo en temps réel.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.helpBlock}>
-          <Text style={styles.helpSubtitle}>Poser vos questions</Text>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              En bas à droite de votre écran, cliquez sur « Q&R » ou « Q&A ».
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Tapez un message dans la boîte de dialogue « Question ».
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Les questions seront vues en temps réel par le modérateur et pourront être traitées pendant la session de questions/réponses à la fin de l'intervention.
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Vous ne pouvez pas intervenir oralement.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.helpBlock}>
-          <Text style={styles.helpSubtitle}>Quelques conseils</Text>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              N'hésitez pas à vous connecter quelques minutes avant le début de la réunion.
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Pour les utilisateurs de tablettes/smartphones, une application gratuite « ZOOM Cloud Meetings » est disponible.
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Équipez-vous d'un casque pour une meilleure qualité de son.
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <View style={styles.helpBullet} />
-            <Text style={styles.helpText}>
-              Dans la mesure du possible, fermez les applications qui consomment de la bande passante.
-            </Text>
-          </View>
-        </View>
+        <HelpContent />
       </View>
 
       <View style={styles.bottomSpacer} />
     </ScrollView>
+  );
+}
+
+// Help content component
+function HelpContent() {
+  return (
+    <>
+      <Text style={styles.helpIntro}>
+        Un lien personnalisé vous permettra, à l'heure prévue, de vous connecter au site sur lequel est retransmise la réunion (Zoom). En cas de retard, vous pouvez tout de même accéder à la conférence en cours.
+      </Text>
+
+      <View style={styles.helpBlock}>
+        <Text style={styles.helpSubtitle}>Se connecter</Text>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Vous pouvez participer à la réunion depuis l'appli Zoom, une tablette ou votre téléphone, connecté à internet.
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Entrez les informations demandées (prénom, ville) puis cliquez sur « Connexion ».
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Vous visualisez en direct la retransmission de la conférence en vidéo en temps réel.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.helpBlock}>
+        <Text style={styles.helpSubtitle}>Poser vos questions</Text>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            En bas à droite de votre écran, cliquez sur « Q&R » ou « Q&A ».
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Tapez un message dans la boîte de dialogue « Question ».
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Les questions seront vues en temps réel par le modérateur et pourront être traitées pendant la session de questions/réponses à la fin de l'intervention.
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Vous ne pouvez pas intervenir oralement.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.helpBlock}>
+        <Text style={styles.helpSubtitle}>Quelques conseils</Text>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            N'hésitez pas à vous connecter quelques minutes avant le début de la réunion.
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Pour les utilisateurs de tablettes/smartphones, une application gratuite « ZOOM Cloud Meetings » est disponible.
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Équipez-vous d'un casque pour une meilleure qualité de son.
+          </Text>
+        </View>
+        <View style={styles.helpItem}>
+          <View style={styles.helpBullet} />
+          <Text style={styles.helpText}>
+            Dans la mesure du possible, fermez les applications qui consomment de la bande passante.
+          </Text>
+        </View>
+      </View>
+    </>
   );
 }
 
@@ -427,13 +435,12 @@ const styles = StyleSheet.create({
   
   // Empty state
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexGrow: 1,
   },
   emptyState: {
     alignItems: 'center',
     padding: 32,
+    paddingTop: 60,
   },
   emptyIconContainer: {
     width: 100,
@@ -475,28 +482,20 @@ const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    overflow: 'hidden',
+    padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(28,103,159,0.1)',
-  },
-  heroImage: {
-    width: '100%',
-    height: SCREEN_WIDTH * 0.9,
-    backgroundColor: '#f8f8f8',
-  },
-  heroInfo: {
-    padding: 16,
-    gap: 12,
+    borderColor: 'rgba(28,103,159,0.15)',
+    alignItems: 'center',
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     backgroundColor: '#e53935',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     gap: 6,
+    marginBottom: 16,
   },
   soonBadge: {
     backgroundColor: '#ff9800',
@@ -513,19 +512,34 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bodySemiBold,
     letterSpacing: 1,
   },
+  heroIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(28,103,159,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   heroTitle: {
     fontSize: 20,
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
     lineHeight: 26,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   heroMeta: {
+    gap: 8,
+    marginBottom: 20,
+  },
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   heroMetaText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
   },
@@ -533,11 +547,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 10,
     backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 8,
-    marginTop: 4,
+    width: '100%',
   },
   joinButtonText: {
     color: '#fff',
@@ -552,24 +567,26 @@ const styles = StyleSheet.create({
   },
   eventCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 12,
-    overflow: 'hidden',
+    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: 'rgba(28,103,159,0.1)',
   },
-  eventImage: {
-    width: 120,
-    height: undefined,
-    aspectRatio: 0.8,
-    backgroundColor: '#f8f8f8',
+  eventIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(28,103,159,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
   eventInfo: {
     flex: 1,
-    padding: 12,
-    justifyContent: 'center',
-    gap: 6,
+    gap: 4,
   },
   eventTitle: {
     fontSize: 15,
@@ -592,7 +609,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 8,
+    marginTop: 6,
   },
   zoomLinkText: {
     fontSize: 14,

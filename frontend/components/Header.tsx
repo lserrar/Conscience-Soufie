@@ -8,8 +8,6 @@ import {
   Image,
   ScrollView,
   Switch,
-  ActivityIndicator,
-  Platform,
   TextInput,
   FlatList,
   Keyboard,

@@ -206,12 +206,16 @@ export default function Header() {
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => setSearchModalVisible(true)}
+                data-testid="search-btn"
+                accessibilityLabel="Rechercher"
               >
                 <Ionicons name="search" size={20} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => setDonationModalVisible(true)}
+                data-testid="donation-btn"
+                accessibilityLabel="Faire un don"
               >
                 <Ionicons name="gift-outline" size={20} color="#fff" />
               </TouchableOpacity>

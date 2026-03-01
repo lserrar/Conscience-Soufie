@@ -194,7 +194,10 @@ export default function Header() {
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            {/* Left: Logo that opens profile */}
+            {/* Left spacer for balance */}
+            <View style={styles.sideSpace} />
+            
+            {/* Center: Logo (clickable for profile) */}
             <TouchableOpacity
               style={styles.logoButton}
               onPress={() => setProfileModalVisible(true)}
@@ -203,23 +206,22 @@ export default function Header() {
             >
               <Image
                 source={{ uri: LOGO_URL }}
-                style={styles.logoSmall}
+                style={styles.logoBig}
                 resizeMode="contain"
               />
             </TouchableOpacity>
             
-            {/* Spacer */}
-            <View style={styles.spacer} />
-            
             {/* Right: Search only */}
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={() => setSearchModalVisible(true)}
-              data-testid="search-btn"
-              activeOpacity={0.8}
-            >
-              <Ionicons name="search" size={24} color="#fff" />
-            </TouchableOpacity>
+            <View style={styles.sideSpace}>
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={() => setSearchModalVisible(true)}
+                data-testid="search-btn"
+                activeOpacity={0.8}
+              >
+                <Ionicons name="search" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>

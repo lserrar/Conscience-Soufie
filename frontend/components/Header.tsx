@@ -689,65 +689,83 @@ export default function Header() {
 
       {/* Donation Modal with WebView */}
       <Modal
-        visible={donationModalVisible}
+        visible={donationPageVisible}
         animationType="slide"
-        onRequestClose={() => setDonationModalVisible(false)}
+        onRequestClose={() => setDonationPageVisible(false)}
       >
         <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
-          <View style={styles.donationHeader}>
+          <View style={styles.legalHeader}>
             <TouchableOpacity
               style={styles.modalCloseButton}
-              onPress={() => setDonationModalVisible(false)}
+              onPress={() => setDonationPageVisible(false)}
             >
-              <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
+              <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
             </TouchableOpacity>
-            <Text style={styles.modalHeaderTitle}>Faire un don</Text>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => openLink(DONATION_URL)}
-            >
-              <Ionicons name="open-outline" size={22} color={theme.colors.primary} />
-            </TouchableOpacity>
+            <Text style={styles.legalHeaderTitle}>Don et adhésion</Text>
+            <View style={styles.modalCloseButton} />
           </View>
-
-          {isWeb ? (
-            <View style={styles.webFallback}>
-              <View style={styles.donationIconContainer}>
-                <Ionicons name="heart" size={48} color="#fff" />
+          
+          <ScrollView style={styles.donationContent} showsVerticalScrollIndicator={false}>
+            {/* Elegant Header */}
+            <View style={styles.donationPageHeader}>
+              <View style={styles.donationIconLarge}>
+                <Ionicons name="heart" size={40} color="#fff" />
               </View>
-              <Text style={styles.donationTitle}>Soutenez Conscience Soufie</Text>
-              <Text style={styles.donationSubtitle}>
-                Votre don nous aide à poursuivre notre mission culturelle et spirituelle.
+              <Text style={styles.donationPageTitle}>Soutenez Conscience Soufie</Text>
+            </View>
+            
+            {/* Content */}
+            <View style={styles.donationTextContainer}>
+              <Text style={styles.donationGreeting}>Chers membres du Cercle Conscience Soufie,</Text>
+              
+              <Text style={styles.donationParagraph}>
+                Votre adhésion à Conscience Soufie arrive à échéance le 31 décembre.
               </Text>
-              <TouchableOpacity
-                style={styles.donationCTAButton}
-                onPress={() => {
-                  setDonationModalVisible(false);
-                  openLink(DONATION_URL);
-                }}
-              >
-                <Ionicons name="heart" size={20} color="#fff" />
-                <Text style={styles.donationCTAText}>Faire un don</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.webviewContainer}>
-              {webviewLoading && (
-                <View style={styles.webviewLoading}>
-                  <ActivityIndicator size="large" color={theme.colors.primary} />
-                  <Text style={styles.webviewLoadingText}>Chargement...</Text>
+              
+              <Text style={styles.donationParagraph}>
+                Pour rappel, l'adhésion est annuelle, gratuite et vous permet d'assister à nos assemblées générales, mais également de recevoir les liens Zoom pour assister à nos événements en ligne.
+              </Text>
+              
+              <Text style={styles.donationParagraph}>
+                Votre soutien nous est précieux à plus d'un titre, et votre adhésion est essentielle à notre association. Nous espérons vous compter à nouveau parmi nos membres. Elle s'effectue en moins de 3 min sur le site HelloAsso.
+              </Text>
+              
+              <View style={styles.donationHighlight}>
+                <Ionicons name="gift-outline" size={24} color={theme.colors.primary} />
+                <Text style={styles.donationHighlightText}>
+                  Vous pouvez soutenir également nos actions en effectuant un don ponctuel ou régulier. Vos dons permettront à Conscience Soufie de pérenniser ses actions et l'encourageront à poursuivre ses efforts pour transmettre la sagesse universelle du soufisme à un large public.
+                </Text>
+              </View>
+              
+              <View style={styles.fiscalBox}>
+                <Text style={styles.fiscalTitle}>Avantage fiscal</Text>
+                <Text style={styles.fiscalText}>
+                  L'association Conscience Soufie est une association loi 1901 d'intérêt général et à ce titre, elle est habilitée à délivrer des reçus fiscaux.
+                </Text>
+                <View style={styles.fiscalExample}>
+                  <Text style={styles.fiscalExampleText}>
+                    Donner <Text style={styles.fiscalBold}>50€</Text> ne vous coûte que <Text style={styles.fiscalBold}>17€</Text>
+                  </Text>
+                  <Text style={styles.fiscalSmall}>après déduction fiscale</Text>
                 </View>
-              )}
-              <WebView
-                source={{ uri: DONATION_URL }}
-                style={styles.webview}
-                onLoadStart={() => setWebviewLoading(true)}
-                onLoadEnd={() => setWebviewLoading(false)}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-              />
+              </View>
+              
+              {/* CTA Button */}
+              <TouchableOpacity
+                style={styles.donationMainButton}
+                onPress={() => openLink(DONATION_URL)}
+              >
+                <Ionicons name="heart" size={22} color="#fff" />
+                <Text style={styles.donationMainButtonText}>Adhérer ou faire un don</Text>
+              </TouchableOpacity>
+              
+              {/* Closing */}
+              <View style={styles.donationClosing}>
+                <Text style={styles.donationClosingText}>Bien fraternellement,</Text>
+                <Text style={styles.donationSignature}>Conscience Soufie</Text>
+              </View>
             </View>
-          )}
+          </ScrollView>
         </View>
       </Modal>
     </>

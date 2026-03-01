@@ -448,6 +448,17 @@ export default function Header() {
               
               <TouchableOpacity 
                 style={styles.menuItem}
+                onPress={() => setDonationPageVisible(true)}
+              >
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="heart-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Don et adhésion</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.menuItem}
                 onPress={navigateToAbout}
               >
                 <View style={styles.menuItemLeft}>

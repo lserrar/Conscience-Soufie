@@ -1044,6 +1044,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
+  menuItemPressed: {
+    backgroundColor: '#f5f5f5',
+  },
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',

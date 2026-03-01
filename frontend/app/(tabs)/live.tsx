@@ -588,10 +588,10 @@ const styles = StyleSheet.create({
   },
   heroWithImage: {
     width: '100%',
-    aspectRatio: 0.8,
+    aspectRatio: 0.7,
   },
   heroImageStyle: {
-    resizeMode: 'cover',
+    borderRadius: 16,
   },
   heroOverlayWrapper: {
     flex: 1,

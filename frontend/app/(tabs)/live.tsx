@@ -10,7 +10,6 @@ import {
   Animated,
   Dimensions,
   Linking,
-  Image,
   ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

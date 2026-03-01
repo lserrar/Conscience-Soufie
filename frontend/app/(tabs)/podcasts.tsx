@@ -128,6 +128,8 @@ export default function PodcastsScreen() {
       return;
     }
     await playPodcast(podcast, podcasts, index);
+    // Ouvrir directement le lecteur plein écran
+    setShowFullPlayer(true);
   };
 
   const handleHeroPressIn = () => {

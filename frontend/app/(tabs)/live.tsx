@@ -347,7 +347,7 @@ export default function ZoomScreen() {
                   <View style={styles.cardWithImage}>
                     <Image
                       source={{ uri: webinar.imageUrl }}
-                      style={styles.cardBackgroundImage}
+                      style={[styles.cardBackgroundImage, { objectFit: 'cover' } as any]}
                       resizeMode="cover"
                     />
                     <LinearGradient

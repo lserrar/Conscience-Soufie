@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    aspectRatio: 0.75,
+    height: 200,
     marginRight: 12,
     borderRadius: 16,
     overflow: 'hidden',

@@ -593,12 +593,18 @@ const styles = StyleSheet.create({
   heroWithImage: {
     width: '100%',
     aspectRatio: 0.7,
+    position: 'relative',
+  },
+  heroBackgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   heroImageStyle: {
     borderRadius: 16,
   },
   heroOverlayWrapper: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     padding: 16,
     justifyContent: 'space-between',
   },

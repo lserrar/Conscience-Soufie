@@ -441,19 +441,22 @@ export default function Header() {
             <View style={styles.menuSection}>
               <Text style={styles.menuSectionTitle}>À propos</Text>
               
-              <TouchableOpacity 
-                style={styles.menuItem}
-                onPress={() => setDonationPageVisible(true)}
+              <Pressable 
+                style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+                onPress={() => {
+                  console.log('Don et adhésion pressed');
+                  setDonationPageVisible(true);
+                }}
               >
                 <View style={styles.menuItemLeft}>
                   <Ionicons name="heart-outline" size={22} color={theme.colors.textPrimary} />
                   <Text style={styles.menuItemText}>Don et adhésion</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
+              </Pressable>
               
-              <TouchableOpacity 
-                style={styles.menuItem}
+              <Pressable 
+                style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
                 onPress={navigateToAbout}
               >
                 <View style={styles.menuItemLeft}>
@@ -461,10 +464,10 @@ export default function Header() {
                   <Text style={styles.menuItemText}>Qui sommes-nous</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
+              </Pressable>
               
-              <TouchableOpacity 
-                style={styles.menuItem}
+              <Pressable 
+                style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
                 onPress={sendEmail}
               >
                 <View style={styles.menuItemLeft}>
@@ -472,7 +475,7 @@ export default function Header() {
                   <Text style={styles.menuItemText}>Nous contacter</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Réseaux sociaux */}

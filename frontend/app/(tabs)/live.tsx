@@ -9,9 +9,7 @@ import {
   ActivityIndicator,
   Image,
   Animated,
-  Linking,
   Dimensions,
-  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -20,8 +18,6 @@ import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH * 0.75;
-const CARD_HEIGHT = CARD_WIDTH * 1.2;
 
 interface HelloAssoEvent {
   id: string;
@@ -93,6 +89,7 @@ export default function ZoomScreen() {
     try {
       const date = new Date(dateStr);
       return date.toLocaleDateString('fr-FR', { 
+        weekday: 'long',
         day: 'numeric', 
         month: 'long' 
       });
@@ -200,175 +197,180 @@ export default function ZoomScreen() {
           onPress={() => joinEvent(nextEvent.url)}
           activeOpacity={0.95}
         >
-          {nextEventImage ? (
-            <ImageBackground
+          {nextEventImage && (
+            <Image
               source={{ uri: nextEventImage }}
               style={styles.heroImage}
-              imageStyle={styles.heroImageStyle}
-            >
-              <View style={styles.heroOverlay}>
-                {(isLive(nextEvent) || isSoon(nextEvent)) && (
-                  <View style={[styles.liveBadge, isSoon(nextEvent) && !isLive(nextEvent) && styles.soonBadge]}>
-                    <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-                    <Text style={styles.liveBadgeText}>
-                      {isLive(nextEvent) ? 'EN DIRECT' : 'BIENTÔT'}
-                    </Text>
-                  </View>
-                )}
-                
-                <View style={styles.heroContent}>
-                  <View style={styles.heroDateBadge}>
-                    <Ionicons name="calendar-outline" size={14} color="#fff" />
-                    <Text style={styles.heroDateText}>
-                      {formatDate(nextEvent.startDate)} à {formatTime(nextEvent.startDate)}
-                    </Text>
-                  </View>
-                  
-                  <Text style={styles.heroTitle} numberOfLines={3}>
-                    {nextEvent.title}
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    style={styles.joinButton}
-                    onPress={() => joinEvent(nextEvent.url)}
-                  >
-                    <Ionicons name="videocam" size={18} color="#fff" />
-                    <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ImageBackground>
-          ) : (
-            <View style={[styles.heroImage, styles.heroNoImage]}>
-              <View style={styles.heroOverlay}>
-                {(isLive(nextEvent) || isSoon(nextEvent)) && (
-                  <View style={[styles.liveBadge, isSoon(nextEvent) && !isLive(nextEvent) && styles.soonBadge]}>
-                    <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-                    <Text style={styles.liveBadgeText}>
-                      {isLive(nextEvent) ? 'EN DIRECT' : 'BIENTÔT'}
-                    </Text>
-                  </View>
-                )}
-                
-                <View style={styles.heroContentNoImage}>
-                  <Ionicons name="videocam" size={48} color="rgba(255,255,255,0.3)" />
-                  
-                  <View style={styles.heroDateBadge}>
-                    <Ionicons name="calendar-outline" size={14} color="#fff" />
-                    <Text style={styles.heroDateText}>
-                      {formatDate(nextEvent.startDate)} à {formatTime(nextEvent.startDate)}
-                    </Text>
-                  </View>
-                  
-                  <Text style={styles.heroTitle} numberOfLines={3}>
-                    {nextEvent.title}
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    style={styles.joinButton}
-                    onPress={() => joinEvent(nextEvent.url)}
-                  >
-                    <Ionicons name="videocam" size={18} color="#fff" />
-                    <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
+              resizeMode="contain"
+            />
           )}
+          
+          <View style={styles.heroInfo}>
+            {(isLive(nextEvent) || isSoon(nextEvent)) && (
+              <View style={[styles.liveBadge, isSoon(nextEvent) && !isLive(nextEvent) && styles.soonBadge]}>
+                <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                <Text style={styles.liveBadgeText}>
+                  {isLive(nextEvent) ? 'EN DIRECT' : 'BIENTÔT'}
+                </Text>
+              </View>
+            )}
+            
+            <Text style={styles.heroTitle} numberOfLines={3}>
+              {nextEvent.title}
+            </Text>
+            
+            <View style={styles.heroMeta}>
+              <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
+              <Text style={styles.heroMetaText}>
+                {formatDate(nextEvent.startDate)} à {formatTime(nextEvent.startDate)}
+              </Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.joinButton}
+              onPress={() => joinEvent(nextEvent.url)}
+            >
+              <Ionicons name="videocam" size={18} color="#fff" />
+              <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
       </View>
 
-      {/* Carousel - Prochains événements */}
+      {/* Liste - Événements à venir */}
       {upcomingEvents.length > 0 && (
         <View style={styles.upcomingSection}>
           <Text style={styles.sectionTitle}>À venir</Text>
           
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContainer}
-            decelerationRate="fast"
-            snapToInterval={CARD_WIDTH + 12}
-          >
-            {upcomingEvents.map((event, index) => {
-              const eventImage = getEventImage(event);
-              return (
-                <TouchableOpacity
-                  key={event.id}
-                  style={[styles.eventCard, index === upcomingEvents.length - 1 && styles.lastCard]}
-                  onPress={() => joinEvent(event.url)}
-                  activeOpacity={0.95}
-                >
-                  {eventImage ? (
-                    <ImageBackground
-                      source={{ uri: eventImage }}
-                      style={styles.cardImage}
-                      imageStyle={styles.cardImageStyle}
-                    >
-                      <View style={styles.cardOverlay}>
-                        <View style={styles.cardDateBadge}>
-                          <Text style={styles.cardDateText}>{formatDate(event.startDate)}</Text>
-                        </View>
-                        
-                        <View style={styles.cardContent}>
-                          <Text style={styles.cardTitle} numberOfLines={3}>
-                            {event.title}
-                          </Text>
-                          
-                          <View style={styles.cardTime}>
-                            <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.9)" />
-                            <Text style={styles.cardTimeText}>{formatTime(event.startDate)}</Text>
-                          </View>
-                          
-                          <View style={styles.cardJoinRow}>
-                            <Ionicons name="videocam" size={16} color="#fff" />
-                            <Text style={styles.cardJoinText}>Rejoindre Zoom</Text>
-                          </View>
-                        </View>
-                      </View>
-                    </ImageBackground>
-                  ) : (
-                    <View style={[styles.cardImage, styles.cardNoImage]}>
-                      <View style={styles.cardOverlay}>
-                        <View style={styles.cardDateBadge}>
-                          <Text style={styles.cardDateText}>{formatDate(event.startDate)}</Text>
-                        </View>
-                        
-                        <Ionicons name="videocam" size={32} color="rgba(255,255,255,0.2)" style={styles.cardPlaceholderIcon} />
-                        
-                        <View style={styles.cardContent}>
-                          <Text style={styles.cardTitle} numberOfLines={3}>
-                            {event.title}
-                          </Text>
-                          
-                          <View style={styles.cardTime}>
-                            <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.9)" />
-                            <Text style={styles.cardTimeText}>{formatTime(event.startDate)}</Text>
-                          </View>
-                          
-                          <View style={styles.cardJoinRow}>
-                            <Ionicons name="videocam" size={16} color="#fff" />
-                            <Text style={styles.cardJoinText}>Rejoindre Zoom</Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          {upcomingEvents.map((event) => {
+            const eventImage = getEventImage(event);
+            return (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.eventCard}
+                onPress={() => joinEvent(event.url)}
+                activeOpacity={0.9}
+              >
+                {eventImage && (
+                  <Image
+                    source={{ uri: eventImage }}
+                    style={styles.eventImage}
+                    resizeMode="contain"
+                  />
+                )}
+                
+                <View style={styles.eventInfo}>
+                  <Text style={styles.eventTitle} numberOfLines={2}>
+                    {event.title}
+                  </Text>
+                  
+                  <View style={styles.eventMeta}>
+                    <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} />
+                    <Text style={styles.eventMetaText}>
+                      {formatDate(event.startDate)}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.eventMeta}>
+                    <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
+                    <Text style={styles.eventMetaText}>
+                      {formatTime(event.startDate)}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.zoomLink}>
+                    <Ionicons name="videocam" size={14} color={theme.colors.primary} />
+                    <Text style={styles.zoomLinkText}>Rejoindre Zoom</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
 
-      {/* Info section */}
-      <View style={styles.infoSection}>
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle-outline" size={24} color={theme.colors.primary} />
-          <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>Comment rejoindre ?</Text>
-            <Text style={styles.infoText}>
-              Cliquez sur "Rejoindre Zoom" pour vous inscrire à l'événement et recevoir le lien de connexion.
+      {/* Section Comment ça marche */}
+      <View style={styles.helpSection}>
+        <Text style={styles.helpTitle}>Comment ça marche ?</Text>
+        
+        <Text style={styles.helpIntro}>
+          Un lien personnalisé vous permettra, à l'heure prévue, de vous connecter au site sur lequel est retransmise la réunion (Zoom). En cas de retard, vous pouvez tout de même accéder à la conférence en cours.
+        </Text>
+
+        <View style={styles.helpBlock}>
+          <Text style={styles.helpSubtitle}>Se connecter</Text>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Vous pouvez participer à la réunion depuis l'appli Zoom, une tablette ou votre téléphone, connecté à internet.
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Entrez les informations demandées (prénom, ville) puis cliquez sur « Connexion ».
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Vous visualisez en direct la retransmission de la conférence en vidéo en temps réel.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.helpBlock}>
+          <Text style={styles.helpSubtitle}>Poser vos questions</Text>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              En bas à droite de votre écran, cliquez sur « Q&R » ou « Q&A ».
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Tapez un message dans la boîte de dialogue « Question ».
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Les questions seront vues en temps réel par le modérateur et pourront être traitées pendant la session de questions/réponses à la fin de l'intervention.
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Vous ne pouvez pas intervenir oralement.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.helpBlock}>
+          <Text style={styles.helpSubtitle}>Quelques conseils</Text>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              N'hésitez pas à vous connecter quelques minutes avant le début de la réunion.
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Pour les utilisateurs de tablettes/smartphones, une application gratuite « ZOOM Cloud Meetings » est disponible.
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Équipez-vous d'un casque pour une meilleure qualité de son.
+            </Text>
+          </View>
+          <View style={styles.helpItem}>
+            <View style={styles.helpBullet} />
+            <Text style={styles.helpText}>
+              Dans la mesure du possible, fermez les applications qui consomment de la bande passante.
             </Text>
           </View>
         </View>
@@ -457,42 +459,35 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Hero Section
-  heroSection: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-  },
+  // Section titles
   sectionTitle: {
     fontSize: 22,
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
     marginBottom: 16,
   },
+
+  // Hero Section
+  heroSection: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
   heroCard: {
+    backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
   },
   heroImage: {
     width: '100%',
-    height: SCREEN_WIDTH * 0.85,
+    height: undefined,
+    aspectRatio: 1,
+    backgroundColor: '#f8f8f8',
   },
-  heroNoImage: {
-    backgroundColor: theme.colors.primary,
-  },
-  heroImageStyle: {
-    borderRadius: 16,
-  },
-  heroOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: 20,
-    justifyContent: 'space-between',
-  },
-  heroContentNoImage: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
+  heroInfo: {
+    padding: 16,
+    gap: 12,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -519,30 +514,21 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bodySemiBold,
     letterSpacing: 1,
   },
-  heroContent: {
-    gap: 12,
+  heroTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    lineHeight: 26,
   },
-  heroDateBadge: {
+  heroMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
+    gap: 8,
   },
-  heroDateText: {
-    color: '#fff',
-    fontSize: 13,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  heroTitle: {
-    color: '#fff',
-    fontSize: 22,
-    fontFamily: theme.fonts.titleBold,
-    lineHeight: 28,
-    textAlign: 'center',
+  heroMetaText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
   },
   joinButton: {
     flexDirection: 'row',
@@ -552,7 +538,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     paddingVertical: 14,
     borderRadius: 8,
-    marginTop: 8,
+    marginTop: 4,
   },
   joinButtonText: {
     color: '#fff',
@@ -562,110 +548,105 @@ const styles = StyleSheet.create({
 
   // Upcoming Section
   upcomingSection: {
-    paddingTop: 32,
-    paddingLeft: 16,
-  },
-  carouselContainer: {
-    paddingRight: 16,
-  },
-  eventCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginRight: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  lastCard: {
-    marginRight: 0,
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-  },
-  cardNoImage: {
-    backgroundColor: theme.colors.primary,
-  },
-  cardImageStyle: {
-    borderRadius: 12,
-  },
-  cardOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  cardPlaceholderIcon: {
-    alignSelf: 'center',
-  },
-  cardDateBadge: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  cardDateText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  cardContent: {
-    gap: 8,
-  },
-  cardTitle: {
-    color: '#fff',
-    fontSize: 17,
-    fontFamily: theme.fonts.titleBold,
-    lineHeight: 22,
-  },
-  cardTime: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  cardTimeText: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 13,
-    fontFamily: theme.fonts.body,
-  },
-  cardJoinRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  cardJoinText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-
-  // Info Section
-  infoSection: {
     paddingHorizontal: 16,
     paddingTop: 32,
   },
-  infoCard: {
+  eventCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(28,103,159,0.05)',
+    backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
-    gap: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
   },
-  infoContent: {
+  eventImage: {
+    width: 120,
+    height: undefined,
+    aspectRatio: 0.8,
+    backgroundColor: '#f8f8f8',
+  },
+  eventInfo: {
     flex: 1,
+    padding: 12,
+    justifyContent: 'center',
+    gap: 6,
   },
-  infoTitle: {
+  eventTitle: {
     fontSize: 15,
-    fontFamily: theme.fonts.bodySemiBold,
+    fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
+    lineHeight: 20,
     marginBottom: 4,
   },
-  infoText: {
+  eventMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  eventMetaText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+  },
+  zoomLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  zoomLinkText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: theme.colors.primary,
+  },
+
+  // Help Section
+  helpSection: {
+    paddingHorizontal: 16,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  helpTitle: {
+    fontSize: 22,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 16,
+  },
+  helpIntro: {
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  helpBlock: {
+    marginBottom: 24,
+  },
+  helpSubtitle: {
+    fontSize: 17,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.primary,
+    marginBottom: 12,
+  },
+  helpItem: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  helpBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.colors.primary,
+    marginTop: 8,
+    marginRight: 12,
+  },
+  helpText: {
+    flex: 1,
     fontSize: 14,
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 22,
   },
 
   bottomSpacer: {

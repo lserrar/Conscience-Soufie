@@ -57,7 +57,6 @@ export default function Header() {
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [webviewLoading, setWebviewLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [tempUserName, setTempUserName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);

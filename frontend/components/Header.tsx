@@ -756,7 +756,7 @@ export default function Header() {
                 onPress={() => openLink(DONATION_URL)}
               >
                 <Ionicons name="heart" size={22} color="#fff" />
-                <Text style={styles.donationMainButtonText}>Adhérer ou faire un don</Text>
+                <Text style={styles.donationMainButtonText}>Faire un don</Text>
               </TouchableOpacity>
               
               {/* Closing */}

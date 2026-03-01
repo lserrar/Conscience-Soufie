@@ -49,6 +49,24 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
   - Chargement dynamique par tag/catégorie WordPress
 - [x] Section "À la une" améliorée sur l'Accueil
 
+### Phase 3 - Lecteur Audio Natif (Complété - 01/03/2026)
+- [x] **Lecteur audio natif** avec expo-av
+  - AudioContext singleton pour éviter les doubles lectures
+  - Support background playback (staysActiveInBackground: true)
+  - Gestion InterruptionMode pour iOS et Android
+- [x] **MiniPlayer** en bas de page
+  - Affiche titre, artwork, progress bar
+  - Boutons play/pause, skip previous/next
+- [x] **FullPlayer modal** plein écran
+  - Artwork grand format
+  - Slider de progression seek
+  - Contrôles +30s / -30s
+  - Sélecteur de vitesse (1x, 1.5x, 2x)
+- [x] **Icône de recherche visible** dans le header
+  - Modal de recherche fonctionnel
+  - Recherche dans les articles WordPress
+- [x] **Page À Propos** redesign natif (style New York Times)
+
 ---
 
 ## APIs Backend

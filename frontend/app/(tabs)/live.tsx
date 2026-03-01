@@ -10,6 +10,8 @@ import {
   Animated,
   Dimensions,
   Linking,
+  Image,
+  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -29,6 +31,15 @@ interface Webinar {
   join_url: string;
   status: string;
   agenda?: string;
+  imageUrl?: string | null;
+}
+
+interface HelloAssoEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  banner: string | null;
+  logo: string | null;
 }
 
 export default function ZoomScreen() {
@@ -74,12 +85,44 @@ export default function ZoomScreen() {
     ).start();
   }, []);
 
+  // Match Zoom webinars with HelloAsso events by date
+  const matchWebinarsWithImages = (zoomWebinars: Webinar[], helloAssoEvents: HelloAssoEvent[]): Webinar[] => {
+    return zoomWebinars.map(webinar => {
+      const webinarDate = new Date(webinar.start_time);
+      
+      // Find matching HelloAsso event by date (same day)
+      const matchingEvent = helloAssoEvents.find(event => {
+        const eventDate = new Date(event.startDate);
+        return (
+          webinarDate.getFullYear() === eventDate.getFullYear() &&
+          webinarDate.getMonth() === eventDate.getMonth() &&
+          webinarDate.getDate() === eventDate.getDate()
+        );
+      });
+      
+      return {
+        ...webinar,
+        imageUrl: matchingEvent?.banner || matchingEvent?.logo || null,
+      };
+    });
+  };
+
   const fetchWebinars = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${BACKEND_URL}/api/zoom/webinars`);
-      const webinarList = response.data.webinars || [];
-      setWebinars(webinarList);
+      
+      // Fetch both Zoom webinars and HelloAsso events
+      const [zoomResponse, helloAssoResponse] = await Promise.all([
+        axios.get(`${BACKEND_URL}/api/zoom/webinars`),
+        axios.get(`${BACKEND_URL}/api/helloasso/events`),
+      ]);
+      
+      const zoomWebinars = zoomResponse.data.webinars || [];
+      const helloAssoEvents = helloAssoResponse.data.events || [];
+      
+      // Match webinars with images
+      const webinarsWithImages = matchWebinarsWithImages(zoomWebinars, helloAssoEvents);
+      setWebinars(webinarsWithImages);
     } catch (err) {
       console.error('Error fetching webinars:', err);
       setError('Impossible de charger les conférences Zoom.');
@@ -203,48 +246,97 @@ export default function ZoomScreen() {
       {/* Hero - Prochain Direct */}
       {nextWebinar ? (
         <View style={styles.heroContainer}>
-          <LinearGradient
-            colors={['#0d3d5c', '#1c679f', '#2980b9']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroGradient}
-          >
-            {/* Live/Soon Badge */}
-            {(isLive(nextWebinar) || isSoon(nextWebinar)) && (
-              <View style={[styles.liveBadge, isSoon(nextWebinar) && !isLive(nextWebinar) && styles.soonBadge]}>
-                <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-                <Text style={styles.liveBadgeText}>
-                  {isLive(nextWebinar) ? 'EN DIRECT' : 'BIENTÔT'}
-                </Text>
-              </View>
-            )}
-
-            <Text style={styles.heroLabel}>PROCHAIN DIRECT</Text>
-            
-            <Text style={styles.heroTitle}>{nextWebinar.topic}</Text>
-            
-            <View style={styles.heroMeta}>
-              <View style={styles.heroMetaItem}>
-                <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.heroMetaText}>{formatDate(nextWebinar.start_time)}</Text>
-              </View>
-              <View style={styles.heroMetaItem}>
-                <Ionicons name="time" size={16} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.heroMetaText}>{formatTime(nextWebinar.start_time)}</Text>
-              </View>
-            </View>
-
-            <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%' }}>
-              <TouchableOpacity 
-                style={styles.heroButton}
-                onPress={() => joinZoom(nextWebinar.join_url)}
-                activeOpacity={0.9}
+          {nextWebinar.imageUrl ? (
+            <ImageBackground
+              source={{ uri: nextWebinar.imageUrl }}
+              style={styles.heroWithImage}
+              imageStyle={styles.heroImageStyle}
+            >
+              <LinearGradient
+                colors={['rgba(0,0,0,0.3)', 'rgba(13,61,92,0.85)', 'rgba(28,103,159,0.95)']}
+                style={styles.heroOverlay}
               >
-                <Ionicons name="videocam" size={22} color={theme.colors.primary} />
-                <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </LinearGradient>
+                {/* Live/Soon Badge */}
+                {(isLive(nextWebinar) || isSoon(nextWebinar)) && (
+                  <View style={[styles.liveBadge, isSoon(nextWebinar) && !isLive(nextWebinar) && styles.soonBadge]}>
+                    <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                    <Text style={styles.liveBadgeText}>
+                      {isLive(nextWebinar) ? 'EN DIRECT' : 'BIENTÔT'}
+                    </Text>
+                  </View>
+                )}
+
+                <Text style={styles.heroLabel}>PROCHAIN DIRECT</Text>
+                
+                <Text style={styles.heroTitle}>{nextWebinar.topic}</Text>
+                
+                <View style={styles.heroMeta}>
+                  <View style={styles.heroMetaItem}>
+                    <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.heroMetaText}>{formatDate(nextWebinar.start_time)}</Text>
+                  </View>
+                  <View style={styles.heroMetaItem}>
+                    <Ionicons name="time" size={16} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.heroMetaText}>{formatTime(nextWebinar.start_time)}</Text>
+                  </View>
+                </View>
+
+                <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%' }}>
+                  <TouchableOpacity 
+                    style={styles.heroButton}
+                    onPress={() => joinZoom(nextWebinar.join_url)}
+                    activeOpacity={0.9}
+                  >
+                    <Ionicons name="videocam" size={22} color={theme.colors.primary} />
+                    <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </LinearGradient>
+            </ImageBackground>
+          ) : (
+            <LinearGradient
+              colors={['#0d3d5c', '#1c679f', '#2980b9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroGradient}
+            >
+              {/* Live/Soon Badge */}
+              {(isLive(nextWebinar) || isSoon(nextWebinar)) && (
+                <View style={[styles.liveBadge, isSoon(nextWebinar) && !isLive(nextWebinar) && styles.soonBadge]}>
+                  <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                  <Text style={styles.liveBadgeText}>
+                    {isLive(nextWebinar) ? 'EN DIRECT' : 'BIENTÔT'}
+                  </Text>
+                </View>
+              )}
+
+              <Text style={styles.heroLabel}>PROCHAIN DIRECT</Text>
+              
+              <Text style={styles.heroTitle}>{nextWebinar.topic}</Text>
+              
+              <View style={styles.heroMeta}>
+                <View style={styles.heroMetaItem}>
+                  <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.heroMetaText}>{formatDate(nextWebinar.start_time)}</Text>
+                </View>
+                <View style={styles.heroMetaItem}>
+                  <Ionicons name="time" size={16} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.heroMetaText}>{formatTime(nextWebinar.start_time)}</Text>
+                </View>
+              </View>
+
+              <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%' }}>
+                <TouchableOpacity 
+                  style={styles.heroButton}
+                  onPress={() => joinZoom(nextWebinar.join_url)}
+                  activeOpacity={0.9}
+                >
+                  <Ionicons name="videocam" size={22} color={theme.colors.primary} />
+                  <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </LinearGradient>
+          )}
         </View>
       ) : (
         <View style={styles.emptyHero}>
@@ -273,32 +365,65 @@ export default function ZoomScreen() {
                 onPress={() => joinZoom(webinar.join_url)}
                 activeOpacity={0.95}
               >
-                <LinearGradient
-                  colors={['#1a5276', '#2471a3']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.cardGradient}
-                >
-                  <View style={styles.cardDateBadge}>
-                    <Text style={styles.cardDateText}>{formatShortDate(webinar.start_time)}</Text>
-                  </View>
-                  
-                  <View style={styles.cardIcon}>
-                    <Ionicons name="videocam" size={24} color="rgba(255,255,255,0.3)" />
-                  </View>
-                  
-                  <Text style={styles.cardTitle} numberOfLines={3}>{webinar.topic}</Text>
-                  
-                  <View style={styles.cardMeta}>
-                    <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.7)" />
-                    <Text style={styles.cardMetaText}>{formatTime(webinar.start_time)}</Text>
-                  </View>
-                  
-                  <View style={styles.cardAction}>
-                    <Ionicons name="play-circle" size={16} color="#fff" />
-                    <Text style={styles.cardActionText}>Rejoindre</Text>
-                  </View>
-                </LinearGradient>
+                {webinar.imageUrl ? (
+                  <ImageBackground
+                    source={{ uri: webinar.imageUrl }}
+                    style={styles.cardWithImage}
+                    imageStyle={styles.cardImageStyle}
+                  >
+                    <LinearGradient
+                      colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
+                      style={styles.cardOverlay}
+                    >
+                      <View style={styles.cardDateBadge}>
+                        <Text style={styles.cardDateText}>{formatShortDate(webinar.start_time)}</Text>
+                      </View>
+                      
+                      <View style={styles.cardBottom}>
+                        <Text style={styles.cardTitle} numberOfLines={2}>{webinar.topic}</Text>
+                        
+                        <View style={styles.cardMeta}>
+                          <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
+                          <Text style={styles.cardMetaText}>{formatTime(webinar.start_time)}</Text>
+                        </View>
+                        
+                        <View style={styles.cardAction}>
+                          <Ionicons name="play-circle" size={16} color="#fff" />
+                          <Text style={styles.cardActionText}>Rejoindre</Text>
+                        </View>
+                      </View>
+                    </LinearGradient>
+                  </ImageBackground>
+                ) : (
+                  <LinearGradient
+                    colors={['#1a5276', '#2471a3']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.cardGradient}
+                  >
+                    <View style={styles.cardDateBadge}>
+                      <Text style={styles.cardDateText}>{formatShortDate(webinar.start_time)}</Text>
+                    </View>
+                    
+                    <View style={styles.cardIcon}>
+                      <Ionicons name="videocam" size={24} color="rgba(255,255,255,0.3)" />
+                    </View>
+                    
+                    <View style={styles.cardBottom}>
+                      <Text style={styles.cardTitle} numberOfLines={2}>{webinar.topic}</Text>
+                      
+                      <View style={styles.cardMeta}>
+                        <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
+                        <Text style={styles.cardMetaText}>{formatTime(webinar.start_time)}</Text>
+                      </View>
+                      
+                      <View style={styles.cardAction}>
+                        <Ionicons name="play-circle" size={16} color="#fff" />
+                        <Text style={styles.cardActionText}>Rejoindre</Text>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -477,12 +602,25 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bodySemiBold,
   },
 
-  // Hero Section - Netflix style
+  // Hero Section - Netflix style with image
   heroContainer: {
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 20,
     overflow: 'hidden',
+  },
+  heroWithImage: {
+    width: '100%',
+    height: SCREEN_WIDTH * 1.1,
+  },
+  heroImageStyle: {
+    borderRadius: 20,
+  },
+  heroOverlay: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   heroGradient: {
     padding: 28,
@@ -518,22 +656,22 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bodySemiBold,
     color: 'rgba(255,255,255,0.7)',
     letterSpacing: 3,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   heroTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: theme.fonts.titleBold,
     color: '#fff',
     textAlign: 'center',
-    lineHeight: 30,
-    marginBottom: 20,
+    lineHeight: 28,
+    marginBottom: 16,
   },
   heroMeta: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 20,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   heroMetaItem: {
     flexDirection: 'row',
@@ -599,6 +737,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
+    height: CARD_WIDTH * 1.3,
     marginRight: 12,
     borderRadius: 16,
     overflow: 'hidden',
@@ -606,13 +745,25 @@ const styles = StyleSheet.create({
   lastCard: {
     marginRight: 0,
   },
+  cardWithImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardImageStyle: {
+    borderRadius: 16,
+  },
+  cardOverlay: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
   cardGradient: {
-    padding: 20,
-    height: 200,
+    flex: 1,
+    padding: 16,
     justifyContent: 'space-between',
   },
   cardDateBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -625,15 +776,18 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   cardIcon: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardBottom: {
+    gap: 8,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: theme.fonts.titleBold,
     color: '#fff',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   cardMeta: {
     flexDirection: 'row',

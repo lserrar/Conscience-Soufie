@@ -141,6 +141,13 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - Icône de recherche visible dans le header
 - MiniPlayer et FullPlayer fonctionnels
 - Espacements corrigés dans rightIcons du Header
+- **Correction UI onglet Zoom** : Hero banner et carousel avec images en mode `cover` et texte/boutons visibles
+  - Utilisation de `ImageBackground` avec `LinearGradient` pour l'overlay
+  - Styles simplifiés pour robustesse cross-platform
+
+## Vérifications en attente
+- [ ] **Bouton "Don et adhésion"** : Tester sur mobile que le modal s'ouvre correctement
+- [ ] **Audio en arrière-plan** : Rebuild natif nécessaire (`npx expo run:ios` ou `eas build`)
 
 ## Dernière mise à jour
-1 mars 2026 - Phase 3 complétée (Lecteur Audio Natif)
+1 mars 2026 - Correction UI onglet Zoom (images cover + overlay visible)

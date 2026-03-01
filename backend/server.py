@@ -561,10 +561,11 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
             "references-bibilographiques": "references-bibilographiques",
             "paix": "paix",
             "hommages": "hommages",
+            "rene-guenon": "rene-guenon",
         }
         
         # Tags that should use text search (no direct category in WordPress)
-        search_only_tags = {"rumi"}
+        search_only_tags = {"rumi", "rene-guenon"}
         
         # Search terms for text search fallback
         search_term_mapping = {
@@ -575,6 +576,7 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
             "cheikh-ahmad-al-alawi": "Cheikh Alawi",
             "hallaj": "Hallaj",
             "le-prophete-muhammad": "Prophète Muhammad",
+            "rene-guenon": "René Guénon",
         }
         
         async with httpx.AsyncClient() as http_client:

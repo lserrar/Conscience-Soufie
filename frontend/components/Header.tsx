@@ -778,29 +778,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
-  menuButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    paddingLeft: 4,
+  logoButton: {
+    paddingVertical: 4,
+  },
+  logoSmall: {
+    width: 140,
+    height: 40,
+  },
+  spacer: {
+    flex: 1,
   },
   searchButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 4,
-  },
-  centerSection: {
-    flex: 1,
     alignItems: 'center',
-  },
-  logo: {
-    width: 180,
-    height: 50,
   },
   
   // Search Modal Styles

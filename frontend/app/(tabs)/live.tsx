@@ -250,6 +250,7 @@ export default function ZoomScreen() {
               source={{ uri: nextWebinar.imageUrl }} 
               style={styles.heroWithImage}
               imageStyle={styles.heroImageStyle}
+              resizeMode="cover"
             >
               <LinearGradient
                 colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(28,103,159,0.85)']}

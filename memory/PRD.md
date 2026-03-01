@@ -116,8 +116,8 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 ## Backlog
 
 ### P1 - Prioritaire
-- [ ] Corriger l'affichage des filtres Articles sur web (étirement vertical)
-- [ ] Implémenter la fonctionnalité de recherche
+- [x] ~~Corriger l'affichage des filtres Articles sur web (étirement vertical)~~
+- [x] ~~Implémenter la fonctionnalité de recherche~~
 
 ### P2 - Important
 - [ ] Compléter les préférences utilisateur dans le profil
@@ -126,18 +126,21 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 ### P3 - Nice to have
 - [ ] Mode hors-ligne pour les podcasts
 - [ ] Favoris/Bookmarks
+- [ ] Migration de expo-av vers expo-audio (avant SDK 54)
 
 ---
 
 ## Tests
-- **Backend**: 14/14 tests passés (100%)
-- **Frontend**: Fonctionnel, problème mineur de rendu web
+- **Backend**: APIs fonctionnelles (WordPress, HelloAsso, Zoom, SoundCloud RSS)
+- **Frontend**: 100% - Tous les bugs critiques corrigés et testés
 
-## Corrections récentes (28/02/2026)
-- Corrigé le label "Henri Corbin" → "Henry Corbin"
-- Corrigé la recherche pour "Rûmî" (utilise recherche textuelle)
-- Ajouté page lecteur audio podcast avec embed SoundCloud
-- Corrigé le lien "Voir tout" sur Accueil pour passer le bon filtre
+## Corrections récentes (01/03/2026)
+- Refonte complète de AudioContext.tsx avec pattern singleton
+- Correction du bug de double audio
+- Support du background playback configuré
+- Icône de recherche visible dans le header
+- MiniPlayer et FullPlayer fonctionnels
+- Espacements corrigés dans rightIcons du Header
 
 ## Dernière mise à jour
-28 février 2026 - Phase 2 complétée + corrections
+1 mars 2026 - Phase 3 complétée (Lecteur Audio Natif)

@@ -786,15 +786,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
+  sideSpace: {
+    width: 50,
+    alignItems: 'flex-end',
+  },
   logoButton: {
-    paddingVertical: 4,
-  },
-  logoSmall: {
-    width: 140,
-    height: 40,
-  },
-  spacer: {
     flex: 1,
+    alignItems: 'center',
+  },
+  logoBig: {
+    width: 220,
+    height: 55,
   },
   searchButton: {
     width: 44,

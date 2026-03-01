@@ -190,8 +190,6 @@ export default function Header() {
     setHasSearched(false);
   };
 
-  const isWeb = Platform.OS === 'web';
-
   return (
     <>
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>

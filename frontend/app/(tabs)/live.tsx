@@ -586,20 +586,15 @@ const styles = StyleSheet.create({
   heroWithImage: {
     width: '100%',
     aspectRatio: 0.8,
-    justifyContent: 'flex-end',
   },
-  heroImageStyle: {
-  },
-  heroOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  heroOverlayWrapper: {
+    flex: 1,
+    backgroundColor: 'rgba(28,103,159,0.55)',
     padding: 16,
     justifyContent: 'space-between',
   },
-  heroGradient: {
+  heroGradientOnly: {
+    backgroundColor: theme.colors.primary,
     padding: 20,
     aspectRatio: 0.8,
     justifyContent: 'space-between',

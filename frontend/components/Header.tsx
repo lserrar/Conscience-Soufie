@@ -446,8 +446,8 @@ export default function Header() {
               <Pressable 
                 style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
                 onPress={() => {
-                  console.log('Don et adhésion pressed');
-                  setDonationPageVisible(true);
+                  setProfileModalVisible(false);
+                  setTimeout(() => setDonationPageVisible(true), 300);
                 }}
               >
                 <View style={styles.menuItemLeft}>

@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    height: CARD_WIDTH * 1.3,
+    aspectRatio: 0.75,
     marginRight: 12,
     borderRadius: 16,
     overflow: 'hidden',
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   cardImageStyle: {
-    borderRadius: 16,
+    resizeMode: 'cover',
   },
   cardOverlay: {
     flex: 1,

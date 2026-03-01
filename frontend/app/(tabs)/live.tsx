@@ -729,6 +729,11 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   cardWithImage: {
+    flex: 1,
+    position: 'relative',
+  },
+  cardBackgroundImage: {
+    ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
   },
@@ -736,7 +741,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   cardOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     padding: 16,
     justifyContent: 'space-between',
   },

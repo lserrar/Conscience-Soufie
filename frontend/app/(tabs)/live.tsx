@@ -590,8 +590,10 @@ const styles = StyleSheet.create({
   },
   heroWithImage: {
     width: '100%',
-    aspectRatio: 0.7,
+    aspectRatio: 16 / 9,
     position: 'relative',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   heroBackgroundImage: {
     ...StyleSheet.absoluteFillObject,

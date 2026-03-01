@@ -35,6 +35,7 @@ const THEMATIC_TAGS = [
   { slug: 'philosophie', label: 'Philosophie' },
   { slug: 'paix', label: 'Paix' },
   { slug: 'hommages', label: 'Hommages' },
+  { slug: 'rene-guenon', label: 'René Guénon' },
 ];
 
 // Calameo magazines with actual cover images

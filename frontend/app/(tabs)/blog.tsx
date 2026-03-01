@@ -32,6 +32,7 @@ const TOPIC_FILTERS = [
   { slug: 'references-bibilographiques', label: 'Bibliographie' },
   { slug: 'paix', label: 'Paix' },
   { slug: 'hommages', label: 'Hommages' },
+  { slug: 'rene-guenon', label: 'René Guénon' },
 ];
 
 interface Post {

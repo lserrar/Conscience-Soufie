@@ -348,6 +348,7 @@ export default function ZoomScreen() {
                     source={{ uri: webinar.imageUrl }}
                     style={styles.cardWithImage}
                     imageStyle={styles.cardImageStyle}
+                    resizeMode="cover"
                   >
                     <LinearGradient
                       colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}

@@ -13,6 +13,7 @@ import {
   TextInput,
   FlatList,
   Keyboard,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -25,6 +26,17 @@ import theme from '@/constants/theme';
 
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
 const DONATION_URL = 'https://www.helloasso.com/associations/conscience-soufie/formulaires/1';
+
+// Social links
+const SOCIAL_LINKS = {
+  facebook: 'https://www.facebook.com/ConscienceSoufie',
+  instagram: 'https://www.instagram.com/conscience_soufie/',
+  youtube: 'https://www.youtube.com/channel/UCK37umfJRkclvPvuVXFkjQA/videos',
+  website: 'https://consciencesoufie.com/',
+  spotify: 'https://open.spotify.com/show/3zKLZijUDiFANmWvH76fqa',
+  soundcloud: 'https://soundcloud.com/user-431553500',
+  apple: 'https://podcasts.apple.com/fr/podcast/conscience-soufie/id1447560870',
+};
 
 interface SearchResult {
   id: number;
@@ -43,6 +55,8 @@ export default function Header() {
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [donationModalVisible, setDonationModalVisible] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [webviewLoading, setWebviewLoading] = useState(true);
   const [userName, setUserName] = useState('');
@@ -83,6 +97,10 @@ export default function Header() {
 
   const openLink = async (url: string) => {
     await WebBrowser.openBrowserAsync(url);
+  };
+
+  const sendEmail = () => {
+    Linking.openURL('mailto:info@consciencesoufie.com?subject=Contact depuis l\'application');
   };
 
   const navigateToAbout = () => {
@@ -181,24 +199,22 @@ export default function Header() {
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            {/* Left: Profile */}
+            {/* Left: Menu hamburger */}
             <TouchableOpacity
-              style={styles.sideButton}
+              style={styles.menuButton}
               onPress={() => setProfileModalVisible(true)}
+              data-testid="menu-btn"
             >
-              <View style={styles.profileAvatar}>
-                <Ionicons name="person" size={16} color="#fff" />
-              </View>
+              <Ionicons name="menu" size={26} color="#fff" />
             </TouchableOpacity>
             
-            {/* Center: Logo + Subtitle */}
+            {/* Center: Logo only (bigger) */}
             <View style={styles.centerSection}>
               <Image
                 source={{ uri: LOGO_URL }}
                 style={styles.logo}
                 resizeMode="contain"
               />
-              <Text style={styles.subtitle}>Association culturelle à but non lucratif</Text>
             </View>
             
             {/* Right: Search + Donation */}
@@ -207,17 +223,15 @@ export default function Header() {
                 style={styles.iconBtn}
                 onPress={() => setSearchModalVisible(true)}
                 data-testid="search-btn"
-                accessibilityLabel="Rechercher"
               >
-                <Ionicons name="search" size={20} color="#fff" />
+                <Ionicons name="search" size={22} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => setDonationModalVisible(true)}
                 data-testid="donation-btn"
-                accessibilityLabel="Faire un don"
               >
-                <Ionicons name="gift-outline" size={20} color="#fff" />
+                <Ionicons name="heart-outline" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -320,73 +334,76 @@ export default function Header() {
         </View>
       </Modal>
 
-      {/* Profile/Settings Modal */}
+      {/* Profile/Menu Modal - FNAC Style */}
       <Modal
         visible={profileModalVisible}
         animationType="slide"
         onRequestClose={() => setProfileModalVisible(false)}
       >
-        <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
-          {/* Modal Header */}
-          <View style={styles.modalHeader}>
+        <View style={[styles.modalFullScreen, { paddingTop: 0 }]}>
+          {/* Blue Header Section */}
+          <View style={[styles.profileHeaderBlue, { paddingTop: insets.top + 16 }]}>
             <TouchableOpacity
-              style={styles.modalCloseButton}
+              style={styles.closeButtonWhite}
               onPress={() => setProfileModalVisible(false)}
             >
-              <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
+              <Ionicons name="close" size={28} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.modalHeaderTitle}>Mon profil</Text>
-            <View style={styles.modalCloseButton} />
+            
+            <View style={styles.profileHeaderContent}>
+              <Image
+                source={{ uri: LOGO_URL }}
+                style={styles.profileLogo}
+                resizeMode="contain"
+              />
+              {userName ? (
+                <Text style={styles.welcomeText}>Bienvenue, {userName}</Text>
+              ) : (
+                <Text style={styles.welcomeText}>Bienvenue</Text>
+              )}
+            </View>
           </View>
           
           <ScrollView style={styles.profileContent} showsVerticalScrollIndicator={false}>
-            {/* Profile Section */}
-            <View style={styles.profileSection}>
-              <View style={styles.profileAvatarLarge}>
-                <Ionicons name="person" size={40} color="#fff" />
-              </View>
-              
-              {isEditingName ? (
-                <View style={styles.editNameContainer}>
-                  <TextInput
-                    style={styles.nameInput}
-                    value={tempUserName}
-                    onChangeText={setTempUserName}
-                    placeholder="Votre nom"
-                    placeholderTextColor={theme.colors.textSecondary}
-                    autoFocus
-                  />
-                  <View style={styles.editNameButtons}>
-                    <TouchableOpacity style={styles.saveNameButton} onPress={saveUserName}>
-                      <Text style={styles.saveNameButtonText}>Enregistrer</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setIsEditingName(false)}>
-                      <Text style={styles.cancelText}>Annuler</Text>
-                    </TouchableOpacity>
+            {/* User Name Edit */}
+            {!userName && (
+              <View style={styles.addNameSection}>
+                {isEditingName ? (
+                  <View style={styles.editNameContainer}>
+                    <TextInput
+                      style={styles.nameInput}
+                      value={tempUserName}
+                      onChangeText={setTempUserName}
+                      placeholder="Votre prénom"
+                      placeholderTextColor={theme.colors.textSecondary}
+                      autoFocus
+                    />
+                    <View style={styles.editNameButtons}>
+                      <TouchableOpacity style={styles.saveNameButton} onPress={saveUserName}>
+                        <Text style={styles.saveNameButtonText}>Enregistrer</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setIsEditingName(false)}>
+                        <Text style={styles.cancelText}>Annuler</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ) : (
-                <TouchableOpacity onPress={() => setIsEditingName(true)}>
-                  <Text style={styles.profileName}>
-                    {userName || 'Ajouter votre nom'}
-                  </Text>
-                  {!userName && (
-                    <Text style={styles.profileNameHint}>Appuyez pour modifier</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-              
-              <Text style={styles.profileSubtext}>Membre Conscience Soufie</Text>
-            </View>
+                ) : (
+                  <TouchableOpacity style={styles.addNameButton} onPress={() => setIsEditingName(true)}>
+                    <Ionicons name="person-add-outline" size={20} color={theme.colors.primary} />
+                    <Text style={styles.addNameText}>Ajouter votre prénom</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
 
-            {/* Settings */}
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionTitle}>Préférences</Text>
+            {/* Préférences */}
+            <View style={styles.menuSection}>
+              <Text style={styles.menuSectionTitle}>Préférences</Text>
               
-              <View style={styles.settingItem}>
-                <View style={styles.settingItemLeft}>
-                  <Ionicons name="notifications-outline" size={22} color={theme.colors.primary} />
-                  <Text style={styles.settingItemText}>Notifications</Text>
+              <View style={styles.menuItem}>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="notifications-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Notifications</Text>
                 </View>
                 <Switch
                   value={notificationsEnabled}
@@ -395,71 +412,275 @@ export default function Header() {
                   thumbColor="#fff"
                 />
               </View>
+
+              {userName && (
+                <TouchableOpacity style={styles.menuItem} onPress={() => setIsEditingName(true)}>
+                  <View style={styles.menuItemLeft}>
+                    <Ionicons name="person-outline" size={22} color={theme.colors.textPrimary} />
+                    <Text style={styles.menuItemText}>Modifier mon prénom</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              )}
             </View>
 
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionTitle}>Confidentialité</Text>
+            {/* Confidentialité & Paramètres */}
+            <View style={styles.menuSection}>
+              <Text style={styles.menuSectionTitle}>Paramètres</Text>
               
               <TouchableOpacity 
-                style={styles.settingItemButton}
-                onPress={() => openLink('https://consciencesoufie.com/politique-de-confidentialite/')}
+                style={styles.menuItem}
+                onPress={() => setPrivacyModalVisible(true)}
               >
-                <View style={styles.settingItemLeft}>
-                  <Ionicons name="shield-checkmark-outline" size={22} color={theme.colors.primary} />
-                  <Text style={styles.settingItemText}>Politique de confidentialité</Text>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="shield-checkmark-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Confidentialité</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={styles.settingItemButton}
-                onPress={() => openLink('https://consciencesoufie.com/conditions-generales/')}
+                style={styles.menuItem}
+                onPress={() => setTermsModalVisible(true)}
               >
-                <View style={styles.settingItemLeft}>
-                  <Ionicons name="reader-outline" size={22} color={theme.colors.primary} />
-                  <Text style={styles.settingItemText}>Conditions d'utilisation</Text>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="document-text-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Conditions d'utilisation</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionTitle}>À propos</Text>
+            {/* À propos */}
+            <View style={styles.menuSection}>
+              <Text style={styles.menuSectionTitle}>À propos</Text>
               
               <TouchableOpacity 
-                style={styles.settingItemButton}
+                style={styles.menuItem}
                 onPress={navigateToAbout}
               >
-                <View style={styles.settingItemLeft}>
-                  <Ionicons name="information-circle-outline" size={22} color={theme.colors.primary} />
-                  <Text style={styles.settingItemText}>Qui sommes-nous</Text>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="information-circle-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Qui sommes-nous</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={styles.settingItemButton}
-                onPress={() => openLink('https://consciencesoufie.com/contact/')}
+                style={styles.menuItem}
+                onPress={sendEmail}
               >
-                <View style={styles.settingItemLeft}>
-                  <Ionicons name="mail-outline" size={22} color={theme.colors.primary} />
-                  <Text style={styles.settingItemText}>Nous contacter</Text>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="mail-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Nous contacter</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            {/* Logout */}
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={22} color="#dc3545" />
-              <Text style={styles.logoutText}>Se déconnecter</Text>
-            </TouchableOpacity>
+            {/* Réseaux sociaux */}
+            <View style={styles.menuSection}>
+              <Text style={styles.menuSectionTitle}>Suivez-nous</Text>
+              
+              <View style={styles.socialIconsContainer}>
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.website)}
+                >
+                  <Ionicons name="globe-outline" size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.facebook)}
+                >
+                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.instagram)}
+                >
+                  <Ionicons name="logo-instagram" size={24} color="#E4405F" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.youtube)}
+                >
+                  <Ionicons name="logo-youtube" size={24} color="#FF0000" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.spotify)}
+                >
+                  <Ionicons name="musical-notes" size={24} color="#1DB954" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.soundcloud)}
+                >
+                  <Ionicons name="cloud-outline" size={24} color="#FF5500" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialIcon}
+                  onPress={() => openLink(SOCIAL_LINKS.apple)}
+                >
+                  <Ionicons name="logo-apple" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Déconnexion */}
+            {userName && (
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Ionicons name="log-out-outline" size={22} color="#dc3545" />
+                <Text style={styles.logoutText}>Se déconnecter</Text>
+              </TouchableOpacity>
+            )}
 
             {/* App Version */}
             <View style={styles.appVersion}>
               <Text style={styles.appVersionText}>Conscience Soufie</Text>
               <Text style={styles.appVersionNumber}>Version 1.0.0</Text>
             </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Privacy Policy Modal */}
+      <Modal
+        visible={privacyModalVisible}
+        animationType="slide"
+        onRequestClose={() => setPrivacyModalVisible(false)}
+      >
+        <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
+          <View style={styles.legalHeader}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setPrivacyModalVisible(false)}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.legalHeaderTitle}>Confidentialité</Text>
+            <View style={styles.modalCloseButton} />
+          </View>
+          
+          <ScrollView style={styles.legalContent} showsVerticalScrollIndicator={false}>
+            <Text style={styles.legalTitle}>Politique de Confidentialité</Text>
+            <Text style={styles.legalDate}>Dernière mise à jour : Mars 2026</Text>
+            
+            <Text style={styles.legalSectionTitle}>1. Collecte des données</Text>
+            <Text style={styles.legalText}>
+              L'application Conscience Soufie respecte votre vie privée. Nous collectons uniquement les données strictement nécessaires au fonctionnement de l'application :{'\n\n'}
+              • Votre prénom (optionnel, stocké localement){'\n'}
+              • Vos préférences de notifications{'\n'}
+              • Données d'utilisation anonymisées
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>2. Utilisation des données</Text>
+            <Text style={styles.legalText}>
+              Vos données sont utilisées exclusivement pour :{'\n\n'}
+              • Personnaliser votre expérience{'\n'}
+              • Améliorer nos services{'\n'}
+              • Vous informer des nouveaux contenus (si vous l'avez autorisé)
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>3. Protection des données</Text>
+            <Text style={styles.legalText}>
+              Conformément au Règlement Général sur la Protection des Données (RGPD), nous garantissons :{'\n\n'}
+              • Le stockage sécurisé de vos informations{'\n'}
+              • Aucune transmission à des tiers sans consentement{'\n'}
+              • Votre droit d'accès, de rectification et de suppression
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>4. Vos droits</Text>
+            <Text style={styles.legalText}>
+              Vous disposez à tout moment des droits suivants :{'\n\n'}
+              • Accéder à vos données personnelles{'\n'}
+              • Demander leur rectification ou suppression{'\n'}
+              • Retirer votre consentement{'\n'}
+              • Porter réclamation auprès de la CNIL{'\n\n'}
+              Pour exercer ces droits, contactez-nous à : info@consciencesoufie.com
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>5. Contact</Text>
+            <Text style={styles.legalText}>
+              Association Conscience Soufie{'\n'}
+              Email : info@consciencesoufie.com{'\n'}
+              Site web : consciencesoufie.com
+            </Text>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Terms of Use Modal */}
+      <Modal
+        visible={termsModalVisible}
+        animationType="slide"
+        onRequestClose={() => setTermsModalVisible(false)}
+      >
+        <View style={[styles.modalFullScreen, { paddingTop: insets.top }]}>
+          <View style={styles.legalHeader}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setTermsModalVisible(false)}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.legalHeaderTitle}>Conditions d'utilisation</Text>
+            <View style={styles.modalCloseButton} />
+          </View>
+          
+          <ScrollView style={styles.legalContent} showsVerticalScrollIndicator={false}>
+            <Text style={styles.legalTitle}>Conditions Générales d'Utilisation</Text>
+            <Text style={styles.legalDate}>Dernière mise à jour : Mars 2026</Text>
+            
+            <Text style={styles.legalSectionTitle}>1. Objet</Text>
+            <Text style={styles.legalText}>
+              Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de l'application mobile Conscience Soufie, éditée par l'association culturelle Conscience Soufie.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>2. Acceptation des conditions</Text>
+            <Text style={styles.legalText}>
+              L'utilisation de l'application implique l'acceptation pleine et entière des présentes CGU. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser l'application.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>3. Accès à l'application</Text>
+            <Text style={styles.legalText}>
+              L'application est accessible gratuitement à tout utilisateur disposant d'un appareil mobile compatible. L'association se réserve le droit de modifier, suspendre ou interrompre l'accès à tout ou partie de l'application.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>4. Propriété intellectuelle</Text>
+            <Text style={styles.legalText}>
+              L'ensemble des contenus présents sur l'application (textes, images, vidéos, podcasts) sont la propriété de Conscience Soufie ou de ses partenaires. Toute reproduction non autorisée est interdite.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>5. Responsabilité</Text>
+            <Text style={styles.legalText}>
+              L'association Conscience Soufie s'efforce de fournir des informations exactes et à jour. Toutefois, elle ne saurait être tenue responsable des erreurs, omissions ou résultats qui pourraient être obtenus par un mauvais usage de ces informations.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>6. Protection des données</Text>
+            <Text style={styles.legalText}>
+              Le traitement des données personnelles est régi par notre Politique de Confidentialité, accessible depuis l'application, en conformité avec le RGPD.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>7. Droit applicable</Text>
+            <Text style={styles.legalText}>
+              Les présentes CGU sont soumises au droit français. Tout litige relatif à leur interprétation ou exécution relève des tribunaux français compétents.
+            </Text>
+            
+            <Text style={styles.legalSectionTitle}>8. Contact</Text>
+            <Text style={styles.legalText}>
+              Pour toute question concernant ces conditions, contactez-nous :{'\n\n'}
+              Association Conscience Soufie{'\n'}
+              Email : info@consciencesoufie.com{'\n'}
+              Site web : consciencesoufie.com
+            </Text>
           </ScrollView>
         </View>
       </Modal>
@@ -494,7 +715,7 @@ export default function Header() {
               </View>
               <Text style={styles.donationTitle}>Soutenez Conscience Soufie</Text>
               <Text style={styles.donationSubtitle}>
-                Votre don nous aide à poursuivre notre mission.
+                Votre don nous aide à poursuivre notre mission culturelle et spirituelle.
               </Text>
               <TouchableOpacity
                 style={styles.donationCTAButton}
@@ -543,12 +764,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingVertical: 10,
   },
-  sideButton: {
-    width: 48,
-    height: 48,
+  menuButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -556,8 +776,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minWidth: 88,
-    justifyContent: 'flex-end',
   },
   iconBtn: {
     width: 44,
@@ -565,39 +783,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  leftButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
   centerSection: {
     flex: 1,
     alignItems: 'center',
   },
   logo: {
-    width: 160,
-    height: 45,
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 10,
-    fontFamily: theme.fonts.body,
-    marginTop: 4,
+    width: 180,
+    height: 50,
   },
   
   // Search Modal Styles
@@ -721,93 +913,80 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalFullScreen: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(28,103,159,0.1)',
     backgroundColor: '#fff',
   },
-  donationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  
+  // Profile Modal - FNAC Style
+  profileHeaderBlue: {
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(28,103,159,0.1)',
-    backgroundColor: '#fff',
+    paddingBottom: 24,
   },
-  modalCloseButton: {
+  closeButtonWhite: {
+    position: 'absolute',
+    top: 50,
+    right: 16,
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
-  modalHeaderTitle: {
+  profileHeaderContent: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  profileLogo: {
+    width: 200,
+    height: 55,
+    marginBottom: 12,
+  },
+  welcomeText: {
     fontSize: 18,
-    fontFamily: theme.fonts.titleBold,
-    color: theme.colors.textPrimary,
+    fontFamily: theme.fonts.title,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 8,
   },
   profileContent: {
     flex: 1,
+    backgroundColor: '#f8f8f8',
   },
   
-  // Profile Section
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 32,
+  // Add Name Section
+  addNameSection: {
     backgroundColor: '#fff',
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 8,
   },
-  profileAvatarLarge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
+  addNameButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 8,
+    borderStyle: 'dashed',
   },
-  profileName: {
-    fontSize: 22,
-    fontFamily: theme.fonts.titleBold,
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  profileNameHint: {
-    fontSize: 12,
-    fontFamily: theme.fonts.body,
+  addNameText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.bodyMedium,
     color: theme.colors.primary,
-    textAlign: 'center',
-  },
-  profileSubtext: {
-    fontSize: 14,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
   },
   editNameContainer: {
     alignItems: 'center',
-    width: '80%',
   },
   nameInput: {
     borderWidth: 1,
     borderColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.button,
+    borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: theme.fonts.body,
     color: theme.colors.textPrimary,
     width: '100%',
-    textAlign: 'center',
     marginBottom: 12,
   },
   editNameButtons: {
@@ -817,9 +996,9 @@ const styles = StyleSheet.create({
   },
   saveNameButton: {
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 10,
-    borderRadius: theme.borderRadius.button,
+    borderRadius: 8,
   },
   saveNameButtonText: {
     color: '#fff',
@@ -832,13 +1011,13 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.body,
   },
   
-  // Settings
-  settingsSection: {
+  // Menu Sections
+  menuSection: {
     backgroundColor: '#fff',
-    marginBottom: 16,
+    marginBottom: 8,
     paddingVertical: 8,
   },
-  settingsSectionTitle: {
+  menuSectionTitle: {
     fontSize: 13,
     fontFamily: theme.fonts.bodySemiBold,
     color: theme.colors.textSecondary,
@@ -847,29 +1026,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  settingItem: {
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  settingItemButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  settingItemLeft: {
+  menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
-  settingItemText: {
+  menuItemText: {
     fontSize: 16,
     fontFamily: theme.fonts.body,
     color: theme.colors.textPrimary,
+  },
+  
+  // Social Icons
+  socialIconsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 16,
+  },
+  socialIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   
   // Logout
@@ -882,7 +1074,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 8,
     backgroundColor: '#fff',
-    borderRadius: theme.borderRadius.medium,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#dc3545',
   },
@@ -907,6 +1099,76 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
     marginTop: 4,
+  },
+  
+  // Legal Pages
+  legalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,103,159,0.1)',
+    backgroundColor: '#fff',
+  },
+  legalHeaderTitle: {
+    fontSize: 17,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+  },
+  legalContent: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  legalTitle: {
+    fontSize: 24,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
+  },
+  legalDate: {
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    marginBottom: 24,
+  },
+  legalSectionTitle: {
+    fontSize: 17,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.primary,
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  legalText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textPrimary,
+    lineHeight: 24,
+  },
+  
+  // Donation Modal
+  donationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,103,159,0.1)',
+    backgroundColor: '#fff',
+  },
+  modalCloseButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalHeaderTitle: {
+    fontSize: 18,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
   },
 
   // WebView
@@ -970,7 +1232,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: theme.borderRadius.button,
+    borderRadius: 8,
     gap: 10,
   },
   donationCTAText: {

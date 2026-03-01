@@ -11,6 +11,7 @@ import {
   Animated,
   Linking,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -19,6 +20,8 @@ import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH * 0.75;
+const CARD_HEIGHT = CARD_WIDTH * 1.2;
 
 interface Webinar {
   id: string;
@@ -30,36 +33,35 @@ interface Webinar {
   agenda?: string;
 }
 
+// Default event image
+const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80';
+
 export default function ZoomScreen() {
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentWebinar, setCurrentWebinar] = useState<Webinar | null>(null);
-  const [isLive, setIsLive] = useState(false);
   
   const liveDotAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (isLive) {
-      const dotPulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(liveDotAnim, {
-            toValue: 0.3,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(liveDotAnim, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      dotPulse.start();
-      return () => dotPulse.stop();
-    }
-  }, [isLive, liveDotAnim]);
+    const dotPulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(liveDotAnim, {
+          toValue: 0.3,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(liveDotAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    dotPulse.start();
+    return () => dotPulse.stop();
+  }, [liveDotAnim]);
 
   const fetchWebinars = async () => {
     try {
@@ -67,18 +69,6 @@ export default function ZoomScreen() {
       const response = await axios.get(`${BACKEND_URL}/api/zoom/webinars`);
       const webinarList = response.data.webinars || [];
       setWebinars(webinarList);
-      
-      if (webinarList.length > 0) {
-        const next = webinarList[0];
-        setCurrentWebinar(next);
-        
-        // Check if live
-        const now = new Date();
-        const startTime = new Date(next.start_time);
-        const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
-        const endTime = new Date(startTime.getTime() + next.duration * 60000);
-        setIsLive(timeDiff <= 30 && now <= endTime);
-      }
     } catch (err) {
       console.error('Error fetching webinars:', err);
       setError('Impossible de charger les conférences.');
@@ -97,22 +87,36 @@ export default function ZoomScreen() {
     fetchWebinars();
   }, []);
 
-  const formatDateTime = (dateStr: string) => {
+  const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      const dateFormatted = date.toLocaleDateString('fr-FR', { 
-        weekday: 'long',
+      return date.toLocaleDateString('fr-FR', { 
         day: 'numeric', 
         month: 'long' 
       });
-      const timeFormatted = date.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      return `${dateFormatted} à ${timeFormatted}`;
     } catch {
       return '';
     }
+  };
+
+  const formatTime = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  const isLive = (webinar: Webinar) => {
+    const now = new Date();
+    const startTime = new Date(webinar.start_time);
+    const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
+    const endTime = new Date(startTime.getTime() + webinar.duration * 60000);
+    return timeDiff <= 30 && now <= endTime;
   };
 
   const joinZoom = async (joinUrl: string) => {
@@ -155,6 +159,32 @@ export default function ZoomScreen() {
     );
   }
 
+  if (webinars.length === 0) {
+    return (
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.emptyContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
+      >
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="videocam-outline" size={48} color={theme.colors.primary} />
+          </View>
+          <Text style={styles.emptyTitle}>Aucune conférence programmée</Text>
+          <Text style={styles.emptySubtitle}>
+            Les prochains événements Zoom apparaîtront ici.
+            Revenez bientôt !
+          </Text>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const nextWebinar = webinars[0];
+  const upcomingWebinars = webinars.slice(1);
+
   return (
     <ScrollView
       style={styles.container}
@@ -163,75 +193,117 @@ export default function ZoomScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
-      {/* En Direct Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          {isLive ? (
-            <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-          ) : (
-            <View style={styles.offlineDot} />
-          )}
-          <Text style={styles.sectionTitle}>En direct</Text>
-        </View>
-
-        {currentWebinar ? (
-          <TouchableOpacity 
-            style={styles.liveCard}
-            onPress={() => joinZoom(currentWebinar.join_url)}
-            activeOpacity={0.9}
+      {/* Hero - Prochain événement */}
+      <View style={styles.heroSection}>
+        <Text style={styles.sectionTitle}>Prochain événement</Text>
+        
+        <TouchableOpacity 
+          style={styles.heroCard}
+          onPress={() => joinZoom(nextWebinar.join_url)}
+          activeOpacity={0.95}
+        >
+          <ImageBackground
+            source={{ uri: DEFAULT_EVENT_IMAGE }}
+            style={styles.heroImage}
+            imageStyle={styles.heroImageStyle}
           >
-            {isLive && (
-              <View style={styles.liveBadge}>
-                <View style={styles.liveBadgeDot} />
-                <Text style={styles.liveBadgeText}>EN DIRECT</Text>
+            <View style={styles.heroOverlay}>
+              {isLive(nextWebinar) && (
+                <View style={styles.liveBadge}>
+                  <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                  <Text style={styles.liveBadgeText}>EN DIRECT</Text>
+                </View>
+              )}
+              
+              <View style={styles.heroContent}>
+                <View style={styles.heroDateBadge}>
+                  <Ionicons name="calendar-outline" size={14} color="#fff" />
+                  <Text style={styles.heroDateText}>
+                    {formatDate(nextWebinar.start_time)} à {formatTime(nextWebinar.start_time)}
+                  </Text>
+                </View>
+                
+                <Text style={styles.heroTitle} numberOfLines={3}>
+                  {nextWebinar.topic}
+                </Text>
+                
+                <TouchableOpacity 
+                  style={styles.joinButton}
+                  onPress={() => joinZoom(nextWebinar.join_url)}
+                >
+                  <Ionicons name="videocam" size={18} color="#fff" />
+                  <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
+                </TouchableOpacity>
               </View>
-            )}
-            <Text style={styles.liveTitle}>{currentWebinar.topic}</Text>
-            <Text style={styles.liveMeta}>{formatDateTime(currentWebinar.start_time)}</Text>
-            <View style={styles.joinRow}>
-              <Text style={styles.joinText}>Rejoindre sur Zoom</Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
             </View>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.emptyCard}>
-            <Ionicons name="videocam-off-outline" size={40} color={theme.colors.textSecondary} />
-            <Text style={styles.emptyText}>Aucune conférence programmée</Text>
-          </View>
-        )}
+          </ImageBackground>
+        </TouchableOpacity>
       </View>
 
-      {/* Prochaines Conférences */}
-      {webinars.length > 1 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="calendar" size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Prochaines conférences</Text>
-          </View>
-
-          <View style={styles.webinarGrid}>
-            {webinars.slice(1).map((webinar) => (
+      {/* Carousel - Prochaines conférences */}
+      {upcomingWebinars.length > 0 && (
+        <View style={styles.upcomingSection}>
+          <Text style={styles.sectionTitle}>À venir</Text>
+          
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContainer}
+            decelerationRate="fast"
+            snapToInterval={CARD_WIDTH + 12}
+          >
+            {upcomingWebinars.map((webinar, index) => (
               <TouchableOpacity
                 key={webinar.id}
-                style={styles.webinarCard}
+                style={[styles.eventCard, index === upcomingWebinars.length - 1 && styles.lastCard]}
                 onPress={() => joinZoom(webinar.join_url)}
-                activeOpacity={0.9}
+                activeOpacity={0.95}
               >
-                {/* Placeholder poster with topic */}
-                <View style={styles.webinarPoster}>
-                  <Text style={styles.posterTitle} numberOfLines={3}>{webinar.topic}</Text>
-                  <View style={styles.posterDate}>
-                    <Ionicons name="calendar-outline" size={14} color="#fff" />
-                    <Text style={styles.posterDateText}>
-                      {new Date(webinar.start_time).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    </Text>
+                <ImageBackground
+                  source={{ uri: DEFAULT_EVENT_IMAGE }}
+                  style={styles.cardImage}
+                  imageStyle={styles.cardImageStyle}
+                >
+                  <View style={styles.cardOverlay}>
+                    <View style={styles.cardDateBadge}>
+                      <Text style={styles.cardDateText}>{formatDate(webinar.start_time)}</Text>
+                    </View>
+                    
+                    <View style={styles.cardContent}>
+                      <Text style={styles.cardTitle} numberOfLines={3}>
+                        {webinar.topic}
+                      </Text>
+                      
+                      <View style={styles.cardTime}>
+                        <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.9)" />
+                        <Text style={styles.cardTimeText}>{formatTime(webinar.start_time)}</Text>
+                      </View>
+                      
+                      <View style={styles.cardJoinRow}>
+                        <Ionicons name="videocam" size={16} color="#fff" />
+                        <Text style={styles.cardJoinText}>Rejoindre Zoom</Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
+                </ImageBackground>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </View>
       )}
+
+      {/* Info section */}
+      <View style={styles.infoSection}>
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle-outline" size={24} color={theme.colors.primary} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoTitle}>Comment rejoindre ?</Text>
+            <Text style={styles.infoText}>
+              Cliquez sur "Rejoindre Zoom" pour ouvrir l'application Zoom ou rejoindre via le navigateur.
+            </Text>
+          </View>
+        </View>
+      </View>
 
       <View style={styles.bottomSpacer} />
     </ScrollView>
@@ -281,62 +353,84 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: theme.fonts.bodySemiBold,
   },
-
-  // Sections
-  section: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
+  
+  // Empty state
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 10,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(28,103,159,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Hero Section
+  heroSection: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   sectionTitle: {
     fontSize: 22,
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.textPrimary,
+    marginBottom: 16,
   },
-
-  // Live Dot
-  liveDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: theme.colors.success,
+  heroCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  offlineDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: theme.colors.textSecondary,
+  heroImage: {
+    width: '100%',
+    height: SCREEN_WIDTH * 0.7,
   },
-
-  // Live Card
-  liveCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: theme.borderRadius.medium,
+  heroImageStyle: {
+    borderRadius: 16,
+  },
+  heroOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(28,103,159,0.12)',
+    justifyContent: 'space-between',
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.success,
+    backgroundColor: '#e53935',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    marginBottom: 12,
+    gap: 6,
   },
-  liveBadgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#fff',
-    marginRight: 6,
   },
   liveBadgeText: {
     color: '#fff',
@@ -344,82 +438,146 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bodySemiBold,
     letterSpacing: 1,
   },
-  liveTitle: {
-    fontSize: 18,
-    fontFamily: theme.fonts.titleBold,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
-    lineHeight: 24,
-  },
-  liveMeta: {
-    fontSize: 13,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    marginBottom: 16,
-  },
-  joinRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  joinText: {
-    fontSize: 15,
-    fontFamily: theme.fonts.bodySemiBold,
-    color: theme.colors.primary,
-  },
-
-  // Empty Card
-  emptyCard: {
-    backgroundColor: 'rgba(28,103,159,0.04)',
-    borderRadius: theme.borderRadius.medium,
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: theme.fonts.body,
-    color: theme.colors.textSecondary,
-    marginTop: 12,
-  },
-
-  // Webinar Grid
-  webinarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  heroContent: {
     gap: 12,
   },
-  webinarCard: {
-    width: (SCREEN_WIDTH - 44) / 2,
-    borderRadius: theme.borderRadius.medium,
-    overflow: 'hidden',
-  },
-  webinarPoster: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    backgroundColor: theme.colors.primary,
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  posterTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: theme.fonts.titleBold,
-    lineHeight: 22,
-  },
-  posterDate: {
+  heroDateBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     alignSelf: 'flex-start',
   },
-  posterDateText: {
+  heroDateText: {
+    color: '#fff',
+    fontSize: 13,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  heroTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontFamily: theme.fonts.titleBold,
+    lineHeight: 28,
+  },
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+
+  // Upcoming Section
+  upcomingSection: {
+    paddingTop: 32,
+    paddingLeft: 16,
+  },
+  carouselContainer: {
+    paddingRight: 16,
+  },
+  eventCard: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    marginRight: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  lastCard: {
+    marginRight: 0,
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardImageStyle: {
+    borderRadius: 12,
+  },
+  cardOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  cardDateBadge: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  cardDateText: {
     color: '#fff',
     fontSize: 12,
     fontFamily: theme.fonts.bodySemiBold,
+  },
+  cardContent: {
+    gap: 8,
+  },
+  cardTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontFamily: theme.fonts.titleBold,
+    lineHeight: 22,
+  },
+  cardTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  cardTimeText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+  },
+  cardJoinRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  cardJoinText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+
+  // Info Section
+  infoSection: {
+    paddingHorizontal: 16,
+    paddingTop: 32,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(28,103,159,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 15,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
   },
 
   bottomSpacer: {

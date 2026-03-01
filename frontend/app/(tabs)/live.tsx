@@ -250,13 +250,8 @@ export default function ZoomScreen() {
             <ImageBackground
               source={{ uri: nextWebinar.imageUrl }}
               style={styles.heroWithImage}
-              imageStyle={styles.heroImageStyle}
             >
-              <LinearGradient
-                colors={['transparent', 'rgba(28,103,159,0.7)', 'rgba(28,103,159,0.95)']}
-                locations={[0, 0.5, 1]}
-                style={styles.heroOverlay}
-              >
+              <View style={styles.heroOverlayWrapper}>
                 {/* Top: Date badge + Live badge */}
                 <View style={styles.heroTop}>
                   <View style={styles.heroDateBadge}>
@@ -289,15 +284,10 @@ export default function ZoomScreen() {
                     <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
                   </TouchableOpacity>
                 </View>
-              </LinearGradient>
+              </View>
             </ImageBackground>
           ) : (
-            <LinearGradient
-              colors={['#0d3d5c', '#1c679f', '#2980b9']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroGradient}
-            >
+            <View style={styles.heroGradientOnly}>
               <View style={styles.heroTop}>
                 <View style={styles.heroDateBadge}>
                   <Ionicons name="calendar" size={14} color="#fff" />
@@ -319,7 +309,7 @@ export default function ZoomScreen() {
                   <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
                 </TouchableOpacity>
               </View>
-            </LinearGradient>
+            </View>
           )}
         </View>
       ) : (

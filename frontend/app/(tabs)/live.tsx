@@ -606,25 +606,26 @@ const styles = StyleSheet.create({
   heroContainer: {
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   heroWithImage: {
     width: '100%',
-    height: SCREEN_WIDTH * 1.1,
+    aspectRatio: 0.85,
   },
   heroImageStyle: {
-    borderRadius: 20,
+    resizeMode: 'cover',
   },
   heroOverlay: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    padding: 20,
+    justifyContent: 'space-between',
   },
   heroGradient: {
     padding: 28,
     alignItems: 'center',
+    aspectRatio: 0.85,
+    justifyContent: 'center',
   },
   liveBadge: {
     flexDirection: 'row',

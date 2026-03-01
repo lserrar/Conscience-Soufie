@@ -248,12 +248,12 @@ export default function ZoomScreen() {
       {nextWebinar ? (
         <View style={styles.heroContainer}>
           {nextWebinar.imageUrl ? (
-            <ImageBackground 
-              source={{ uri: nextWebinar.imageUrl }} 
-              style={styles.heroWithImage}
-              imageStyle={styles.heroImageStyle}
-              resizeMode="cover"
-            >
+            <View style={styles.heroWithImage}>
+              <Image 
+                source={{ uri: nextWebinar.imageUrl }} 
+                style={styles.heroBackgroundImage}
+                resizeMode="cover"
+              />
               <LinearGradient
                 colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(28,103,159,0.85)']}
                 style={styles.heroOverlayWrapper}
@@ -291,7 +291,7 @@ export default function ZoomScreen() {
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
-            </ImageBackground>
+            </View>
           ) : (
             <View style={styles.heroGradientOnly}>
               <View style={styles.heroTop}>

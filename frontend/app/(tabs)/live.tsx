@@ -346,12 +346,12 @@ export default function ZoomScreen() {
                 activeOpacity={0.95}
               >
                 {webinar.imageUrl ? (
-                  <ImageBackground
-                    source={{ uri: webinar.imageUrl }}
-                    style={styles.cardWithImage}
-                    imageStyle={styles.cardImageStyle}
-                    resizeMode="cover"
-                  >
+                  <View style={styles.cardWithImage}>
+                    <Image
+                      source={{ uri: webinar.imageUrl }}
+                      style={styles.cardBackgroundImage}
+                      resizeMode="cover"
+                    />
                     <LinearGradient
                       colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
                       style={styles.cardOverlay}
@@ -374,7 +374,7 @@ export default function ZoomScreen() {
                         </View>
                       </View>
                     </LinearGradient>
-                  </ImageBackground>
+                  </View>
                 ) : (
                   <LinearGradient
                     colors={['#1a5276', '#2471a3']}

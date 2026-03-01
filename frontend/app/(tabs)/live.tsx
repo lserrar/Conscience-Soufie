@@ -247,13 +247,15 @@ export default function ZoomScreen() {
       {nextWebinar ? (
         <View style={styles.heroContainer}>
           {nextWebinar.imageUrl ? (
-            <View style={styles.heroWithImage}>
-              <Image 
-                source={{ uri: nextWebinar.imageUrl }} 
-                style={styles.heroImageFull}
-                resizeMode="cover"
-              />
-              <View style={styles.heroOverlayWrapper}>
+            <ImageBackground 
+              source={{ uri: nextWebinar.imageUrl }} 
+              style={styles.heroWithImage}
+              imageStyle={styles.heroImageStyle}
+            >
+              <LinearGradient
+                colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(28,103,159,0.85)']}
+                style={styles.heroOverlayWrapper}
+              >
                 {/* Top: Date badge + Live badge */}
                 <View style={styles.heroTop}>
                   <View style={styles.heroDateBadge}>
@@ -286,8 +288,8 @@ export default function ZoomScreen() {
                     <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </View>
+              </LinearGradient>
+            </ImageBackground>
           ) : (
             <View style={styles.heroGradientOnly}>
               <View style={styles.heroTop}>

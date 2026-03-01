@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { Audio, AVPlaybackStatus } from 'expo-av';
+import { Platform } from 'react-native';
 
 interface Podcast {
   id: string;
@@ -13,19 +14,15 @@ interface Podcast {
 }
 
 interface AudioContextType {
-  // Current state
   currentPodcast: Podcast | null;
   isPlaying: boolean;
   isLoading: boolean;
-  position: number; // in milliseconds
-  duration: number; // in milliseconds
+  position: number;
+  duration: number;
   playbackSpeed: number;
-  
-  // Playlist
   playlist: Podcast[];
   currentIndex: number;
   
-  // Actions
   playPodcast: (podcast: Podcast, playlist?: Podcast[], index?: number) => Promise<void>;
   togglePlayPause: () => Promise<void>;
   seekTo: (position: number) => Promise<void>;
@@ -50,70 +47,118 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [currentIndex, setCurrentIndex] = useState(-1);
   
   const soundRef = useRef<Audio.Sound | null>(null);
+  const isLoadingRef = useRef(false);
 
   // Configure audio mode on mount
   useEffect(() => {
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
-    });
+    const setupAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (error) {
+        console.error('Error setting audio mode:', error);
+      }
+    };
+    
+    setupAudio();
     
     return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
+      // Cleanup on unmount
+      const cleanup = async () => {
+        if (soundRef.current) {
+          try {
+            await soundRef.current.stopAsync();
+            await soundRef.current.unloadAsync();
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+          soundRef.current = null;
+        }
+      };
+      cleanup();
     };
   }, []);
 
   const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (!status.isLoaded) {
-      setIsLoading(true);
+      if (status.error) {
+        console.error('Playback error:', status.error);
+      }
       return;
     }
     
-    setIsLoading(false);
     setIsPlaying(status.isPlaying);
     setPosition(status.positionMillis || 0);
     setDuration(status.durationMillis || 0);
     
     // Auto-play next when finished
     if (status.didJustFinish && !status.isLooping) {
-      playNext();
+      // Use setTimeout to avoid state update issues
+      setTimeout(() => {
+        playNextInternal();
+      }, 500);
     }
   }, []);
 
-  const playPodcast = async (podcast: Podcast, newPlaylist?: Podcast[], index?: number) => {
-    if (!podcast.audioUrl) {
-      console.error('No audio URL for podcast');
+  const playNextInternal = async () => {
+    if (playlist.length === 0 || currentIndex >= playlist.length - 1) return;
+    
+    const nextIndex = currentIndex + 1;
+    const nextPodcast = playlist[nextIndex];
+    if (nextPodcast && nextPodcast.audioUrl) {
+      await loadAndPlayAudio(nextPodcast, nextIndex);
+    }
+  };
+
+  const stopCurrentSound = async () => {
+    if (soundRef.current) {
+      try {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded) {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+        }
+      } catch (error) {
+        console.log('Error stopping sound:', error);
+      }
+      soundRef.current = null;
+    }
+  };
+
+  const loadAndPlayAudio = async (podcast: Podcast, index: number) => {
+    if (!podcast.audioUrl || isLoadingRef.current) {
       return;
     }
 
+    isLoadingRef.current = true;
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-      
-      // Unload previous sound
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
+      // IMPORTANT: Stop and unload any existing sound first
+      await stopCurrentSound();
 
-      // Update playlist if provided
-      if (newPlaylist) {
-        setPlaylist(newPlaylist);
-        setCurrentIndex(index ?? 0);
-      } else if (index !== undefined) {
-        setCurrentIndex(index);
-      }
-
+      // Update state
       setCurrentPodcast(podcast);
+      setCurrentIndex(index);
+      setPosition(0);
+      setDuration(0);
 
-      // Create and load new sound
+      // Small delay to ensure cleanup is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Create new sound
       const { sound } = await Audio.Sound.createAsync(
         { uri: podcast.audioUrl },
-        { shouldPlay: true, rate: playbackSpeed },
+        { 
+          shouldPlay: true, 
+          rate: playbackSpeed,
+          progressUpdateIntervalMillis: 500,
+        },
         onPlaybackStatusUpdate
       );
 
@@ -121,8 +166,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setIsPlaying(true);
     } catch (error) {
       console.error('Error playing podcast:', error);
+      setCurrentPodcast(null);
+    } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
+  };
+
+  const playPodcast = async (podcast: Podcast, newPlaylist?: Podcast[], index?: number) => {
+    if (!podcast.audioUrl) {
+      console.error('No audio URL for podcast');
+      return;
+    }
+
+    // Update playlist if provided
+    if (newPlaylist) {
+      setPlaylist(newPlaylist);
+    }
+
+    const podcastIndex = index ?? 0;
+    await loadAndPlayAudio(podcast, podcastIndex);
   };
 
   const togglePlayPause = async () => {
@@ -175,13 +238,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   };
 
   const playNext = async () => {
-    if (playlist.length === 0 || currentIndex >= playlist.length - 1) return;
-    
-    const nextIndex = currentIndex + 1;
-    const nextPodcast = playlist[nextIndex];
-    if (nextPodcast) {
-      await playPodcast(nextPodcast, undefined, nextIndex);
-    }
+    await playNextInternal();
   };
 
   const playPrevious = async () => {
@@ -189,8 +246,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     
     const prevIndex = currentIndex - 1;
     const prevPodcast = playlist[prevIndex];
-    if (prevPodcast) {
-      await playPodcast(prevPodcast, undefined, prevIndex);
+    if (prevPodcast && prevPodcast.audioUrl) {
+      await loadAndPlayAudio(prevPodcast, prevIndex);
     }
   };
 
@@ -207,16 +264,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   };
 
   const stopPlayback = async () => {
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      } catch (error) {
-        console.error('Error stopping:', error);
-      }
-    }
-    
+    await stopCurrentSound();
     setCurrentPodcast(null);
     setIsPlaying(false);
     setPosition(0);

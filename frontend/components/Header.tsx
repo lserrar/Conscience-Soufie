@@ -53,7 +53,7 @@ export default function Header() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
-  const [donationModalVisible, setDonationModalVisible] = useState(false);
+  const [donationPageVisible, setDonationPageVisible] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
@@ -217,23 +217,14 @@ export default function Header() {
               />
             </View>
             
-            {/* Right: Search + Donation */}
-            <View style={styles.rightIcons}>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => setSearchModalVisible(true)}
-                data-testid="search-btn"
-              >
-                <Ionicons name="search" size={22} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => setDonationModalVisible(true)}
-                data-testid="donation-btn"
-              >
-                <Ionicons name="heart-outline" size={22} color="#fff" />
-              </TouchableOpacity>
-            </View>
+            {/* Right: Search only */}
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={() => setSearchModalVisible(true)}
+              data-testid="search-btn"
+            >
+              <Ionicons name="search" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
         </View>
       </View>

@@ -249,7 +249,7 @@ export default function ZoomScreen() {
             <View style={styles.heroWithImage}>
               <Image 
                 source={{ uri: nextWebinar.imageUrl }} 
-                style={styles.heroBackgroundImage}
+                style={[styles.heroBackgroundImage, { objectFit: 'cover' } as any]}
                 resizeMode="cover"
               />
               <LinearGradient

@@ -23,21 +23,23 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.75;
 const CARD_HEIGHT = CARD_WIDTH * 1.2;
 
-interface Webinar {
+interface HelloAssoEvent {
   id: string;
-  topic: string;
-  start_time: string;
-  duration: number;
-  join_url: string;
-  status: string;
-  agenda?: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  banner: string | null;
+  logo: string | null;
+  url: string;
+  place?: {
+    name?: string;
+    city?: string;
+  };
 }
 
-// Default event image
-const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80';
-
 export default function ZoomScreen() {
-  const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const [events, setEvents] = useState<HelloAssoEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,15 +65,15 @@ export default function ZoomScreen() {
     return () => dotPulse.stop();
   }, [liveDotAnim]);
 
-  const fetchWebinars = async () => {
+  const fetchEvents = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${BACKEND_URL}/api/zoom/webinars`);
-      const webinarList = response.data.webinars || [];
-      setWebinars(webinarList);
+      const response = await axios.get(`${BACKEND_URL}/api/helloasso/events`);
+      const eventList = response.data.events || [];
+      setEvents(eventList);
     } catch (err) {
-      console.error('Error fetching webinars:', err);
-      setError('Impossible de charger les conférences.');
+      console.error('Error fetching events:', err);
+      setError('Impossible de charger les événements.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,12 +81,12 @@ export default function ZoomScreen() {
   };
 
   useEffect(() => {
-    fetchWebinars();
+    fetchEvents();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchWebinars();
+    fetchEvents();
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -111,31 +113,26 @@ export default function ZoomScreen() {
     }
   };
 
-  const isLive = (webinar: Webinar) => {
+  const isLive = (event: HelloAssoEvent) => {
     const now = new Date();
-    const startTime = new Date(webinar.start_time);
-    const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
-    const endTime = new Date(startTime.getTime() + webinar.duration * 60000);
-    return timeDiff <= 30 && now <= endTime;
+    const startTime = new Date(event.startDate);
+    const endTime = new Date(event.endDate);
+    return now >= startTime && now <= endTime;
   };
 
-  const joinZoom = async (joinUrl: string) => {
-    const meetingMatch = joinUrl.match(/\/j\/(\d+)/);
-    const meetingNumber = meetingMatch ? meetingMatch[1] : null;
-    
-    if (meetingNumber) {
-      const zoomDeepLink = `zoomus://zoom.us/join?confno=${meetingNumber}`;
-      try {
-        const canOpen = await Linking.canOpenURL(zoomDeepLink);
-        if (canOpen) {
-          await Linking.openURL(zoomDeepLink);
-          return;
-        }
-      } catch (e) {
-        console.log('Cannot open Zoom app');
-      }
-    }
-    await WebBrowser.openBrowserAsync(joinUrl);
+  const isSoon = (event: HelloAssoEvent) => {
+    const now = new Date();
+    const startTime = new Date(event.startDate);
+    const timeDiff = (startTime.getTime() - now.getTime()) / (1000 * 60);
+    return timeDiff <= 30 && timeDiff > 0;
+  };
+
+  const joinEvent = async (url: string) => {
+    await WebBrowser.openBrowserAsync(url);
+  };
+
+  const getEventImage = (event: HelloAssoEvent) => {
+    return event.banner || event.logo || null;
   };
 
   if (loading) {
@@ -152,14 +149,14 @@ export default function ZoomScreen() {
       <View style={styles.errorContainer}>
         <Ionicons name="cloud-offline-outline" size={48} color={theme.colors.textSecondary} />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchWebinars}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
           <Text style={styles.retryButtonText}>Réessayer</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  if (webinars.length === 0) {
+  if (events.length === 0) {
     return (
       <ScrollView
         style={styles.container}
@@ -172,7 +169,7 @@ export default function ZoomScreen() {
           <View style={styles.emptyIconContainer}>
             <Ionicons name="videocam-outline" size={48} color={theme.colors.primary} />
           </View>
-          <Text style={styles.emptyTitle}>Aucune conférence programmée</Text>
+          <Text style={styles.emptyTitle}>Aucun événement programmé</Text>
           <Text style={styles.emptySubtitle}>
             Les prochains événements Zoom apparaîtront ici.
             Revenez bientôt !
@@ -182,8 +179,9 @@ export default function ZoomScreen() {
     );
   }
 
-  const nextWebinar = webinars[0];
-  const upcomingWebinars = webinars.slice(1);
+  const nextEvent = events[0];
+  const upcomingEvents = events.slice(1);
+  const nextEventImage = getEventImage(nextEvent);
 
   return (
     <ScrollView
@@ -199,49 +197,89 @@ export default function ZoomScreen() {
         
         <TouchableOpacity 
           style={styles.heroCard}
-          onPress={() => joinZoom(nextWebinar.join_url)}
+          onPress={() => joinEvent(nextEvent.url)}
           activeOpacity={0.95}
         >
-          <ImageBackground
-            source={{ uri: DEFAULT_EVENT_IMAGE }}
-            style={styles.heroImage}
-            imageStyle={styles.heroImageStyle}
-          >
-            <View style={styles.heroOverlay}>
-              {isLive(nextWebinar) && (
-                <View style={styles.liveBadge}>
-                  <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-                  <Text style={styles.liveBadgeText}>EN DIRECT</Text>
-                </View>
-              )}
-              
-              <View style={styles.heroContent}>
-                <View style={styles.heroDateBadge}>
-                  <Ionicons name="calendar-outline" size={14} color="#fff" />
-                  <Text style={styles.heroDateText}>
-                    {formatDate(nextWebinar.start_time)} à {formatTime(nextWebinar.start_time)}
+          {nextEventImage ? (
+            <ImageBackground
+              source={{ uri: nextEventImage }}
+              style={styles.heroImage}
+              imageStyle={styles.heroImageStyle}
+            >
+              <View style={styles.heroOverlay}>
+                {(isLive(nextEvent) || isSoon(nextEvent)) && (
+                  <View style={[styles.liveBadge, isSoon(nextEvent) && !isLive(nextEvent) && styles.soonBadge]}>
+                    <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                    <Text style={styles.liveBadgeText}>
+                      {isLive(nextEvent) ? 'EN DIRECT' : 'BIENTÔT'}
+                    </Text>
+                  </View>
+                )}
+                
+                <View style={styles.heroContent}>
+                  <View style={styles.heroDateBadge}>
+                    <Ionicons name="calendar-outline" size={14} color="#fff" />
+                    <Text style={styles.heroDateText}>
+                      {formatDate(nextEvent.startDate)} à {formatTime(nextEvent.startDate)}
+                    </Text>
+                  </View>
+                  
+                  <Text style={styles.heroTitle} numberOfLines={3}>
+                    {nextEvent.title}
                   </Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.joinButton}
+                    onPress={() => joinEvent(nextEvent.url)}
+                  >
+                    <Ionicons name="videocam" size={18} color="#fff" />
+                    <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
+                  </TouchableOpacity>
                 </View>
+              </View>
+            </ImageBackground>
+          ) : (
+            <View style={[styles.heroImage, styles.heroNoImage]}>
+              <View style={styles.heroOverlay}>
+                {(isLive(nextEvent) || isSoon(nextEvent)) && (
+                  <View style={[styles.liveBadge, isSoon(nextEvent) && !isLive(nextEvent) && styles.soonBadge]}>
+                    <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                    <Text style={styles.liveBadgeText}>
+                      {isLive(nextEvent) ? 'EN DIRECT' : 'BIENTÔT'}
+                    </Text>
+                  </View>
+                )}
                 
-                <Text style={styles.heroTitle} numberOfLines={3}>
-                  {nextWebinar.topic}
-                </Text>
-                
-                <TouchableOpacity 
-                  style={styles.joinButton}
-                  onPress={() => joinZoom(nextWebinar.join_url)}
-                >
-                  <Ionicons name="videocam" size={18} color="#fff" />
-                  <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
-                </TouchableOpacity>
+                <View style={styles.heroContentNoImage}>
+                  <Ionicons name="videocam" size={48} color="rgba(255,255,255,0.3)" />
+                  
+                  <View style={styles.heroDateBadge}>
+                    <Ionicons name="calendar-outline" size={14} color="#fff" />
+                    <Text style={styles.heroDateText}>
+                      {formatDate(nextEvent.startDate)} à {formatTime(nextEvent.startDate)}
+                    </Text>
+                  </View>
+                  
+                  <Text style={styles.heroTitle} numberOfLines={3}>
+                    {nextEvent.title}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.joinButton}
+                    onPress={() => joinEvent(nextEvent.url)}
+                  >
+                    <Ionicons name="videocam" size={18} color="#fff" />
+                    <Text style={styles.joinButtonText}>Rejoindre Zoom</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </ImageBackground>
+          )}
         </TouchableOpacity>
       </View>
 
-      {/* Carousel - Prochaines conférences */}
-      {upcomingWebinars.length > 0 && (
+      {/* Carousel - Prochains événements */}
+      {upcomingEvents.length > 0 && (
         <View style={styles.upcomingSection}>
           <Text style={styles.sectionTitle}>À venir</Text>
           
@@ -252,42 +290,73 @@ export default function ZoomScreen() {
             decelerationRate="fast"
             snapToInterval={CARD_WIDTH + 12}
           >
-            {upcomingWebinars.map((webinar, index) => (
-              <TouchableOpacity
-                key={webinar.id}
-                style={[styles.eventCard, index === upcomingWebinars.length - 1 && styles.lastCard]}
-                onPress={() => joinZoom(webinar.join_url)}
-                activeOpacity={0.95}
-              >
-                <ImageBackground
-                  source={{ uri: DEFAULT_EVENT_IMAGE }}
-                  style={styles.cardImage}
-                  imageStyle={styles.cardImageStyle}
+            {upcomingEvents.map((event, index) => {
+              const eventImage = getEventImage(event);
+              return (
+                <TouchableOpacity
+                  key={event.id}
+                  style={[styles.eventCard, index === upcomingEvents.length - 1 && styles.lastCard]}
+                  onPress={() => joinEvent(event.url)}
+                  activeOpacity={0.95}
                 >
-                  <View style={styles.cardOverlay}>
-                    <View style={styles.cardDateBadge}>
-                      <Text style={styles.cardDateText}>{formatDate(webinar.start_time)}</Text>
-                    </View>
-                    
-                    <View style={styles.cardContent}>
-                      <Text style={styles.cardTitle} numberOfLines={3}>
-                        {webinar.topic}
-                      </Text>
-                      
-                      <View style={styles.cardTime}>
-                        <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.cardTimeText}>{formatTime(webinar.start_time)}</Text>
+                  {eventImage ? (
+                    <ImageBackground
+                      source={{ uri: eventImage }}
+                      style={styles.cardImage}
+                      imageStyle={styles.cardImageStyle}
+                    >
+                      <View style={styles.cardOverlay}>
+                        <View style={styles.cardDateBadge}>
+                          <Text style={styles.cardDateText}>{formatDate(event.startDate)}</Text>
+                        </View>
+                        
+                        <View style={styles.cardContent}>
+                          <Text style={styles.cardTitle} numberOfLines={3}>
+                            {event.title}
+                          </Text>
+                          
+                          <View style={styles.cardTime}>
+                            <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.9)" />
+                            <Text style={styles.cardTimeText}>{formatTime(event.startDate)}</Text>
+                          </View>
+                          
+                          <View style={styles.cardJoinRow}>
+                            <Ionicons name="videocam" size={16} color="#fff" />
+                            <Text style={styles.cardJoinText}>Rejoindre Zoom</Text>
+                          </View>
+                        </View>
                       </View>
-                      
-                      <View style={styles.cardJoinRow}>
-                        <Ionicons name="videocam" size={16} color="#fff" />
-                        <Text style={styles.cardJoinText}>Rejoindre Zoom</Text>
+                    </ImageBackground>
+                  ) : (
+                    <View style={[styles.cardImage, styles.cardNoImage]}>
+                      <View style={styles.cardOverlay}>
+                        <View style={styles.cardDateBadge}>
+                          <Text style={styles.cardDateText}>{formatDate(event.startDate)}</Text>
+                        </View>
+                        
+                        <Ionicons name="videocam" size={32} color="rgba(255,255,255,0.2)" style={styles.cardPlaceholderIcon} />
+                        
+                        <View style={styles.cardContent}>
+                          <Text style={styles.cardTitle} numberOfLines={3}>
+                            {event.title}
+                          </Text>
+                          
+                          <View style={styles.cardTime}>
+                            <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.9)" />
+                            <Text style={styles.cardTimeText}>{formatTime(event.startDate)}</Text>
+                          </View>
+                          
+                          <View style={styles.cardJoinRow}>
+                            <Ionicons name="videocam" size={16} color="#fff" />
+                            <Text style={styles.cardJoinText}>Rejoindre Zoom</Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
-            ))}
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
       )}
@@ -299,7 +368,7 @@ export default function ZoomScreen() {
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>Comment rejoindre ?</Text>
             <Text style={styles.infoText}>
-              Cliquez sur "Rejoindre Zoom" pour ouvrir l'application Zoom ou rejoindre via le navigateur.
+              Cliquez sur "Rejoindre Zoom" pour vous inscrire à l'événement et recevoir le lien de connexion.
             </Text>
           </View>
         </View>
@@ -405,16 +474,25 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.85,
+  },
+  heroNoImage: {
+    backgroundColor: theme.colors.primary,
   },
   heroImageStyle: {
     borderRadius: 16,
   },
   heroOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     padding: 20,
     justifyContent: 'space-between',
+  },
+  heroContentNoImage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -425,6 +503,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     gap: 6,
+  },
+  soonBadge: {
+    backgroundColor: '#ff9800',
   },
   liveDot: {
     width: 8,
@@ -461,6 +542,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: theme.fonts.titleBold,
     lineHeight: 28,
+    textAlign: 'center',
   },
   joinButton: {
     flexDirection: 'row',
@@ -500,14 +582,20 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  cardNoImage: {
+    backgroundColor: theme.colors.primary,
+  },
   cardImageStyle: {
     borderRadius: 12,
   },
   cardOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     padding: 16,
     justifyContent: 'space-between',
+  },
+  cardPlaceholderIcon: {
+    alignSelf: 'center',
   },
   cardDateBadge: {
     backgroundColor: theme.colors.primary,

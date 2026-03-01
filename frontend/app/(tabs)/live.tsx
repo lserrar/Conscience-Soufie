@@ -590,20 +590,12 @@ const styles = StyleSheet.create({
   heroWithImage: {
     width: '100%',
     aspectRatio: 0.8,
-    position: 'relative',
   },
-  heroImageFull: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
+  heroImageStyle: {
+    resizeMode: 'cover',
   },
   heroOverlayWrapper: {
     flex: 1,
-    backgroundColor: 'rgba(28,103,159,0.55)',
     padding: 16,
     justifyContent: 'space-between',
   },

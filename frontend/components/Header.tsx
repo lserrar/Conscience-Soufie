@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import theme from '@/constants/theme';
 import { useUser } from '@/contexts/UserContext';
+import { usePreferences, ThemeMode } from '@/contexts/PreferencesContext';
 
 const LOGO_URL = require('@/assets/images/logo-cs-blanc.png');
 const DONATION_URL = 'https://www.helloasso.com/associations/conscience-soufie/formulaires/1';

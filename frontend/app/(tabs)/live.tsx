@@ -17,8 +17,10 @@ import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import theme from '@/constants/theme';
+import { useUser } from '@/contexts/UserContext';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const HELLOASSO_MEMBERSHIP_URL = 'https://www.helloasso.com/associations/conscience-soufie/adhesions/campagne-d-adhesion-2026';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.7;
 

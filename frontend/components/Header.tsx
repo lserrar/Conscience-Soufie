@@ -802,6 +802,96 @@ export default function Header() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Theme Selection Modal */}
+      <Modal
+        visible={themeModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setThemeModalVisible(false)}
+      >
+        <View style={[styles.fullModal, { paddingTop: insets.top }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
+              <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Thème</Text>
+            <View style={{ width: 28 }} />
+          </View>
+          
+          <View style={styles.themeOptions}>
+            <TouchableOpacity 
+              style={[
+                styles.themeOption, 
+                preferences.themeMode === 'light' && styles.themeOptionSelected
+              ]}
+              onPress={() => {
+                setThemeMode('light');
+                setThemeModalVisible(false);
+              }}
+            >
+              <View style={styles.themeOptionLeft}>
+                <Ionicons name="sunny-outline" size={24} color={preferences.themeMode === 'light' ? theme.colors.primary : theme.colors.textPrimary} />
+                <Text style={[
+                  styles.themeOptionText,
+                  preferences.themeMode === 'light' && styles.themeOptionTextSelected
+                ]}>Clair</Text>
+              </View>
+              {preferences.themeMode === 'light' && (
+                <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[
+                styles.themeOption, 
+                preferences.themeMode === 'dark' && styles.themeOptionSelected
+              ]}
+              onPress={() => {
+                setThemeMode('dark');
+                setThemeModalVisible(false);
+              }}
+            >
+              <View style={styles.themeOptionLeft}>
+                <Ionicons name="moon-outline" size={24} color={preferences.themeMode === 'dark' ? theme.colors.primary : theme.colors.textPrimary} />
+                <Text style={[
+                  styles.themeOptionText,
+                  preferences.themeMode === 'dark' && styles.themeOptionTextSelected
+                ]}>Sombre</Text>
+              </View>
+              {preferences.themeMode === 'dark' && (
+                <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[
+                styles.themeOption, 
+                preferences.themeMode === 'system' && styles.themeOptionSelected
+              ]}
+              onPress={() => {
+                setThemeMode('system');
+                setThemeModalVisible(false);
+              }}
+            >
+              <View style={styles.themeOptionLeft}>
+                <Ionicons name="phone-portrait-outline" size={24} color={preferences.themeMode === 'system' ? theme.colors.primary : theme.colors.textPrimary} />
+                <Text style={[
+                  styles.themeOptionText,
+                  preferences.themeMode === 'system' && styles.themeOptionTextSelected
+                ]}>Système</Text>
+              </View>
+              {preferences.themeMode === 'system' && (
+                <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.themeNote}>
+            Note : Le thème sombre sera disponible dans une prochaine version.
+          </Text>
+        </View>
+      </Modal>
     </>
   );
 }

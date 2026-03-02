@@ -86,7 +86,7 @@ export default function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Header with logo */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 30 }]}>
         <Image
           source={LOGO_WHITE}
           style={styles.logo}

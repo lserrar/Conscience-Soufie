@@ -1519,4 +1519,60 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.titleBold,
     color: theme.colors.primary,
   },
+
+  // Theme Modal Styles
+  themeOptions: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
+  },
+  themeOptionSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: 'rgba(28,103,159,0.05)',
+  },
+  themeOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeOptionText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: theme.colors.textPrimary,
+  },
+  themeOptionTextSelected: {
+    color: theme.colors.primary,
+  },
+  themeNote: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+
+  // Menu Item Right (for value display)
+  menuItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  menuItemValue: {
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+  },
 });

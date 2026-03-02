@@ -589,6 +589,84 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
+  // New Accueil-style hero
+  heroImageContainer: {
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f0f4f8',
+  },
+  heroImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+  },
+  heroInfo: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  heroInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  heroDateBadgeAccueil: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroDateTextAccueil: {
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+  },
+  liveBadgeAccueil: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e53935',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  soonBadgeAccueil: {
+    backgroundColor: '#ff9800',
+  },
+  liveDotAccueil: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+  },
+  liveBadgeTextAccueil: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: theme.fonts.bodySemiBold,
+    letterSpacing: 0.5,
+  },
+  heroTitleAccueil: {
+    fontSize: 18,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginBottom: 12,
+    lineHeight: 24,
+  },
+  heroButtonAccueil: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+  },
+  heroButtonTextAccueil: {
+    color: '#fff',
+    fontSize: 15,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  // Keep old styles for fallback
   heroWithImage: {
     width: '100%',
     height: 220,

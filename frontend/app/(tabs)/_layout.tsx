@@ -36,12 +36,6 @@ export default function TabLayout() {
         initialRouteName="accueil"
       >
         <Tabs.Screen
-          name="index"
-          options={{
-            tabBarButton: () => null,
-          }}
-        />
-        <Tabs.Screen
           name="accueil"
           options={{
             title: 'Accueil',

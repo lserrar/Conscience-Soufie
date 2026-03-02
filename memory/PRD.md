@@ -201,4 +201,4 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - `/app/backend/server.py` - API `/api/auth/check-membership`
 
 ## Dernière mise à jour
-2 mars 2026 - Réorganisation page Accueil + Section YouTube ajoutée
+2 mars 2026 - Section YouTube dynamique avec vraies vidéos récentes

@@ -15,27 +15,54 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
+import * as Linking from 'expo-linking';
 import theme from '@/constants/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Thematic tags for article carousels (from WordPress categories)
+// Ordered as per user request - some tags redirect to other categories
 const THEMATIC_TAGS = [
   { slug: 'references-bibilographiques', label: 'Bibliographie' },
-  { slug: 'soufisme', label: 'Soufisme' },
   { slug: 'le-prophete-muhammad', label: 'Le Prophète Muhammad' },
   { slug: 'ibn-arabi', label: 'Ibn \'Arabî' },
   { slug: 'rumi', label: 'Rûmî' },
-  { slug: 'henry-corbin', label: 'Henry Corbin' },
-  { slug: 'eva', label: 'Eva de Vitray-Meyerovitch' },
-  { slug: 'cheikh-ahmad-al-alawi', label: 'Cheikh al-\'Alâwî' },
   { slug: 'hallaj', label: 'Hallâj' },
   { slug: 'poesie', label: 'Poésie' },
+  { slug: 'hommages', label: 'Hommages' },
+  { slug: 'eva', label: 'Eva de Vitray-Meyerovitch' },
+  { slug: 'hallaj', label: 'Louis Massignon', redirect: true }, // Redirects to Hallaj articles
+  { slug: 'henry-corbin', label: 'Henry Corbin' },
+  { slug: 'ibn-arabi', label: 'Michel Chodkiewicz', redirect: true }, // Redirects to Ibn Arabi articles
+  { slug: 'rene-guenon', label: 'René Guénon' },
+  { slug: 'cheikh-ahmad-al-alawi', label: 'Cheikh al-\'Alâwî' },
   { slug: 'philosophie', label: 'Philosophie' },
   { slug: 'paix', label: 'Paix' },
-  { slug: 'hommages', label: 'Hommages' },
-  { slug: 'rene-guenon', label: 'René Guénon' },
+  { slug: 'soufisme', label: 'Soufisme' },
+];
+
+// YouTube channel data for Conscience Soufie
+const YOUTUBE_CHANNEL_URL = 'https://www.youtube.com/@ConscienceSoufie';
+const YOUTUBE_VIDEOS = [
+  {
+    id: '1',
+    title: 'Conscience Soufie',
+    thumbnail: 'https://i.ytimg.com/vi/JfHPsrZNmwg/hqdefault.jpg',
+    url: YOUTUBE_CHANNEL_URL,
+  },
+  {
+    id: '2',
+    title: 'Vidéos récentes',
+    thumbnail: 'https://i.ytimg.com/vi/8XW_h64XZOM/hqdefault.jpg',
+    url: YOUTUBE_CHANNEL_URL,
+  },
+  {
+    id: '3',
+    title: 'Conférences',
+    thumbnail: 'https://i.ytimg.com/vi/QeVg7bqVKjY/hqdefault.jpg',
+    url: YOUTUBE_CHANNEL_URL,
+  },
 ];
 
 // Calameo magazines with actual cover images
@@ -96,6 +123,13 @@ interface HelloAssoEvent {
 
 interface ThemedArticles {
   [key: string]: BlogPost[];
+}
+
+interface YouTubeVideo {
+  id: string;
+  title: string;
+  thumbnail: string;
+  url: string;
 }
 
 export default function AccueilScreen() {

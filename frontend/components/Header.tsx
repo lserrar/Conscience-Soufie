@@ -400,11 +400,41 @@ export default function Header() {
                   <Text style={styles.menuItemText}>Notifications</Text>
                 </View>
                 <Switch
-                  value={notificationsEnabled}
+                  value={preferences.notificationsEnabled}
                   onValueChange={setNotificationsEnabled}
                   trackColor={{ false: '#ddd', true: theme.colors.primary }}
                   thumbColor="#fff"
                 />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => setThemeModalVisible(true)}
+              >
+                <View style={styles.menuItemLeft}>
+                  <Ionicons 
+                    name={preferences.themeMode === 'dark' ? 'moon-outline' : preferences.themeMode === 'light' ? 'sunny-outline' : 'phone-portrait-outline'} 
+                    size={22} 
+                    color={theme.colors.textPrimary} 
+                  />
+                  <Text style={styles.menuItemText}>Thème</Text>
+                </View>
+                <View style={styles.menuItemRight}>
+                  <Text style={styles.menuItemValue}>
+                    {preferences.themeMode === 'light' ? 'Clair' : preferences.themeMode === 'dark' ? 'Sombre' : 'Système'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.menuItem}>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name="language-outline" size={22} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Langue</Text>
+                </View>
+                <View style={styles.menuItemRight}>
+                  <Text style={styles.menuItemValue}>Français</Text>
+                </View>
               </View>
 
               {userName && (

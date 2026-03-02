@@ -231,8 +231,24 @@ export default function AccueilScreen() {
     });
   };
 
-  const openYouTube = (url: string) => {
-    Linking.openURL(url);
+  const openYouTube = async (url: string) => {
+    // Use platform-specific opening method
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        // Fallback for web environment
+        if (typeof window !== 'undefined') {
+          window.open(url, '_blank');
+        }
+      }
+    } catch (error) {
+      // Fallback for web environment
+      if (typeof window !== 'undefined') {
+        window.open(url, '_blank');
+      }
+    }
   };
 
   const formatDate = (dateStr: string) => {

@@ -734,6 +734,43 @@ async def check_membership(request: EmailCheckRequest):
             message="Erreur lors de la vérification de l'adhésion."
         )
 
+# Get current membership form URL dynamically
+@api_router.get("/helloasso/membership-form")
+async def get_membership_form():
+    """Get the current active membership form URL from HelloAsso"""
+    try:
+        access_token = await get_helloasso_access_token()
+        if not access_token:
+            return {"url": "https://www.helloasso.com/associations/conscience-soufie", "error": "Token unavailable"}
+        
+        async with httpx.AsyncClient() as client:
+            # Get membership forms
+            response = await client.get(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms",
+                headers={"Authorization": f"Bearer {access_token}"},
+                params={"formTypes": "Membership", "states": "Public", "pageSize": 10}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                forms = data.get("data", [])
+                
+                if forms:
+                    # Get the most recent public membership form
+                    latest_form = forms[0]
+                    form_slug = latest_form.get("formSlug", "")
+                    
+                    # Construct the HelloAsso URL
+                    url = f"https://www.helloasso.com/associations/{HELLOASSO_ORG_SLUG}/adhesions/{form_slug}"
+                    return {"url": url, "title": latest_form.get("title", "")}
+            
+            # Fallback to organization page
+            return {"url": "https://www.helloasso.com/associations/conscience-soufie"}
+            
+    except Exception as e:
+        logger.error(f"Error fetching membership form: {e}")
+        return {"url": "https://www.helloasso.com/associations/conscience-soufie", "error": str(e)}
+
 # Include the router in the main app
 app.include_router(api_router)
 

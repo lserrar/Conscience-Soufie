@@ -101,7 +101,7 @@ export default function ZoomScreen() {
       
       return {
         ...webinar,
-        imageUrl: matchingEvent?.banner || matchingEvent?.logo || null,
+        imageUrl: matchingEvent?.logo || matchingEvent?.banner || null,
       };
     });
   };

@@ -66,7 +66,7 @@ export default function AuthScreen() {
         setIsMember(data.isMember);
 
         // Navigate to main app
-        router.replace('/(tabs)');
+        router.replace('/(tabs)/accueil');
       } else {
         setError(data.detail || 'Une erreur est survenue');
       }

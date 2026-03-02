@@ -51,7 +51,7 @@ export default function RootLayout() {
     <UserProvider>
       <AudioProvider>
         <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>

@@ -799,8 +799,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBig: {
-    width: 200,
-    height: 50,
+    width: 230,
+    height: 58,
   },
   searchButton: {
     width: 40,

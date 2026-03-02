@@ -194,24 +194,28 @@ export default function Header() {
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            {/* Left spacer for balance */}
-            <View style={styles.sideSpace} />
+            {/* Left: Menu icon for profile */}
+            <View style={styles.sideSpace}>
+              <TouchableOpacity
+                style={styles.menuButton}
+                onPress={() => setProfileModalVisible(true)}
+                data-testid="menu-btn"
+                activeOpacity={0.8}
+              >
+                <Ionicons name="menu" size={20} color={theme.colors.primary} />
+              </TouchableOpacity>
+            </View>
             
-            {/* Center: Logo (clickable for profile) */}
-            <TouchableOpacity
-              style={styles.logoButton}
-              onPress={() => setProfileModalVisible(true)}
-              data-testid="menu-btn"
-              activeOpacity={0.8}
-            >
+            {/* Center: Logo */}
+            <View style={styles.logoContainer}>
               <Image
                 source={LOGO_URL}
                 style={styles.logoBig}
                 resizeMode="contain"
               />
-            </TouchableOpacity>
+            </View>
             
-            {/* Right: Search only */}
+            {/* Right: Search */}
             <View style={styles.sideSpace}>
               <TouchableOpacity
                 style={styles.searchButton}
@@ -219,7 +223,7 @@ export default function Header() {
                 data-testid="search-btn"
                 activeOpacity={0.8}
               >
-                <Ionicons name="search" size={24} color={theme.colors.primary} />
+                <Ionicons name="search" size={18} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           </View>

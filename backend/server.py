@@ -483,6 +483,10 @@ async def get_webinar_details(webinar_id: str):
 # SoundCloud RSS Feed URL
 SOUNDCLOUD_RSS_URL = "https://feeds.soundcloud.com/users/soundcloud:users:522380445/sounds.rss"
 
+# YouTube RSS Feed URL for Conscience Soufie channel
+YOUTUBE_CHANNEL_ID = "UCK37umfJRkclvPvuVXFkjQA"
+YOUTUBE_RSS_URL = f"https://www.youtube.com/feeds/videos.xml?channel_id={YOUTUBE_CHANNEL_ID}"
+
 @api_router.get("/podcasts")
 async def get_podcasts():
     """Get podcasts from SoundCloud RSS feed"""

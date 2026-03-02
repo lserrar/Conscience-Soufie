@@ -29,6 +29,9 @@ export default function TabLayout() {
           tabBarIconStyle: {
             marginBottom: -2,
           },
+          tabBarItemStyle: {
+            flex: 1,
+          },
         }}
       >
         <Tabs.Screen

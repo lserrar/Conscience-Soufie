@@ -15,9 +15,9 @@ export default function Index() {
     );
   }
 
-  // If user has a profile, go directly to tabs
+  // If user has a profile, go directly to accueil
   if (profile) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(tabs)/accueil" />;
   }
 
   // Otherwise, show splash screen

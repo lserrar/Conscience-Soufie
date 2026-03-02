@@ -643,6 +643,97 @@ async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
         logger.error(f"Articles by tag error: {e}")
         return {"articles": [], "error": str(e)}
 
+# Membership check endpoint
+@api_router.post("/auth/check-membership", response_model=MembershipCheckResponse)
+async def check_membership(request: EmailCheckRequest):
+    """Check if an email is associated with an active HelloAsso membership"""
+    try:
+        email = request.email.lower().strip()
+        logger.info(f"Checking membership for email: {email}")
+        
+        # Get HelloAsso access token
+        access_token = await get_helloasso_access_token()
+        if not access_token:
+            logger.error("Failed to get HelloAsso access token")
+            # Allow access but mark as non-member if API fails
+            return MembershipCheckResponse(
+                isMember=False,
+                memberName=None,
+                message="Impossible de vérifier l'adhésion. Réessayez plus tard."
+            )
+        
+        # Fetch all membership forms (current and possibly previous years)
+        async with httpx.AsyncClient() as client:
+            # Get all membership forms for the organization
+            forms_response = await client.get(
+                f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms",
+                headers={"Authorization": f"Bearer {access_token}"},
+                params={"formTypes": "Membership", "states": "Public", "pageSize": 20}
+            )
+            
+            if forms_response.status_code != 200:
+                logger.error(f"Failed to fetch HelloAsso forms: {forms_response.status_code}")
+                return MembershipCheckResponse(
+                    isMember=False,
+                    memberName=None,
+                    message="Erreur lors de la vérification de l'adhésion."
+                )
+            
+            forms_data = forms_response.json()
+            forms = forms_data.get("data", [])
+            
+            # Check each membership form for the user's email
+            for form in forms:
+                form_slug = form.get("formSlug", "")
+                
+                # Get items (memberships) for this form
+                items_response = await client.get(
+                    f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms/Membership/{form_slug}/items",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    params={"pageSize": 100, "withDetails": True}
+                )
+                
+                if items_response.status_code == 200:
+                    items_data = items_response.json()
+                    items = items_data.get("data", [])
+                    
+                    # Search for the email in membership items
+                    for item in items:
+                        payer = item.get("payer", {})
+                        user = item.get("user", {})
+                        
+                        payer_email = payer.get("email", "").lower().strip()
+                        user_email = user.get("email", "").lower().strip()
+                        
+                        if payer_email == email or user_email == email:
+                            # Found a membership for this email
+                            member_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
+                            if not member_name:
+                                member_name = f"{payer.get('firstName', '')} {payer.get('lastName', '')}".strip()
+                            
+                            logger.info(f"Found membership for {email}: {member_name}")
+                            return MembershipCheckResponse(
+                                isMember=True,
+                                memberName=member_name if member_name else None,
+                                message="Bienvenue ! Vous êtes adhérent."
+                            )
+            
+            # No membership found
+            logger.info(f"No membership found for {email}")
+            return MembershipCheckResponse(
+                isMember=False,
+                memberName=None,
+                message="Aucune adhésion trouvée pour cet email."
+            )
+            
+    except Exception as e:
+        logger.error(f"Membership check error: {e}")
+        return MembershipCheckResponse(
+            isMember=False,
+            memberName=None,
+            message="Erreur lors de la vérification de l'adhésion."
+        )
+
 # Include the router in the main app
 app.include_router(api_router)
 

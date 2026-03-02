@@ -176,6 +176,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginBottom: 8,
   },
+  titleItalic: {
+    fontStyle: 'italic',
+  },
   subtitle: {
     fontSize: 16,
     fontFamily: theme.fonts.body,

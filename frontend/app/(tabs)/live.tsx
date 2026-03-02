@@ -235,7 +235,7 @@ export default function ZoomScreen() {
   }
 
   const nextWebinar = webinars[0];
-  const upcomingWebinars = webinars.slice(1];
+  const upcomingWebinars = webinars.slice(1);
 
   // Non-member overlay component
   const NonMemberOverlay = () => (

@@ -121,6 +121,7 @@ export default function AccueilScreen() {
   const [events, setEvents] = useState<HelloAssoEvent[]>([]);
   const [highlightEvent, setHighlightEvent] = useState<HelloAssoEvent | null>(null);
   const [themedArticles, setThemedArticles] = useState<ThemedArticles>({});
+  const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
   
   const highlightScale = useRef(new Animated.Value(1)).current;
 

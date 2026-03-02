@@ -200,4 +200,4 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - `/app/backend/server.py` - API `/api/auth/check-membership`
 
 ## Dernière mise à jour
-2 mars 2026 - Splash screen + Authentification HelloAsso + Design bleu
+2 mars 2026 - Réorganisation page Accueil + Section YouTube ajoutée

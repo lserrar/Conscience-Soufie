@@ -141,7 +141,7 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
   1. À la une (hero event)
   2. Prochains événements
   3. Derniers articles
-  4. **Dernières vidéos** (NOUVEAU - lien vers chaîne YouTube)
+  4. **Dernières vidéos** (DYNAMIQUE - flux RSS YouTube)
   5. Revues Conscience Soufie
   6. Sections thématiques dans l'ordre :
      - Bibliographie
@@ -161,11 +161,12 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
      - Paix
      - Soufisme
 
-- **Section YouTube ajoutée** :
-  - Carrousel horizontal style Netflix
-  - 3 cartes avec miniatures et bouton play rouge
-  - Clic ouvre la chaîne YouTube @ConscienceSoufie
-  - Lien "Voir la chaîne" dans le header
+- **Section YouTube DYNAMIQUE ajoutée** :
+  - Nouvel endpoint backend `/api/youtube/videos` utilisant le flux RSS YouTube
+  - Récupère automatiquement les 10 dernières vidéos de la chaîne Conscience Soufie
+  - Affiche les vrais titres et miniatures des vidéos
+  - Carrousel horizontal style Netflix avec bouton play rouge
+  - Clic ouvre la vidéo directement sur YouTube
 
 - **Bug "Don et adhésion"** : Confirmé fonctionnel sur mobile ✅
 

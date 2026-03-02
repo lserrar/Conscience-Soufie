@@ -732,12 +732,14 @@ async def check_membership(request: EmailCheckRequest):
                                 message="Bienvenue ! Vous êtes adhérent."
                             )
                     
-                    # Check for more pages
-                    pagination = items_data.get("pagination", {})
-                    total_pages = pagination.get("totalPages", 1)
-                    if page >= total_pages:
+                    # Check for more pages - continue if we got 100 items (might be more)
+                    if len(items) < 100:
                         break
                     page += 1
+                    
+                    # Safety limit to avoid infinite loops
+                    if page > 20:
+                        break
             
             # No membership found
             logger.info(f"No membership found for {email}")

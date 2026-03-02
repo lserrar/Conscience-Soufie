@@ -541,7 +541,11 @@ export default function ZoomScreen() {
       </View>
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+      </ScrollView>
+      
+      {/* Non-member overlay */}
+      {!isMember && <NonMemberOverlay />}
+    </View>
   );
 }
 

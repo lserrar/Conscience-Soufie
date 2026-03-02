@@ -774,7 +774,9 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,103,159,0.1)',
   },
   header: {
     overflow: 'hidden',
@@ -795,8 +797,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBig: {
-    width: 220,
-    height: 55,
+    width: 200,
+    height: 50,
   },
   searchButton: {
     width: 44,

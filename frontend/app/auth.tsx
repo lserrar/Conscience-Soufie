@@ -22,6 +22,7 @@ const LOGO_WHITE = require('@/assets/images/logo-cs-blanc.png');
 
 export default function AuthScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { setUser, setIsMember } = useUser();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);

@@ -64,7 +64,7 @@ const MAGAZINES = [
   {
     id: '3',
     title: 'Transmission et Initiation',
-    cover: 'https://customer-assets.emergentagent.com/job_c0476faa-5b8f-4947-b745-239f5b57206d/artifacts/ua22y8x8_IMG_1583.png',
+    cover: 'https://customer-assets.emergentagent.com/job_c0476faa-5b8f-4947-b745-239f5b57206d/artifacts/r3fdfqad_IMG_1584.jpeg',
     readUrl: 'https://www.calameo.com/read/00729418046e9bf1ac1d9',
   },
   {

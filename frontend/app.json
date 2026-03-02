@@ -10,18 +10,27 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.consciencesoufie.app",
+      "buildNumber": "1",
       "infoPlist": {
         "UIBackgroundModes": ["audio"],
-        "NSMicrophoneUsageDescription": "Cette application n'utilise pas le microphone."
+        "NSMicrophoneUsageDescription": "Cette application n'utilise pas le microphone.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
+      "package": "com.consciencesoufie.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1c679f"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["android.permission.FOREGROUND_SERVICE"]
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -50,6 +59,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "conscience-soufie"
+      }
+    },
+    "owner": "consciencesoufie"
   }
 }

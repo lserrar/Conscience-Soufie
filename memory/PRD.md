@@ -135,6 +135,41 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - **Frontend**: 100% - Tous les bugs critiques corrigés et testés
 
 ## Corrections récentes (02/03/2026)
+
+### Réorganisation de la page Accueil + Section YouTube (02/03/2026)
+- **Nouvel ordre des sections sur la page Accueil** :
+  1. À la une (hero event)
+  2. Prochains événements
+  3. Derniers articles
+  4. **Dernières vidéos** (NOUVEAU - lien vers chaîne YouTube)
+  5. Revues Conscience Soufie
+  6. Sections thématiques dans l'ordre :
+     - Bibliographie
+     - Le Prophète Muhammad
+     - Ibn 'Arabî
+     - Rûmî
+     - Hallâj
+     - Poésie
+     - Hommages
+     - Eva de Vitray-Meyerovitch
+     - Louis Massignon (renvoie vers articles Hallâj)
+     - Henry Corbin
+     - Michel Chodkiewicz (renvoie vers articles Ibn 'Arabî)
+     - René Guénon
+     - Cheikh al-'Alâwî
+     - Philosophie
+     - Paix
+     - Soufisme
+
+- **Section YouTube ajoutée** :
+  - Carrousel horizontal style Netflix
+  - 3 cartes avec miniatures et bouton play rouge
+  - Clic ouvre la chaîne YouTube @ConscienceSoufie
+  - Lien "Voir la chaîne" dans le header
+
+- **Bug "Don et adhésion"** : Confirmé fonctionnel sur mobile ✅
+
+### Autres corrections précédentes (02/03/2026)
 - **Design lumineux/bleu implémenté** :
   - Header bleu avec logo blanc centré + icône menu à gauche + icône recherche à droite
   - Barre de navigation bleue avec icônes remplies/contour (style Fnac Photo)

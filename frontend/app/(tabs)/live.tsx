@@ -550,9 +550,56 @@ export default function ZoomScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  // Non-member overlay styles
+  nonMemberOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 100,
+  },
+  nonMemberContent: {
+    alignItems: 'center',
+    maxWidth: 320,
+  },
+  nonMemberTitle: {
+    fontSize: 22,
+    fontFamily: theme.fonts.titleBold,
+    color: theme.colors.textPrimary,
+    marginTop: 20,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  nonMemberText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  nonMemberButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    gap: 10,
+  },
+  nonMemberButtonText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.bodySemiBold,
+    color: '#fff',
   },
   loadingContainer: {
     flex: 1,

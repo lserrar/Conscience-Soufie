@@ -52,6 +52,14 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
+class EmailCheckRequest(BaseModel):
+    email: str
+
+class MembershipCheckResponse(BaseModel):
+    isMember: bool
+    memberName: Optional[str] = None
+    message: str
+
 class ZoomWebinar(BaseModel):
     id: str
     uuid: Optional[str] = None

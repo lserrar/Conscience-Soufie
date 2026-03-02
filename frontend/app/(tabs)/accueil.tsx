@@ -44,26 +44,14 @@ const THEMATIC_TAGS = [
 
 // YouTube channel data for Conscience Soufie
 const YOUTUBE_CHANNEL_URL = 'https://www.youtube.com/@ConscienceSoufie';
-const YOUTUBE_VIDEOS = [
-  {
-    id: '1',
-    title: 'Conscience Soufie',
-    thumbnail: 'https://i.ytimg.com/vi/JfHPsrZNmwg/hqdefault.jpg',
-    url: YOUTUBE_CHANNEL_URL,
-  },
-  {
-    id: '2',
-    title: 'Vidéos récentes',
-    thumbnail: 'https://i.ytimg.com/vi/8XW_h64XZOM/hqdefault.jpg',
-    url: YOUTUBE_CHANNEL_URL,
-  },
-  {
-    id: '3',
-    title: 'Conférences',
-    thumbnail: 'https://i.ytimg.com/vi/QeVg7bqVKjY/hqdefault.jpg',
-    url: YOUTUBE_CHANNEL_URL,
-  },
-];
+
+interface YouTubeVideo {
+  id: string;
+  title: string;
+  thumbnail: string;
+  url: string;
+  publishedAt?: string;
+}
 
 // Calameo magazines with actual cover images
 const MAGAZINES = [

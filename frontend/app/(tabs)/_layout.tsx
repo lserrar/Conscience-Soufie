@@ -33,6 +33,7 @@ export default function TabLayout() {
             flex: 1,
           },
         }}
+        initialRouteName="accueil"
       >
         <Tabs.Screen
           name="index"

@@ -49,9 +49,34 @@ export default function ZoomScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [membershipUrl, setMembershipUrl] = useState<string | null>(null);
   
   const liveDotAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Fetch membership form URL
+  useEffect(() => {
+    const fetchMembershipUrl = async () => {
+      try {
+        const response = await axios.get(`${BACKEND_URL}/api/helloasso/membership-form`);
+        if (response.data?.url) {
+          setMembershipUrl(response.data.url);
+        }
+      } catch (err) {
+        console.log('Could not fetch membership URL, using fallback');
+      }
+    };
+    fetchMembershipUrl();
+  }, []);
+
+  const openMembershipForm = async () => {
+    const url = membershipUrl || 'https://www.helloasso.com/associations/conscience-soufie';
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch (err) {
+      Linking.openURL(url);
+    }
+  };
 
   useEffect(() => {
     // Live dot pulse

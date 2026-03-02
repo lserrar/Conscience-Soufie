@@ -793,28 +793,27 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   sideSpace: {
-    width: 36,
-    alignItems: 'center',
+    width: 40,
   },
   menuButton: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   logoContainer: {
     flex: 1,
     alignItems: 'center',
   },
   logoBig: {
-    width: 240,
-    height: 58,
+    width: 220,
+    height: 55,
   },
   searchButton: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   
   // Search Modal Styles

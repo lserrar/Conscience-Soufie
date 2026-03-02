@@ -345,34 +345,16 @@ export default function ZoomScreen() {
                 activeOpacity={0.95}
               >
                 {webinar.imageUrl ? (
-                  <View style={styles.cardWithImage}>
+                  <View style={styles.cardAccueilStyle}>
                     <Image
                       source={{ uri: webinar.imageUrl }}
-                      style={[styles.cardBackgroundImage, { objectFit: 'cover' } as any]}
+                      style={styles.cardImageAccueil}
                       resizeMode="cover"
                     />
-                    <LinearGradient
-                      colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
-                      style={styles.cardOverlay}
-                    >
-                      <View style={styles.cardDateBadge}>
-                        <Text style={styles.cardDateText}>{formatShortDate(webinar.start_time)}</Text>
-                      </View>
-                      
-                      <View style={styles.cardBottom}>
-                        <Text style={styles.cardTitle} numberOfLines={2}>{webinar.topic}</Text>
-                        
-                        <View style={styles.cardMeta}>
-                          <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
-                          <Text style={styles.cardMetaText}>{formatTime(webinar.start_time)}</Text>
-                        </View>
-                        
-                        <View style={styles.cardAction}>
-                          <Ionicons name="play-circle" size={16} color="#fff" />
-                          <Text style={styles.cardActionText}>Rejoindre</Text>
-                        </View>
-                      </View>
-                    </LinearGradient>
+                    <View style={styles.cardContentAccueil}>
+                      <Text style={styles.cardTitleAccueil} numberOfLines={2}>{webinar.topic}</Text>
+                      <Text style={styles.cardDateAccueil}>{formatShortDate(webinar.start_time)} à {formatTime(webinar.start_time)}</Text>
+                    </View>
                   </View>
                 ) : (
                   <LinearGradient

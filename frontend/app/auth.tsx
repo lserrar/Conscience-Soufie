@@ -94,7 +94,9 @@ export default function AuthScreen() {
 
       {/* Form */}
       <View style={styles.formContainer}>
-        <Text style={styles.title}>Bienvenue</Text>
+        <Text style={styles.title}>
+          <Text style={styles.titleItalic}>Bienvenue ! Marhaban !</Text>
+        </Text>
         <Text style={styles.subtitle}>
           Entrez votre email pour accéder à l'application
         </Text>

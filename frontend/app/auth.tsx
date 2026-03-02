@@ -155,11 +155,10 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: theme.colors.primary,
-    paddingTop: 40,
-    paddingBottom: 40,
+    paddingTop: 50,
+    paddingBottom: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 150,
   },
   logo: {
     width: 220,

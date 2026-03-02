@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   },
   heroWithImage: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    height: 220,
     position: 'relative',
     borderRadius: 16,
     overflow: 'hidden',

@@ -49,18 +49,20 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <AudioProvider>
-        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-          <StatusBar style="light" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="splash" options={{ headerShown: false }} />
-            <Stack.Screen name="auth" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-        </View>
-      </AudioProvider>
-    </UserProvider>
+    <PreferencesProvider>
+      <UserProvider>
+        <AudioProvider>
+          <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+            <StatusBar style="light" />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="splash" options={{ headerShown: false }} />
+              <Stack.Screen name="auth" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+          </View>
+        </AudioProvider>
+      </UserProvider>
+    </PreferencesProvider>
   );
 }

@@ -219,7 +219,7 @@ export default function Header() {
                 data-testid="search-btn"
                 activeOpacity={0.8}
               >
-                <Ionicons name="search" size={24} color="#fff" />
+                <Ionicons name="search" size={24} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           </View>

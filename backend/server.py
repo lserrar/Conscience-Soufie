@@ -655,15 +655,13 @@ async def check_membership(request: EmailCheckRequest):
         access_token = await get_helloasso_access_token()
         if not access_token:
             logger.error("Failed to get HelloAsso access token")
-            # Allow access but mark as non-member if API fails
             return MembershipCheckResponse(
                 isMember=False,
                 memberName=None,
                 message="Impossible de vérifier l'adhésion. Réessayez plus tard."
             )
         
-        # Fetch all membership forms (current and possibly previous years)
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             # Get all membership forms for the organization
             forms_response = await client.get(
                 f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms",
@@ -681,21 +679,32 @@ async def check_membership(request: EmailCheckRequest):
             
             forms_data = forms_response.json()
             forms = forms_data.get("data", [])
+            logger.info(f"Found {len(forms)} membership forms")
             
             # Check each membership form for the user's email
             for form in forms:
                 form_slug = form.get("formSlug", "")
+                logger.info(f"Checking form: {form_slug}")
                 
-                # Get items (memberships) for this form
-                items_response = await client.get(
-                    f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms/Membership/{form_slug}/items",
-                    headers={"Authorization": f"Bearer {access_token}"},
-                    params={"pageSize": 100, "withDetails": True}
-                )
-                
-                if items_response.status_code == 200:
+                # Paginate through all items in this form
+                page = 1
+                while True:
+                    items_response = await client.get(
+                        f"https://api.helloasso.com/v5/organizations/{HELLOASSO_ORG_SLUG}/forms/Membership/{form_slug}/items",
+                        headers={"Authorization": f"Bearer {access_token}"},
+                        params={"pageSize": 100, "pageIndex": page, "withDetails": True}
+                    )
+                    
+                    if items_response.status_code != 200:
+                        break
+                    
                     items_data = items_response.json()
                     items = items_data.get("data", [])
+                    
+                    if not items:
+                        break
+                    
+                    logger.info(f"Form {form_slug} page {page}: {len(items)} items")
                     
                     # Search for the email in membership items
                     for item in items:
@@ -705,18 +714,30 @@ async def check_membership(request: EmailCheckRequest):
                         payer_email = payer.get("email", "").lower().strip()
                         user_email = user.get("email", "").lower().strip()
                         
-                        if payer_email == email or user_email == email:
-                            # Found a membership for this email
+                        # Also check custom fields
+                        custom_fields = item.get("customFields", [])
+                        custom_emails = [f.get("answer", "").lower().strip() for f in custom_fields if "email" in f.get("name", "").lower()]
+                        
+                        all_emails = [payer_email, user_email] + custom_emails
+                        
+                        if email in all_emails:
                             member_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
                             if not member_name:
                                 member_name = f"{payer.get('firstName', '')} {payer.get('lastName', '')}".strip()
                             
-                            logger.info(f"Found membership for {email}: {member_name}")
+                            logger.info(f"Found membership for {email}: {member_name} in form {form_slug}")
                             return MembershipCheckResponse(
                                 isMember=True,
                                 memberName=member_name if member_name else None,
                                 message="Bienvenue ! Vous êtes adhérent."
                             )
+                    
+                    # Check for more pages
+                    pagination = items_data.get("pagination", {})
+                    total_pages = pagination.get("totalPages", 1)
+                    if page >= total_pages:
+                        break
+                    page += 1
             
             # No membership found
             logger.info(f"No membership found for {email}")

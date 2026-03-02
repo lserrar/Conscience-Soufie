@@ -413,7 +413,42 @@ export default function AccueilScreen() {
         />
       </View>
 
-      {/* Section 3: Revues Conscience Soufie */}
+      {/* Section 3: Dernières vidéos YouTube */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Dernières vidéos</Text>
+          <TouchableOpacity onPress={() => openYouTube(YOUTUBE_CHANNEL_URL)}>
+            <Text style={styles.sectionLink}>Voir la chaîne</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <FlatList
+          horizontal
+          data={YOUTUBE_VIDEOS}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.youtubeCard}
+              onPress={() => openYouTube(item.url)}
+              activeOpacity={0.9}
+            >
+              <View style={styles.youtubeImageContainer}>
+                <Image source={{ uri: item.thumbnail }} style={styles.youtubeImage} resizeMode="cover" />
+                <View style={styles.youtubePlayButton}>
+                  <Ionicons name="play" size={24} color="#fff" />
+                </View>
+              </View>
+              <View style={styles.youtubeContent}>
+                <Text style={styles.youtubeTitle} numberOfLines={2}>{item.title}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      {/* Section 4: Revues Conscience Soufie */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Revues Conscience Soufie</Text>

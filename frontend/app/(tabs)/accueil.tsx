@@ -113,13 +113,6 @@ interface ThemedArticles {
   [key: string]: BlogPost[];
 }
 
-interface YouTubeVideo {
-  id: string;
-  title: string;
-  thumbnail: string;
-  url: string;
-}
-
 export default function AccueilScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);

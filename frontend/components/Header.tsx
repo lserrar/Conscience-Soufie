@@ -53,12 +53,13 @@ export default function Header() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile, clearProfile } = useUser();
+  const { preferences, setNotificationsEnabled, setThemeMode } = usePreferences();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [donationPageVisible, setDonationPageVisible] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [userName, setUserName] = useState('');
   const [tempUserName, setTempUserName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);

@@ -554,6 +554,69 @@ async def get_podcasts():
         logger.error(f"Podcasts error: {e}")
         return {"podcasts": [], "error": str(e)}
 
+@api_router.get("/youtube/videos")
+async def get_youtube_videos():
+    """Get recent videos from YouTube RSS feed"""
+    try:
+        import xml.etree.ElementTree as ET
+        
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.get(YOUTUBE_RSS_URL, timeout=15.0)
+            
+            if response.status_code != 200:
+                logger.error(f"YouTube RSS error: {response.status_code}")
+                return {"videos": [], "error": "Impossible de récupérer les vidéos"}
+            
+            # Parse XML (YouTube Atom feed)
+            root = ET.fromstring(response.text)
+            
+            # Define namespace for Atom and Media
+            ns = {
+                'atom': 'http://www.w3.org/2005/Atom',
+                'media': 'http://search.yahoo.com/mrss/',
+                'yt': 'http://www.youtube.com/xml/schemas/2015'
+            }
+            
+            videos = []
+            entries = root.findall('atom:entry', ns)
+            
+            for entry in entries[:10]:  # Get up to 10 recent videos
+                video_id_elem = entry.find('yt:videoId', ns)
+                title_elem = entry.find('atom:title', ns)
+                published_elem = entry.find('atom:published', ns)
+                
+                # Get media thumbnail
+                media_group = entry.find('media:group', ns)
+                thumbnail_url = None
+                description = None
+                
+                if media_group is not None:
+                    thumbnail_elem = media_group.find('media:thumbnail', ns)
+                    if thumbnail_elem is not None:
+                        thumbnail_url = thumbnail_elem.get('url')
+                    
+                    desc_elem = media_group.find('media:description', ns)
+                    if desc_elem is not None:
+                        description = desc_elem.text
+                
+                if video_id_elem is not None:
+                    video_id = video_id_elem.text
+                    video = {
+                        "id": video_id,
+                        "title": title_elem.text if title_elem is not None else "Sans titre",
+                        "description": description[:200] + "..." if description and len(description) > 200 else description,
+                        "thumbnail": thumbnail_url or f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg",
+                        "url": f"https://www.youtube.com/watch?v={video_id}",
+                        "publishedAt": published_elem.text if published_elem is not None else None,
+                    }
+                    videos.append(video)
+            
+            return {"videos": videos, "channelUrl": f"https://www.youtube.com/channel/{YOUTUBE_CHANNEL_ID}"}
+            
+    except Exception as e:
+        logger.error(f"YouTube videos error: {e}")
+        return {"videos": [], "error": str(e)}
+
 @api_router.get("/articles/by-tag/{tag_slug}")
 async def get_articles_by_tag(tag_slug: str, per_page: int = 10):
     """Get articles from WordPress filtered by tag or category"""

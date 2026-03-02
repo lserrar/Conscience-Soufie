@@ -22,7 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import theme from '@/constants/theme';
 
-const LOGO_URL = 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/xcg84shu_logo1.png';
+const LOGO_URL = require('@/assets/images/logo-cs-bleu.png');
 const DONATION_URL = 'https://www.helloasso.com/associations/conscience-soufie/formulaires/1';
 
 // Social links

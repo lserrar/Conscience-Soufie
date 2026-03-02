@@ -774,9 +774,7 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(28,103,159,0.1)',
+    backgroundColor: theme.colors.primary,
   },
   header: {
     overflow: 'hidden',

@@ -135,24 +135,34 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - **Frontend**: 100% - Tous les bugs critiques corrigés et testés
 
 ## Corrections récentes (02/03/2026)
+- **Design lumineux/bleu implémenté** :
+  - Header bleu avec logo blanc centré + icône menu à gauche + icône recherche à droite
+  - Barre de navigation bleue avec icônes remplies/contour (style Fnac Photo)
+  - StatusBar en mode "light" pour texte blanc
+
 - **Onglet Zoom redesigné** : Nouveau style identique à la page d'Accueil
   - Hero banner avec image en mode `contain` (affiche complète visible)
   - Fond gris clair `#f0f4f8` autour des images
   - Informations (date, titre, bouton) affichées en dessous de l'image
-  - Cartes du carousel avec le même style (image + contenu en dessous)
-- Utilisation de `logo` HelloAsso en priorité (comme sur la page d'Accueil)
 
-## Corrections précédentes (01/03/2026)
-- Refonte complète de AudioContext.tsx avec pattern singleton
-- Correction du bug de double audio
-- Support du background playback configuré
-- Icône de recherche visible dans le header
-- MiniPlayer et FullPlayer fonctionnels
-- Espacements corrigés dans rightIcons du Header
+- **Système d'authentification implémenté** :
+  - Splash screen (3s) avec fond bleu et logo blanc centré
+  - Écran de connexion avec email
+  - API backend pour vérifier l'adhésion HelloAsso
+  - Overlay non-membre sur l'onglet Zoom avec bouton "Devenir adhérent"
+  - Stockage du profil utilisateur avec AsyncStorage
 
 ## Vérifications en attente
-- [ ] **Bouton "Don et adhésion"** : Tester sur mobile que le modal s'ouvre correctement
+- [ ] **Vérification adhésion HelloAsso** : Tester avec un email adhérent réel
+- [ ] **Overlay non-membre Zoom** : Vérifier l'affichage sur téléphone
 - [ ] **Audio en arrière-plan** : Rebuild natif nécessaire (`npx expo run:ios` ou `eas build`)
 
+## Architecture des fichiers d'authentification
+- `/app/frontend/app/index.tsx` - Route racine, redirige vers splash ou tabs
+- `/app/frontend/app/splash.tsx` - Écran splash (3 secondes)
+- `/app/frontend/app/auth.tsx` - Écran de connexion par email
+- `/app/frontend/contexts/UserContext.tsx` - Contexte utilisateur avec isMember
+- `/app/backend/server.py` - API `/api/auth/check-membership`
+
 ## Dernière mise à jour
-2 mars 2026 - Onglet Zoom redesigné (style identique à la page d'Accueil)
+2 mars 2026 - Splash screen + Authentification HelloAsso + Design bleu

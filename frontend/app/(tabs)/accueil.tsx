@@ -76,7 +76,7 @@ const MAGAZINES = [
   {
     id: '3',
     title: 'Soufisme et Poésie',
-    cover: 'https://customer-assets.emergentagent.com/job_3f80383a-d81a-4581-ad89-ad734daf5fe0/artifacts/lly4v3er_Revue-Conscience-Soufie-N3-web.pdf',
+    cover: 'https://i.calameoassets.com/181429070361a4e13db8f/large.jpg',
     readUrl: 'https://www.calameo.com/read/00729418046e9bf1ac1d9',
   },
   {

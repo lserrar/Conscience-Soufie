@@ -201,7 +201,7 @@ export default function Header() {
               data-testid="menu-btn"
               activeOpacity={0.8}
             >
-              <Ionicons name="menu" size={22} color={theme.colors.primary} />
+              <Ionicons name="menu" size={22} color="#fff" />
             </TouchableOpacity>
             
             {/* Center: Logo */}
@@ -220,7 +220,7 @@ export default function Header() {
               data-testid="search-btn"
               activeOpacity={0.8}
             >
-              <Ionicons name="search" size={20} color={theme.colors.primary} />
+              <Ionicons name="search" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>

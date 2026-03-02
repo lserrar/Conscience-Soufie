@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
-import { Audio, AVPlaybackStatus, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync, AudioPlayer } from 'expo-audio';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 
 interface Podcast {
@@ -36,25 +36,28 @@ interface AudioContextType {
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
+// Default podcast cover
+const DEFAULT_COVER = 'https://i1.sndcdn.com/avatars-000342847280-qdvr5o-t500x500.jpg';
+
 // Singleton to track if audio mode has been configured
 let audioModeConfigured = false;
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [currentPodcast, setCurrentPodcast] = useState<Podcast | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const [playlist, setPlaylist] = useState<Podcast[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   
-  // Use refs for critical state to avoid stale closures
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const isLoadingRef = useRef(false);
+  // Create audio player - using empty source initially
+  const player = useAudioPlayer();
+  const status = useAudioPlayerStatus(player);
+  
+  // Refs for stable callbacks
   const currentPodcastIdRef = useRef<string | null>(null);
   const playlistRef = useRef<Podcast[]>([]);
   const currentIndexRef = useRef(-1);
+  const isLoadingRef = useRef(false);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -65,23 +68,25 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // Configure audio mode once on mount
+  // Derive state from player status
+  const isPlaying = status?.playing || false;
+  const position = (status?.currentTime || 0) * 1000; // Convert to milliseconds for compatibility
+  const duration = (status?.duration || 0) * 1000; // Convert to milliseconds for compatibility
+
+  // Configure audio mode once on mount for background playback
   useEffect(() => {
     const setupAudio = async () => {
       if (audioModeConfigured) return;
       
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          staysActiveInBackground: true,
-          playsInSilentModeIOS: true,
-          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-          shouldDuckAndroid: false,
-          playThroughEarpieceAndroid: false,
+        // Configure audio mode for background playback
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: 'doNotMix',
         });
         audioModeConfigured = true;
-        console.log('Audio mode configured successfully');
+        console.log('Audio mode configured for background playback');
       } catch (error) {
         console.error('Error setting audio mode:', error);
       }
@@ -91,8 +96,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     
     // Handle app state changes for background audio
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      // Audio should continue in background - no special handling needed
-      // because staysActiveInBackground: true handles this
       console.log('App state changed to:', nextAppState);
     };
 
@@ -100,82 +103,29 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     
     return () => {
       subscription.remove();
-      // Cleanup sound on unmount
-      const cleanup = async () => {
-        if (soundRef.current) {
-          try {
-            await soundRef.current.stopAsync();
-            await soundRef.current.unloadAsync();
-          } catch (e) {
-            // Ignore cleanup errors
-          }
-          soundRef.current = null;
-        }
-      };
-      cleanup();
     };
   }, []);
 
-  const playNextInternal = useCallback(async () => {
-    const currentPlaylist = playlistRef.current;
-    const currentIdx = currentIndexRef.current;
-    
-    if (currentPlaylist.length === 0 || currentIdx >= currentPlaylist.length - 1) {
-      return;
-    }
-    
-    const nextIndex = currentIdx + 1;
-    const nextPodcast = currentPlaylist[nextIndex];
-    if (nextPodcast && nextPodcast.audioUrl) {
-      await loadAndPlayAudio(nextPodcast, nextIndex);
-    }
-  }, []);
-
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) {
-      if (status.error) {
-        console.error('Playback error:', status.error);
-        setIsLoading(false);
-        isLoadingRef.current = false;
+  // Handle track completion - auto-play next
+  useEffect(() => {
+    if (status?.didJustFinish && !isLoadingRef.current) {
+      const currentPlaylist = playlistRef.current;
+      const currentIdx = currentIndexRef.current;
+      
+      if (currentPlaylist.length > 0 && currentIdx < currentPlaylist.length - 1) {
+        // Auto-play next track
+        setTimeout(() => {
+          const nextIndex = currentIdx + 1;
+          const nextPodcast = currentPlaylist[nextIndex];
+          if (nextPodcast && nextPodcast.audioUrl) {
+            playPodcastInternal(nextPodcast, nextIndex);
+          }
+        }, 300);
       }
-      return;
     }
-    
-    setIsPlaying(status.isPlaying);
-    setPosition(status.positionMillis || 0);
-    setDuration(status.durationMillis || 0);
-    
-    // Auto-play next when finished
-    if (status.didJustFinish && !status.isLooping) {
-      setTimeout(() => {
-        playNextInternal();
-      }, 300);
-    }
-  }, [playNextInternal]);
+  }, [status?.didJustFinish]);
 
-  const stopCurrentSound = useCallback(async () => {
-    const currentSound = soundRef.current;
-    if (!currentSound) return;
-    
-    // Clear ref immediately to prevent double cleanup
-    soundRef.current = null;
-    
-    try {
-      const status = await currentSound.getStatusAsync();
-      if (status.isLoaded) {
-        // Remove status callback first
-        currentSound.setOnPlaybackStatusUpdate(null);
-        await currentSound.stopAsync();
-        await currentSound.unloadAsync();
-      }
-    } catch (error) {
-      // Sound might already be unloaded, ignore errors
-      console.log('Cleanup notice:', error);
-    }
-  }, []);
-
-  const loadAndPlayAudio = useCallback(async (podcast: Podcast, index: number) => {
-    // Prevent double-loading
+  const playPodcastInternal = useCallback(async (podcast: Podcast, index: number) => {
     if (!podcast.audioUrl) {
       console.warn('No audio URL for podcast');
       return;
@@ -188,19 +138,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Check if we're already playing this exact podcast
-    if (currentPodcastIdRef.current === podcast.id && soundRef.current) {
+    if (currentPodcastIdRef.current === podcast.id && player) {
       console.log('Same podcast, toggling play/pause instead');
-      try {
-        const status = await soundRef.current.getStatusAsync();
-        if (status.isLoaded) {
-          if (status.isPlaying) {
-            await soundRef.current.pauseAsync();
-          } else {
-            await soundRef.current.playAsync();
-          }
-        }
-      } catch (e) {
-        console.error('Toggle error:', e);
+      if (isPlaying) {
+        player.pause();
+      } else {
+        player.play();
       }
       return;
     }
@@ -209,50 +152,64 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      // CRITICAL: Stop and unload any existing sound FIRST
-      await stopCurrentSound();
+      // Stop current playback if any
+      if (player && currentPodcastIdRef.current) {
+        player.pause();
+        try {
+          player.setActiveForLockScreen(false);
+        } catch (e) {
+          // Ignore if not supported
+        }
+      }
 
-      // Update state atomically
+      // Update state
       currentPodcastIdRef.current = podcast.id;
       setCurrentPodcast(podcast);
       setCurrentIndex(index);
-      setPosition(0);
-      setDuration(0);
 
-      // Brief delay to ensure cleanup is complete
+      // Small delay to ensure state is updated
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Create new sound with explicit configuration
-      const { sound, status } = await Audio.Sound.createAsync(
+      // Load the new audio
+      await player.loadAsync(
         { uri: podcast.audioUrl },
-        { 
-          shouldPlay: true, 
-          rate: playbackSpeed,
-          progressUpdateIntervalMillis: 500,
-          positionMillis: 0,
-        },
-        onPlaybackStatusUpdate
+        {},
+        true // shouldPlay
       );
 
-      // Store the new sound
-      soundRef.current = sound;
-      
-      // Update initial status
-      if (status.isLoaded) {
-        setIsPlaying(status.isPlaying);
-        setDuration(status.durationMillis || 0);
+      // Enable lock screen controls with metadata for background playback
+      try {
+        player.setActiveForLockScreen(true, {
+          title: podcast.title,
+          artist: 'Conscience Soufie',
+          albumTitle: 'Podcasts',
+          artworkUrl: podcast.imageUrl || DEFAULT_COVER,
+        });
+        console.log('Lock screen controls enabled');
+      } catch (lockScreenError) {
+        console.log('Lock screen controls not available:', lockScreenError);
       }
+
+      // Set playback speed if not default
+      if (playbackSpeed !== 1) {
+        try {
+          player.setPlaybackRate(playbackSpeed);
+        } catch (e) {
+          console.log('Could not set playback rate:', e);
+        }
+      }
+
+      console.log('Started playback:', podcast.title);
       
     } catch (error) {
       console.error('Error playing podcast:', error);
       currentPodcastIdRef.current = null;
       setCurrentPodcast(null);
-      setIsPlaying(false);
     } finally {
       setIsLoading(false);
       isLoadingRef.current = false;
     }
-  }, [playbackSpeed, stopCurrentSound, onPlaybackStatusUpdate]);
+  }, [player, isPlaying, playbackSpeed]);
 
   const playPodcast = useCallback(async (podcast: Podcast, newPlaylist?: Podcast[], index?: number) => {
     if (!podcast.audioUrl) {
@@ -267,71 +224,70 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
 
     const podcastIndex = index ?? 0;
-    await loadAndPlayAudio(podcast, podcastIndex);
-  }, [loadAndPlayAudio]);
+    await playPodcastInternal(podcast, podcastIndex);
+  }, [playPodcastInternal]);
 
   const togglePlayPause = useCallback(async () => {
-    const currentSound = soundRef.current;
-    if (!currentSound) return;
+    if (!player) return;
 
     try {
-      const status = await currentSound.getStatusAsync();
-      if (status.isLoaded) {
-        if (status.isPlaying) {
-          await currentSound.pauseAsync();
-        } else {
-          await currentSound.playAsync();
-        }
+      if (isPlaying) {
+        player.pause();
+      } else {
+        player.play();
       }
     } catch (error) {
       console.error('Error toggling play/pause:', error);
     }
-  }, []);
+  }, [player, isPlaying]);
 
   const seekTo = useCallback(async (positionMs: number) => {
-    const currentSound = soundRef.current;
-    if (!currentSound) return;
+    if (!player) return;
 
     try {
-      await currentSound.setPositionAsync(positionMs);
+      // Convert from milliseconds to seconds
+      player.seekTo(positionMs / 1000);
     } catch (error) {
       console.error('Error seeking:', error);
     }
-  }, []);
+  }, [player]);
 
   const skipForward = useCallback(async (seconds: number = 30) => {
-    const currentSound = soundRef.current;
-    if (!currentSound) return;
+    if (!player || !status) return;
 
     try {
-      const status = await currentSound.getStatusAsync();
-      if (status.isLoaded) {
-        const newPosition = Math.min((status.positionMillis || 0) + seconds * 1000, status.durationMillis || 0);
-        await currentSound.setPositionAsync(newPosition);
-      }
+      const newPosition = Math.min((status.currentTime || 0) + seconds, status.duration || 0);
+      player.seekTo(newPosition);
     } catch (error) {
       console.error('Error skipping forward:', error);
     }
-  }, []);
+  }, [player, status]);
 
   const skipBackward = useCallback(async (seconds: number = 30) => {
-    const currentSound = soundRef.current;
-    if (!currentSound) return;
+    if (!player || !status) return;
 
     try {
-      const status = await currentSound.getStatusAsync();
-      if (status.isLoaded) {
-        const newPosition = Math.max((status.positionMillis || 0) - seconds * 1000, 0);
-        await currentSound.setPositionAsync(newPosition);
-      }
+      const newPosition = Math.max((status.currentTime || 0) - seconds, 0);
+      player.seekTo(newPosition);
     } catch (error) {
       console.error('Error skipping backward:', error);
     }
-  }, []);
+  }, [player, status]);
 
   const playNext = useCallback(async () => {
-    await playNextInternal();
-  }, [playNextInternal]);
+    const currentPlaylist = playlistRef.current;
+    const currentIdx = currentIndexRef.current;
+    
+    if (currentPlaylist.length === 0 || currentIdx >= currentPlaylist.length - 1) {
+      return;
+    }
+    
+    const nextIndex = currentIdx + 1;
+    const nextPodcast = currentPlaylist[nextIndex];
+    if (nextPodcast && nextPodcast.audioUrl) {
+      await playPodcastInternal(nextPodcast, nextIndex);
+    }
+  }, [playPodcastInternal]);
 
   const playPrevious = useCallback(async () => {
     const currentPlaylist = playlistRef.current;
@@ -342,32 +298,36 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const prevIndex = currentIdx - 1;
     const prevPodcast = currentPlaylist[prevIndex];
     if (prevPodcast && prevPodcast.audioUrl) {
-      await loadAndPlayAudio(prevPodcast, prevIndex);
+      await playPodcastInternal(prevPodcast, prevIndex);
     }
-  }, [loadAndPlayAudio]);
+  }, [playPodcastInternal]);
 
   const setSpeed = useCallback(async (speed: number) => {
-    setPlaybackSpeed(speed);
+    setPlaybackSpeedState(speed);
     
-    const currentSound = soundRef.current;
-    if (currentSound) {
+    if (player) {
       try {
-        await currentSound.setRateAsync(speed, true);
+        player.setPlaybackRate(speed);
       } catch (error) {
         console.error('Error setting speed:', error);
       }
     }
-  }, []);
+  }, [player]);
 
   const stopPlayback = useCallback(async () => {
-    await stopCurrentSound();
+    if (player) {
+      player.pause();
+      player.seekTo(0);
+      try {
+        player.setActiveForLockScreen(false);
+      } catch (e) {
+        // Ignore if not supported
+      }
+    }
     currentPodcastIdRef.current = null;
     setCurrentPodcast(null);
-    setIsPlaying(false);
-    setPosition(0);
-    setDuration(0);
     setCurrentIndex(-1);
-  }, [stopCurrentSound]);
+  }, [player]);
 
   return (
     <AudioContext.Provider

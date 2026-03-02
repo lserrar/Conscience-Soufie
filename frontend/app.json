@@ -51,9 +51,10 @@
       "expo-font",
       "expo-notifications",
       [
-        "expo-av",
+        "expo-audio",
         {
-          "microphonePermission": "Cette application n'utilise pas le microphone."
+          "microphonePermission": "Cette application n'utilise pas le microphone.",
+          "enableBackgroundPlayback": true
         }
       ]
     ],

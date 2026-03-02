@@ -166,6 +166,7 @@ export default function AccueilScreen() {
       }
       
       if (youtubeResponse.data.videos) {
+        console.log('YouTube videos received:', youtubeResponse.data.videos.slice(0, 3));
         setYoutubeVideos(youtubeResponse.data.videos);
       }
       

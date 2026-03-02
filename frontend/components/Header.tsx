@@ -541,12 +541,10 @@ export default function Header() {
             </View>
 
             {/* Déconnexion */}
-            {userName && (
-              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                <Ionicons name="log-out-outline" size={22} color="#dc3545" />
-                <Text style={styles.logoutText}>Se déconnecter</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={22} color="#dc3545" />
+              <Text style={styles.logoutText}>Se déconnecter</Text>
+            </TouchableOpacity>
 
             {/* App Version */}
             <View style={styles.appVersion}>

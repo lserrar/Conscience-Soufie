@@ -242,13 +242,13 @@ export default function ZoomScreen() {
     <View style={styles.nonMemberOverlay}>
       <View style={styles.nonMemberContent}>
         <Ionicons name="lock-closed" size={48} color={theme.colors.primary} />
-        <Text style={styles.nonMemberTitle}>Contenu réservé aux adhérents</Text>
+        <Text style={styles.nonMemberTitle}>Réservé aux adhérents</Text>
         <Text style={styles.nonMemberText}>
-          Rejoignez Conscience Soufie pour accéder aux conférences Zoom en direct et participer à nos événements exclusifs.
+          L'adhésion à Conscience Soufie est annuelle, gratuite et vous permet d'assister à nos assemblées générales, mais également d'accéder aux événements Zoom en direct ici.{'\n\n'}Elle s'effectue en moins de 3 minutes sur le site HelloAsso.
         </Text>
         <TouchableOpacity
           style={styles.nonMemberButton}
-          onPress={() => Linking.openURL(HELLOASSO_MEMBERSHIP_URL)}
+          onPress={openMembershipForm}
           activeOpacity={0.8}
         >
           <Ionicons name="heart" size={20} color="#fff" />

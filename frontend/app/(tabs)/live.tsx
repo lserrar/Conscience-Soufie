@@ -786,10 +786,35 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    height: 200,
-    marginRight: 12,
-    borderRadius: 16,
+    backgroundColor: '#fff',
+    marginRight: 14,
+    borderRadius: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
+  },
+  // New Accueil-style cards
+  cardAccueilStyle: {
+    flex: 1,
+  },
+  cardImageAccueil: {
+    width: '100%',
+    height: 90,
+  },
+  cardContentAccueil: {
+    padding: 12,
+  },
+  cardTitleAccueil: {
+    fontSize: 13,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  cardDateAccueil: {
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.primary,
   },
   lastCard: {
     marginRight: 0,

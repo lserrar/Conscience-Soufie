@@ -8,28 +8,37 @@ const LOGO_WHITE = require('@/assets/images/logo-cs-blanc.png');
 export default function SplashScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const scaleAnim = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
-    // Fade in animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
+    // Animation sequence: fade in + scale up
+    Animated.sequence([
+      // First: fade in and initial scale
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 0.9,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Then: grow larger
+      Animated.timing(scaleAnim, {
+        toValue: 1.15,
+        duration: 2500,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Navigate after 3 seconds
+    // Navigate after 5 seconds
     const timer = setTimeout(() => {
       router.replace('/auth');
-    }, 3000);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -66,7 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 280,
-    height: 100,
+    width: 320,
+    height: 120,
   },
 });

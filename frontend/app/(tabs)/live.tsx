@@ -235,16 +235,38 @@ export default function ZoomScreen() {
   }
 
   const nextWebinar = webinars[0];
-  const upcomingWebinars = webinars.slice(1);
+  const upcomingWebinars = webinars.slice(1];
+
+  // Non-member overlay component
+  const NonMemberOverlay = () => (
+    <View style={styles.nonMemberOverlay}>
+      <View style={styles.nonMemberContent}>
+        <Ionicons name="lock-closed" size={48} color={theme.colors.primary} />
+        <Text style={styles.nonMemberTitle}>Contenu réservé aux adhérents</Text>
+        <Text style={styles.nonMemberText}>
+          Rejoignez Conscience Soufie pour accéder aux conférences Zoom en direct et participer à nos événements exclusifs.
+        </Text>
+        <TouchableOpacity
+          style={styles.nonMemberButton}
+          onPress={() => Linking.openURL(HELLOASSO_MEMBERSHIP_URL)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="heart" size={20} color="#fff" />
+          <Text style={styles.nonMemberButtonText}>Devenir adhérent</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
-      }
-    >
+    <View style={styles.mainContainer}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
+      >
       {/* Hero - Prochain Direct */}
       {nextWebinar ? (
         <View style={styles.heroContainer}>

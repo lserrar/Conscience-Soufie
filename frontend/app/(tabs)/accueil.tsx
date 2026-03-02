@@ -231,6 +231,10 @@ export default function AccueilScreen() {
     });
   };
 
+  const openYouTube = (url: string) => {
+    Linking.openURL(url);
+  };
+
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);

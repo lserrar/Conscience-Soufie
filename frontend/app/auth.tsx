@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/contexts/UserContext';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 const LOGO_WHITE = require('@/assets/images/logo-cs-blanc.png');

@@ -704,6 +704,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  // YouTube Card
+  youtubeCard: {
+    width: 200,
+    backgroundColor: '#fff',
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(28,103,159,0.1)',
+  },
+  youtubeImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
+  },
+  youtubeImage: {
+    width: '100%',
+    height: '100%',
+  },
+  youtubePlayButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -20 }, { translateY: -20 }],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  youtubeContent: {
+    padding: 12,
+  },
+  youtubeTitle: {
+    fontSize: 14,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textPrimary,
+    lineHeight: 18,
+  },
+
   bottomSpacer: {
     height: 40,
   },

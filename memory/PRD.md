@@ -136,6 +136,15 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 
 ## Corrections récentes (02/03/2026)
 
+### Préférences utilisateur (02/03/2026)
+- **Nouveau contexte `PreferencesContext`** créé pour gérer les préférences utilisateur
+- **Préférences implémentées** :
+  - Notifications (switch on/off, persisté avec AsyncStorage)
+  - Thème (Clair/Sombre/Système, modal de sélection)
+  - Langue (Français uniquement pour l'instant)
+- **Persistance** : Toutes les préférences sont sauvegardées dans AsyncStorage
+- **Note** : Le thème sombre sera implémenté dans une future version
+
 ### Réorganisation de la page Accueil + Section YouTube (02/03/2026)
 - **Nouvel ordre des sections sur la page Accueil** :
   1. À la une (hero event)

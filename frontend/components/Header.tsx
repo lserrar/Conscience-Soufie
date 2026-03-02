@@ -51,6 +51,7 @@ interface SearchResult {
 export default function Header() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile, clearProfile } = useUser();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [donationPageVisible, setDonationPageVisible] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);

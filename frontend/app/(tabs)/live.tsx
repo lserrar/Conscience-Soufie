@@ -246,50 +246,51 @@ export default function ZoomScreen() {
       {nextWebinar ? (
         <View style={styles.heroContainer}>
           {nextWebinar.imageUrl ? (
-            <View style={styles.heroWithImage}>
-              <Image 
-                source={{ uri: nextWebinar.imageUrl }} 
-                style={[styles.heroBackgroundImage, { objectFit: 'cover' } as any]}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(28,103,159,0.85)']}
-                style={styles.heroOverlayWrapper}
-              >
-                {/* Top: Date badge + Live badge */}
-                <View style={styles.heroTop}>
-                  <View style={styles.heroDateBadge}>
-                    <Ionicons name="calendar" size={14} color="#fff" />
-                    <Text style={styles.heroDateText}>
+            <TouchableOpacity 
+              activeOpacity={0.9}
+              onPress={() => joinZoom(nextWebinar.join_url)}
+            >
+              {/* Image container like Accueil */}
+              <View style={styles.heroImageContainer}>
+                <Image 
+                  source={{ uri: nextWebinar.imageUrl }} 
+                  style={styles.heroImage}
+                  resizeMode="contain"
+                />
+              </View>
+              
+              {/* Info below image like Accueil */}
+              <View style={styles.heroInfo}>
+                <View style={styles.heroInfoRow}>
+                  <View style={styles.heroDateBadgeAccueil}>
+                    <Ionicons name="calendar" size={14} color="#1c679f" />
+                    <Text style={styles.heroDateTextAccueil}>
                       {formatShortDate(nextWebinar.start_time)} à {formatTime(nextWebinar.start_time)}
                     </Text>
                   </View>
                   
                   {(isLive(nextWebinar) || isSoon(nextWebinar)) && (
-                    <View style={[styles.liveBadge, isSoon(nextWebinar) && !isLive(nextWebinar) && styles.soonBadge]}>
-                      <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
-                      <Text style={styles.liveBadgeText}>
+                    <View style={[styles.liveBadgeAccueil, isSoon(nextWebinar) && !isLive(nextWebinar) && styles.soonBadgeAccueil]}>
+                      <Animated.View style={[styles.liveDotAccueil, { opacity: liveDotAnim }]} />
+                      <Text style={styles.liveBadgeTextAccueil}>
                         {isLive(nextWebinar) ? 'EN DIRECT' : 'BIENTÔT'}
                       </Text>
                     </View>
                   )}
                 </View>
-
-                {/* Bottom: Title + Button */}
-                <View style={styles.heroBottom}>
-                  <Text style={styles.heroTitle}>{nextWebinar.topic}</Text>
-                  
-                  <TouchableOpacity 
-                    style={styles.heroButton}
-                    onPress={() => joinZoom(nextWebinar.join_url)}
-                    activeOpacity={0.9}
-                  >
-                    <Ionicons name="videocam" size={20} color="#fff" />
-                    <Text style={styles.heroButtonText}>Rejoindre Zoom</Text>
-                  </TouchableOpacity>
-                </View>
-              </LinearGradient>
-            </View>
+                
+                <Text style={styles.heroTitleAccueil} numberOfLines={2}>{nextWebinar.topic}</Text>
+                
+                <TouchableOpacity 
+                  style={styles.heroButtonAccueil}
+                  onPress={() => joinZoom(nextWebinar.join_url)}
+                  activeOpacity={0.9}
+                >
+                  <Ionicons name="videocam" size={18} color="#fff" />
+                  <Text style={styles.heroButtonTextAccueil}>Rejoindre Zoom</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           ) : (
             <View style={styles.heroGradientOnly}>
               <View style={styles.heroTop}>

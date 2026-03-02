@@ -480,12 +480,12 @@ export default function AccueilScreen() {
       </View>
 
       {/* Thematic Article Sections */}
-      {THEMATIC_TAGS.map((tag) => {
+      {THEMATIC_TAGS.map((tag, index) => {
         const tagArticles = themedArticles[tag.slug];
         if (!tagArticles || tagArticles.length === 0) return null;
         
         return (
-          <View key={tag.slug} style={styles.section}>
+          <View key={`${tag.slug}-${tag.label}-${index}`} style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{tag.label}</Text>
               <TouchableOpacity onPress={() => router.push({ pathname: '/blog', params: { filter: tag.slug } })}>
@@ -496,7 +496,7 @@ export default function AccueilScreen() {
             <FlatList
               horizontal
               data={tagArticles}
-              keyExtractor={(item) => `${tag.slug}-${item.id}`}
+              keyExtractor={(item) => `${tag.slug}-${tag.label}-${item.id}`}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalList}
               renderItem={({ item }) => renderArticleCard(item)}

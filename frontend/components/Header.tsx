@@ -205,7 +205,7 @@ export default function Header() {
               activeOpacity={0.8}
             >
               <Image
-                source={{ uri: LOGO_URL }}
+                source={LOGO_URL}
                 style={styles.logoBig}
                 resizeMode="contain"
               />

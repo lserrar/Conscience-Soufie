@@ -108,10 +108,12 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
+    await clearProfile();
     await AsyncStorage.removeItem('@user_name');
     setUserName('');
     setTempUserName('');
     setProfileModalVisible(false);
+    router.replace('/auth');
   };
 
   // Search functions

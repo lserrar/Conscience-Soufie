@@ -147,9 +147,10 @@ export default function AccueilScreen() {
 
   const fetchData = async () => {
     try {
-      const [articlesResponse, eventsResponse] = await Promise.all([
+      const [articlesResponse, eventsResponse, youtubeResponse] = await Promise.all([
         axios.get('https://consciencesoufie.com/wp-json/wp/v2/posts?per_page=10&_embed').catch(() => ({ data: [] })),
         axios.get(`${BACKEND_URL}/api/helloasso/events`).catch(() => ({ data: { events: [] } })),
+        axios.get(`${BACKEND_URL}/api/youtube/videos`).catch(() => ({ data: { videos: [] } })),
       ]);
       
       if (articlesResponse.data) {
@@ -162,6 +163,10 @@ export default function AccueilScreen() {
         if (eventList.length > 0) {
           setHighlightEvent(eventList[0]);
         }
+      }
+      
+      if (youtubeResponse.data.videos) {
+        setYoutubeVideos(youtubeResponse.data.videos);
       }
       
       // Fetch themed articles

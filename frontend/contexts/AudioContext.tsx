@@ -170,12 +170,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       // Small delay to ensure state is updated
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Load the new audio
-      await player.loadAsync(
-        { uri: podcast.audioUrl },
-        {},
-        true // shouldPlay
-      );
+      // Replace the audio source with the new one
+      player.replace({ uri: podcast.audioUrl });
+      
+      // Start playback
+      player.play();
 
       // Enable lock screen controls with metadata for background playback
       try {

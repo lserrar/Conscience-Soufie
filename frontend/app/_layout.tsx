@@ -18,6 +18,7 @@ import {
 } from '@expo-google-fonts/inter';
 import { UserProvider } from '@/contexts/UserContext';
 import { AudioProvider } from '@/contexts/AudioContext';
+import { PreferencesProvider } from '@/contexts/PreferencesContext';
 
 SplashScreen.preventAutoHideAsync();
 

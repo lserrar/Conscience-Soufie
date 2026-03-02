@@ -210,4 +210,11 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - `/app/backend/server.py` - API `/api/auth/check-membership`
 
 ## Dernière mise à jour
-2 mars 2026 - Préférences utilisateur (Notifications, Thème, Langue) + Section YouTube dynamique
+2 mars 2026 - Configuration EAS pour déploiement iOS/Android
+
+## Configuration de déploiement
+- **Bundle ID** : `com.consciencesoufie.app`
+- **Version** : 1.0.0
+- **Build Number** : 1
+- **EAS configuré** : Oui (eas.json créé)
+- **Guide** : voir `/frontend/DEPLOYMENT_GUIDE.md`

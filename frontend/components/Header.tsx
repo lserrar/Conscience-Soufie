@@ -788,12 +788,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  sideSpace: {
-    width: 40,
-  },
   menuButton: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
@@ -802,12 +799,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBig: {
-    width: 220,
-    height: 55,
+    width: 200,
+    height: 50,
   },
   searchButton: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'flex-end',
   },

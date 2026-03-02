@@ -134,20 +134,25 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
 - **Backend**: APIs fonctionnelles (WordPress, HelloAsso, Zoom, SoundCloud RSS)
 - **Frontend**: 100% - Tous les bugs critiques corrigés et testés
 
-## Corrections récentes (01/03/2026)
+## Corrections récentes (02/03/2026)
+- **Onglet Zoom redesigné** : Nouveau style identique à la page d'Accueil
+  - Hero banner avec image en mode `contain` (affiche complète visible)
+  - Fond gris clair `#f0f4f8` autour des images
+  - Informations (date, titre, bouton) affichées en dessous de l'image
+  - Cartes du carousel avec le même style (image + contenu en dessous)
+- Utilisation de `logo` HelloAsso en priorité (comme sur la page d'Accueil)
+
+## Corrections précédentes (01/03/2026)
 - Refonte complète de AudioContext.tsx avec pattern singleton
 - Correction du bug de double audio
 - Support du background playback configuré
 - Icône de recherche visible dans le header
 - MiniPlayer et FullPlayer fonctionnels
 - Espacements corrigés dans rightIcons du Header
-- **Correction UI onglet Zoom** : Hero banner et carousel avec images en mode `cover` et texte/boutons visibles
-  - Utilisation de `ImageBackground` avec `LinearGradient` pour l'overlay
-  - Styles simplifiés pour robustesse cross-platform
 
 ## Vérifications en attente
 - [ ] **Bouton "Don et adhésion"** : Tester sur mobile que le modal s'ouvre correctement
 - [ ] **Audio en arrière-plan** : Rebuild natif nécessaire (`npx expo run:ios` ou `eas build`)
 
 ## Dernière mise à jour
-1 mars 2026 - Correction UI onglet Zoom (images cover + overlay visible)
+2 mars 2026 - Onglet Zoom redesigné (style identique à la page d'Accueil)

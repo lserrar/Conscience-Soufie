@@ -188,8 +188,8 @@ Application mobile française pour l'association culturelle Conscience Soufie. L
   - Stockage du profil utilisateur avec AsyncStorage
 
 ## Vérifications en attente
+- [x] **Bug "Don et adhésion"** : Confirmé fonctionnel sur mobile ✅
 - [ ] **Vérification adhésion HelloAsso** : Tester avec un email adhérent réel
-- [ ] **Overlay non-membre Zoom** : Vérifier l'affichage sur téléphone
 - [ ] **Audio en arrière-plan** : Rebuild natif nécessaire (`npx expo run:ios` ou `eas build`)
 
 ## Architecture des fichiers d'authentification

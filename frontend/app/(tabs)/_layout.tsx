@@ -13,18 +13,26 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: theme.colors.primary,
-          tabBarInactiveTintColor: 'rgba(0,0,0,0.4)',
+          tabBarInactiveTintColor: '#8e8e93',
           tabBarStyle: {
             backgroundColor: '#ffffff',
-            borderTopWidth: 1,
-            borderTopColor: 'rgba(28,103,159,0.1)',
-            paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-            paddingTop: 8,
-            height: Platform.OS === 'ios' ? 85 : 65,
+            borderTopWidth: 0,
+            paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+            paddingTop: 10,
+            height: Platform.OS === 'ios' ? 88 : 68,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
           },
           tabBarLabelStyle: {
             fontFamily: theme.fonts.bodyMedium,
-            fontSize: 10,
+            fontSize: 11,
+            marginTop: 4,
+          },
+          tabBarIconStyle: {
+            marginBottom: -2,
           },
         }}
       >
@@ -32,8 +40,8 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Accueil',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home-outline" size={size} color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
             ),
           }}
         />
@@ -41,8 +49,8 @@ export default function TabLayout() {
           name="blog"
           options={{
             title: 'Articles',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="newspaper-outline" size={size} color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "newspaper" : "newspaper-outline"} size={24} color={color} />
             ),
           }}
         />
@@ -50,8 +58,8 @@ export default function TabLayout() {
           name="podcasts"
           options={{
             title: 'Podcasts',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="headset-outline" size={size} color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "headset" : "headset-outline"} size={24} color={color} />
             ),
           }}
         />
@@ -59,8 +67,8 @@ export default function TabLayout() {
           name="live"
           options={{
             title: 'Zoom',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="videocam-outline" size={size} color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "videocam" : "videocam-outline"} size={24} color={color} />
             ),
           }}
         />
@@ -68,8 +76,8 @@ export default function TabLayout() {
           name="about"
           options={{
             title: 'À Propos',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="information-circle-outline" size={size} color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "information-circle" : "information-circle-outline"} size={24} color={color} />
             ),
           }}
         />

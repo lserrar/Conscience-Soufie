@@ -44,6 +44,7 @@ interface HelloAssoEvent {
 }
 
 export default function ZoomScreen() {
+  const { isMember } = useUser();
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

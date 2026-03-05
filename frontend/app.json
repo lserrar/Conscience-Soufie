@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.consciencesoufie.app",
+      "bundleIdentifier": "org.consciencesoufie.app",
       "buildNumber": "1",
       "infoPlist": {
         "UIBackgroundModes": ["audio"],
@@ -19,7 +19,7 @@
       }
     },
     "android": {
-      "package": "com.consciencesoufie.app",
+      "package": "org.consciencesoufie.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

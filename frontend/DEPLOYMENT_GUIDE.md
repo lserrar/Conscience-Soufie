@@ -2,7 +2,7 @@
 
 ## 📱 Lien de test pour l'équipe
 ```
-https://conscience-soufie.preview.emergentagent.com
+https://conscience-content.preview.emergentagent.com
 ```
 
 **Instructions de test :**

@@ -8,33 +8,27 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "simulator": true,
-        "bundleIdentifier": "org.consciencesoufie.app"
+        "simulator": true
       },
       "android": {
-        "buildType": "apk",
-        "package": "org.consciencesoufie.app"
+        "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
-        "simulator": false,
-        "bundleIdentifier": "org.consciencesoufie.app"
+        "simulator": false
       },
       "android": {
-        "buildType": "apk",
-        "package": "org.consciencesoufie.app"
+        "buildType": "apk"
       }
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium",
-        "bundleIdentifier": "org.consciencesoufie.app"
+        "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "app-bundle",
-        "package": "org.consciencesoufie.app"
+        "buildType": "app-bundle"
       }
     }
   }

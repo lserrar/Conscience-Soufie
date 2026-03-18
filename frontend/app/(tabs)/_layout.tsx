@@ -2,10 +2,17 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '@/components/Header';
 import theme from '@/constants/theme';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  
+  // Calculate bottom padding: use safe area insets for both platforms
+  const bottomPadding = Math.max(insets.bottom, 10);
+  const tabBarHeight = 58 + bottomPadding;
+
   return (
     <View style={styles.container}>
       <Header />
@@ -17,9 +24,9 @@ export default function TabLayout() {
           tabBarStyle: {
             backgroundColor: theme.colors.primary,
             borderTopWidth: 0,
-            paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+            paddingBottom: bottomPadding,
             paddingTop: 10,
-            height: Platform.OS === 'ios' ? 88 : 68,
+            height: tabBarHeight,
           },
           tabBarLabelStyle: {
             fontFamily: theme.fonts.bodyMedium,

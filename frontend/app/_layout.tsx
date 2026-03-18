@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -49,20 +50,22 @@ export default function RootLayout() {
   }
 
   return (
-    <PreferencesProvider>
-      <UserProvider>
-        <AudioProvider>
-          <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-            <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="splash" options={{ headerShown: false }} />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            </Stack>
-          </View>
-        </AudioProvider>
-      </UserProvider>
-    </PreferencesProvider>
+    <SafeAreaProvider>
+      <PreferencesProvider>
+        <UserProvider>
+          <AudioProvider>
+            <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+              <StatusBar style="light" />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="splash" options={{ headerShown: false }} />
+                <Stack.Screen name="auth" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              </Stack>
+            </View>
+          </AudioProvider>
+        </UserProvider>
+      </PreferencesProvider>
+    </SafeAreaProvider>
   );
 }

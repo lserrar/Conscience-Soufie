@@ -9,9 +9,14 @@ import theme from '@/constants/theme';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   
-  // Calculate bottom padding: use safe area insets for both platforms
-  const bottomPadding = Math.max(insets.bottom, 10);
-  const tabBarHeight = 58 + bottomPadding;
+  // Calculate bottom padding: use safe area insets
+  // Android with gesture navigation needs extra padding (minimum 48px)
+  // Android with 3-button navigation needs even more (minimum 56px)
+  const androidMinPadding = 48;
+  const iosMinPadding = 20;
+  const minPadding = Platform.OS === 'android' ? androidMinPadding : iosMinPadding;
+  const bottomPadding = Math.max(insets.bottom, minPadding);
+  const tabBarHeight = 60 + bottomPadding;
 
   return (
     <View style={styles.container}>

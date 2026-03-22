@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AudioProvider } from './context/AudioContext';
-import Layout from './components/Layout';
+import MobileLayout from './components/MobileLayout';
 import Home from './pages/Home';
 import Articles from './pages/Articles';
 import ArticleDetail from './pages/ArticleDetail';
@@ -19,7 +19,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Layout />}>
+            <Route path="/" element={<MobileLayout />}>
               <Route index element={<Home />} />
               <Route path="articles" element={<Articles />} />
               <Route path="articles/:slug" element={<ArticleDetail />} />

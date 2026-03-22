@@ -875,3 +875,13 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# Serve webapp static files
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Check if webapp dist exists and mount it
+webapp_dist_path = "/app/webapp/dist"
+if os.path.exists(webapp_dist_path):
+    # Serve static assets
+    app.mount("/webapp", StaticFiles(directory=webapp_dist_path, html=True), name="webapp")

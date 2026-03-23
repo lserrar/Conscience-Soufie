@@ -1,202 +1,134 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Play, Calendar, Video as VideoIcon, ExternalLink } from 'lucide-react';
+import { Video, Calendar, ExternalLink, Users } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const Videos = () => {
-  const [videos, setVideos] = useState([]);
   const [webinars, setWebinars] = useState([]);
-  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('videos');
 
   useEffect(() => {
-    fetchData();
+    fetchWebinars();
   }, []);
 
-  const fetchData = async () => {
+  const fetchWebinars = async () => {
     try {
-      const [videosRes, webinarsRes, eventsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/youtube/videos`),
-        axios.get(`${API_URL}/api/zoom/webinars`),
-        axios.get(`${API_URL}/api/helloasso/events`),
-      ]);
-      
-      // Handle different API response formats
-      const videosData = videosRes.data.videos || videosRes.data || [];
-      const webinarsData = webinarsRes.data.webinars || webinarsRes.data || [];
-      const eventsData = eventsRes.data.events || eventsRes.data || [];
-      
-      setVideos(videosData);
-      setWebinars(webinarsData);
-      setEvents(eventsData);
+      const response = await axios.get(`${API_URL}/api/zoom/webinars`);
+      const data = response.data.webinars || response.data || [];
+      setWebinars(data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching webinars:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '';
+    }
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-12 skeleton rounded-lg w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 skeleton rounded-xl" />)}
-        </div>
+      <div className="flex flex-col items-center justify-center py-20 bg-white min-h-full">
+        <div className="w-8 h-8 border-2 border-[#1c679f] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-3 text-sm font-serif text-gray-500">Chargement...</p>
       </div>
     );
   }
 
   return (
-    <div className="animate-fadeIn">
-      <div className="mb-8">
-        <h1 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mb-4">Vidéos & Événements</h1>
-        <p className="text-gray-600">
-          Retrouvez nos vidéos YouTube, webinaires Zoom et événements à venir.
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-8">
-        {[
-          { id: 'videos', label: 'Vidéos YouTube', count: videos.length },
-          { id: 'webinars', label: 'Webinaires', count: webinars.length },
-          { id: 'events', label: 'Événements', count: events.length },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-3 font-medium transition-colors relative ${
-              activeTab === tab.id
-                ? 'text-primary'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-            <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-              {tab.count}
-            </span>
-            {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Videos Grid */}
-      {activeTab === 'videos' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {videos.map((video) => (
-            <a
-              key={video.id}
-              href={video.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white rounded-xl shadow-sm overflow-hidden card-hover"
-            >
-              <div className="relative">
-                <img src={video.thumbnail} alt={video.title} className="w-full h-44 object-cover" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                    <Play className="text-white ml-1" size={32} />
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{video.title}</h3>
-                {video.publishedAt && (
-                  <p className="text-sm text-gray-500">
-                    {formatDate(video.publishedAt)}
-                  </p>
-                )}
-              </div>
-            </a>
-          ))}
+    <div className="bg-white min-h-full pb-6">
+      {/* Header */}
+      <section className="pt-5 pb-4">
+        <div className="px-4 mb-2">
+          <h2 className="text-2xl font-serif font-bold text-[#1a2a3a]">Webinaires Zoom</h2>
+          <div className="w-[60px] h-[3px] bg-[#c9a96e] mt-2 rounded-sm"></div>
         </div>
-      )}
+        <p className="px-4 text-sm text-gray-600 mt-3">
+          Accédez aux conférences et enseignements en direct réservés aux membres.
+        </p>
+      </section>
 
-      {/* Webinars */}
-      {activeTab === 'webinars' && (
-        <div className="space-y-4">
-          {webinars.length > 0 ? (
-            webinars.map((webinar) => (
+      {/* Comment participer */}
+      <section className="mx-4 mb-6 p-4 bg-[rgba(28,103,159,0.05)] rounded-xl border border-[rgba(28,103,159,0.1)]">
+        <h3 className="text-base font-semibold text-[#1c679f] mb-2 flex items-center gap-2">
+          <Users size={18} />
+          Comment participer ?
+        </h3>
+        <ol className="text-sm text-gray-600 space-y-1.5 list-decimal list-inside">
+          <li>Cliquez sur le webinaire qui vous intéresse</li>
+          <li>Rejoignez via le lien Zoom fourni</li>
+          <li>Connectez-vous avec votre nom et email</li>
+        </ol>
+      </section>
+
+      {/* Webinars List */}
+      <section className="px-4">
+        {webinars.length > 0 ? (
+          <div className="space-y-4">
+            {webinars.map((webinar) => (
               <div
                 key={webinar.id}
-                className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-between card-hover"
+                className="bg-white rounded-xl border border-[rgba(28,103,159,0.15)] overflow-hidden"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <VideoIcon className="text-primary" size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{webinar.topic}</h3>
-                    <p className="text-sm text-gray-500 flex items-center mt-1">
-                      <Calendar size={14} className="mr-1" />
-                      {formatDate(webinar.start_time)}
-                    </p>
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-[#1c679f] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Video className="text-white" size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-serif font-bold text-[#1a2a3a] mb-1.5 leading-tight">
+                        {webinar.topic}
+                      </h3>
+                      <p className="text-sm text-gray-500 flex items-center gap-1.5 mb-3">
+                        <Calendar size={14} />
+                        {formatDate(webinar.start_time)}
+                      </p>
+                      {webinar.agenda && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{webinar.agenda}</p>
+                      )}
+                      {webinar.join_url && (
+                        <a
+                          href={webinar.join_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1c679f] text-white text-sm font-medium rounded-lg"
+                        >
+                          Rejoindre le webinaire
+                          <ExternalLink size={16} />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {webinar.join_url && (
-                  <a
-                    href={webinar.join_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center"
-                  >
-                    Rejoindre
-                    <ExternalLink size={16} className="ml-2" />
-                  </a>
-                )}
               </div>
-            ))
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              Aucun webinaire programmé pour le moment.
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-12">
+            <div className="w-16 h-16 bg-[rgba(28,103,159,0.1)] rounded-full flex items-center justify-center mb-4">
+              <Video className="text-[#1c679f]" size={32} />
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Events */}
-      {activeTab === 'events' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <a
-              key={event.id}
-              href={event.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white rounded-xl shadow-sm overflow-hidden card-hover"
-            >
-              {event.banner && (
-                <img src={event.banner} alt={event.title} className="w-full h-44 object-cover" />
-              )}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{event.title}</h3>
-                <p className="text-sm text-gray-500 flex items-center">
-                  <Calendar size={14} className="mr-1" />
-                  {formatDate(event.startDate)}
-                </p>
-                <span className="inline-block mt-3 text-sm text-primary font-medium">
-                  S'inscrire →
-                </span>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
+            <h3 className="text-lg font-serif font-bold text-[#1a2a3a] mb-2">Aucun webinaire prévu</h3>
+            <p className="text-sm text-gray-500 text-center">
+              Les prochains webinaires seront annoncés ici.
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

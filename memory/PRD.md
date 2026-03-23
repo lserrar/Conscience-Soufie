@@ -85,6 +85,21 @@ French
 
 ---
 
+## Completed Work (Fev 2026)
+
+### Login & Auth (Webapp)
+- ✅ Écran de login redesigné pour être identique à l'appli mobile (auth.tsx)
+  - Header bleu avec logo, titre "Bienvenue ! Marhaban !" en italique, bouton "Continuer"
+- ✅ Non-membres autorisés à se connecter (comme l'appli mobile)
+  - `AuthContext.jsx` stocke l'utilisateur quel que soit le statut de membre
+  - Expose `isMember` dans le contexte
+- ✅ Overlay "Réservé aux adhérents" sur Zoom avec le texte exact de l'appli mobile
+  - Texte HelloAsso, bouton "Devenir adhérent" avec icône coeur
+- ✅ Suppression du `MemberOnlyRoute` (géré directement dans `Videos.jsx`)
+- ✅ Navigation corrigée (onglet Accueil pointe vers `/accueil` au lieu de `/`)
+
+---
+
 ## Pending Issues
 
 ### P1: Background Audio (Mobile)
@@ -98,16 +113,9 @@ French
 
 ## Next Steps
 
-1. **Déployer la webapp sur OVH**
-   - Télécharger le code via "Download Code"
-   - Copier le contenu de `/webapp/dist/` sur le serveur OVH
-   - Ajouter le fichier `.htaccess` pour le routing SPA
+1. **Mettre à jour la webapp sur OVH** (git pull + yarn build)
 
-2. **Tester le fix Android**
-   - Créer un nouveau build APK
-   - Vérifier que la barre d'onglets est visible
-
-3. **App iOS**
+2. **App iOS**
    - Finaliser l'ouverture du compte Apple Developer
    - Soumettre l'app sur l'App Store
 

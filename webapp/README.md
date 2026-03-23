@@ -108,7 +108,7 @@ sudo certbot --nginx -d app.consciencesoufie.com
 
 L'application utilise l'API backend qui doit être déployée séparément.
 
-**URL de l'API actuelle** : `https://conscience-content.preview.emergentagent.com`
+**URL de l'API actuelle** : `https://conscience-preview-1.preview.emergentagent.com`
 
 Pour utiliser votre propre API :
 1. Déployez le backend FastAPI

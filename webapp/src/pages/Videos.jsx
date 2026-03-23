@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Video, Calendar, ExternalLink, Users } from 'lucide-react';
+import { Video, Calendar, ExternalLink, Users, Lock, Heart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const Videos = () => {
+  const { isMember } = useAuth();
   const [webinars, setWebinars] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [membershipUrl, setMembershipUrl] = useState(null);
 
   useEffect(() => {
     fetchWebinars();
+    fetchMembershipUrl();
   }, []);
 
   const fetchWebinars = async () => {
@@ -23,6 +27,19 @@ const Videos = () => {
       setLoading(false);
     }
   };
+
+  const fetchMembershipUrl = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/helloasso/membership-form`);
+      if (response.data?.url) {
+        setMembershipUrl(response.data.url);
+      }
+    } catch (err) {
+      // Fallback URL will be used
+    }
+  };
+
+  const adhesionUrl = membershipUrl || 'https://www.helloasso.com/associations/conscience-soufie';
 
   const formatDate = (dateStr) => {
     try {
@@ -50,7 +67,7 @@ const Videos = () => {
   }
 
   return (
-    <div className="bg-white min-h-full pb-6">
+    <div className="bg-white min-h-full pb-6 relative" data-testid="videos-page">
       {/* Header */}
       <section className="pt-5 pb-4">
         <div className="px-4 mb-2">
@@ -129,6 +146,42 @@ const Videos = () => {
           </div>
         )}
       </section>
+
+      {/* Non-member Overlay - matches mobile live.tsx NonMemberOverlay exactly */}
+      {!isMember && (
+        <div
+          className="absolute inset-0 bg-white/95 flex items-center justify-center p-6 z-10"
+          data-testid="non-member-overlay"
+        >
+          <div className="flex flex-col items-center max-w-[320px] text-center">
+            <Lock className="text-[#1c679f]" size={48} />
+            <h2
+              className="text-[22px] font-serif font-bold text-[#1a2a3a] mt-5 mb-3"
+              data-testid="non-member-title"
+            >
+              Réservé aux adhérents
+            </h2>
+            <p
+              className="text-[15px] text-gray-500 leading-[22px] mb-6"
+              data-testid="non-member-text"
+            >
+              L'adhésion à Conscience Soufie est annuelle, gratuite et vous permet d'assister à nos assemblées générales, mais également d'accéder aux événements Zoom en direct ici.
+              <br /><br />
+              Elle s'effectue en moins de 3 minutes sur le site HelloAsso.
+            </p>
+            <a
+              href={adhesionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 bg-[#1c679f] text-white py-3.5 px-7 rounded-xl text-base font-semibold"
+              data-testid="non-member-cta"
+            >
+              <Heart size={20} />
+              Devenir adhérent
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

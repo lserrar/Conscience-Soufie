@@ -24,7 +24,7 @@ const MobileLayout = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Accueil', icon: Home, iconFilled: Home },
+    { path: '/accueil', label: 'Accueil', icon: Home, iconFilled: Home },
     { path: '/articles', label: 'Articles', icon: FileText, iconFilled: FileText },
     { path: '/podcasts', label: 'Podcasts', icon: Headphones, iconFilled: Headphones },
     { path: '/videos', label: 'Zoom', icon: Video, iconFilled: Video },
@@ -32,7 +32,7 @@ const MobileLayout = () => {
   ];
 
   const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
+    if (path === '/accueil') return location.pathname === '/accueil';
     return location.pathname.startsWith(path);
   };
 

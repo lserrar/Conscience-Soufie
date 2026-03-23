@@ -1,35 +1,64 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
+const LOGO_URL = '/logo-cs-blanc.png';
 
 const Splash = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
+  const [animState, setAnimState] = useState('initial');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Phase 1: fade in + scale to 0.9 (like mobile spring)
+    requestAnimationFrame(() => setAnimState('fadeIn'));
+
+    // Phase 2: slow grow to 1.15 (like mobile)
+    const growTimer = setTimeout(() => setAnimState('grow'), 800);
+
+    // Navigate after 5 seconds (like mobile)
+    const navTimer = setTimeout(() => {
       if (!loading) {
         if (isAuthenticated) {
-          navigate('/accueil');
+          navigate('/accueil', { replace: true });
         } else {
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
       }
-    }, 2500);
-    return () => clearTimeout(timer);
+    }, 5000);
+
+    return () => {
+      clearTimeout(growTimer);
+      clearTimeout(navTimer);
+    };
   }, [loading, isAuthenticated, navigate]);
 
+  const logoStyle = {
+    opacity: animState === 'initial' ? 0 : 1,
+    transform:
+      animState === 'initial'
+        ? 'scale(0.6)'
+        : animState === 'fadeIn'
+        ? 'scale(0.9)'
+        : 'scale(1.15)',
+    transition:
+      animState === 'fadeIn'
+        ? 'opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        : 'transform 2.5s ease-out',
+  };
+
   return (
-    <div className="min-h-screen bg-[#1c679f] flex flex-col items-center justify-center">
-      <img 
-        src="/logo-cs-blanc.png" 
-        alt="Conscience Soufie" 
-        className="w-32 h-32 object-contain animate-pulse"
-      />
-      <h1 className="text-white text-2xl font-serif mt-6">Conscience Soufie</h1>
-      <p className="text-white/60 text-sm mt-2">Sagesse • Spiritualité • Partage</p>
-      <div className="mt-8">
-        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+    <div
+      className="min-h-screen bg-[#1c679f] flex items-center justify-center"
+      data-testid="splash-screen"
+    >
+      <div style={logoStyle}>
+        <img
+          src={LOGO_URL}
+          alt="Conscience Soufie"
+          className="w-[320px] h-[120px] object-contain"
+          data-testid="splash-logo"
+        />
       </div>
     </div>
   );

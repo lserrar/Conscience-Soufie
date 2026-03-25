@@ -1,177 +1,183 @@
 <analysis>**original_problem_statement:**
-The user wants to create a mobile app in French for their Sufi association, Conscience Soufie. The app functions as a content hub, aggregating content from WordPress (articles), SoundCloud (podcasts), YouTube (videos), and Calameo (magazines). The core requirements include a 5-tab navigation, a premium Netflix-like UX, a splash screen, and a member-only authentication system. The ultimate goal is to deploy the backend and publish the mobile app to the iOS and Android app stores. The user has requested assistance with generating the required text and images for the app store listings and is currently facing a critical deployment issue related to a package name conflict on the Google Play Store.
+The user wants to create an application in French for their Sufi association, Conscience Soufie. The app functions as a content hub, aggregating content from WordPress (articles), SoundCloud (podcasts), YouTube (videos), and Calameo (magazines). The core requirements include a 5-tab navigation, a premium UX, a splash screen, and a member-only authentication system linked to HelloAsso. The ultimate goal is to have the app on iOS, Android, and as a Web Application. 
 
 **PRODUCT REQUIREMENTS:**
 -   **5-Tab Navigation:** Accueil, Articles, Podcasts, Zoom, À Propos.
 -   **Content Hub:** Aggregate content from WordPress, SoundCloud RSS, YouTube RSS, and Calameo.
 -   **Authentication:** Restrict access to paying members via an email verification system linked to HelloAsso.
--   **UI/UX:** A premium, modern visual identity with a primary color of .
--   **Profile & Preferences:** A side menu for user settings (notifications, theme, language).
--   **Deployment:** Deploy the backend and prepare the Expo frontend for submission to the iOS and Android app stores.
--   **App Store Assets:** Provide promotional text, descriptions, keywords, and images for both the Apple App Store and Google Play Store.
+-   **UI/UX:** Premium, modern visual identity with a primary color of .
+-   **Platforms:** Android (Live), WebApp (Live on VPS), iOS (Pending).
 
-**User's preferred language**: French
+**User's preferred language**: **French** (You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only. The user speaks French.)
 
-**what currently exists?**
-A full-stack Expo (React Native) and FastAPI application.
--   **Frontend:** The app has a 5-tab structure with a complete authentication flow. It successfully fetches and displays dynamic content from WordPress, YouTube, and SoundCloud. The app was recently migrated from the deprecated  to  for sound playback. A  has been added to resolve path aliases () during the build process. The application's package name has been updated to  to resolve a conflict on the Google Play Store.
--   **Backend:**  includes API endpoints that proxy data from the required third-party services. All endpoints are functional.
+**what currently exists?** 
+A full-stack ecosystem comprising:
+1. **Expo React Native App** (Android deployment successful, iOS pending).
+2. **React/Vite WebApp** built to perfectly mirror the mobile app's UI/UX.
+3. **FastAPI Backend** acting as a proxy for third-party services (WordPress, SoundCloud, Zoom, HelloAsso).
+The Backend and WebApp are currently deployed and live on the user's personal OVH Ubuntu VPS using Nginx and systemd.
 
-**Last working item**:
--   **Last item agent was working**: The agent was resolving a deployment failure caused by an invalid  file. The user had previously attempted to publish a build on a personal Google Play account, creating a package name conflict. To resolve this, the agent changed the package name to . However, in an attempt to enforce this, the agent incorrectly added  and  keys to , which are not allowed by the EAS CLI, causing the latest deployment to fail. The agent has just removed these invalid keys from .
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N
--   **Which testing method agent to use?**:  to analyze build logs if the next deployment attempt fails. The fix can only be verified by the user triggering a new deployment.
--   **User Testing Done**: N
-
-**All Pending/In progress Issue list**:
--   **Issue 1**: Deployment failure due to package name conflict and invalid  configuration. (Priority: P0 - BLOCKER)
--   **Issue 2**: Background audio for podcasts does not work on a locked screen. (Priority: P1)
--   **Issue 3**: Don et adhésion modal click fix needs user verification on a mobile device. (Priority: P2)
-
-**Issues Detail**:
--   **Issue 1**:
-    -   **Description**: The user cannot publish the app on the association's Google Play account because a previous build was uploaded to a personal account, causing a package name conflict. The latest deployment attempt also failed with the error 
-    -   **Attempted fixes**:
-        1.  Changed the package name in  to .
-        2.  Incorrectly added  and  keys to , which caused a validation error ().
-        3.  The agent has now corrected this by removing the forbidden keys from . The file is now valid, and the correct package name is defined only in .
-    -   **Next debug checklist**:
-        1.  Confirm with the user that they should click the Deploy button again.
-        2.  Monitor the build logs for any new errors.
-        3.  If the deployment succeeds, a new build with the package  will be generated, which should resolve the Google Play conflict.
-    -   **Why fix this issue and what will be achieved with the fix?**: This is a critical blocker preventing the user from publishing the application to the Google Play Store.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: The fix is tested by a new deployment run.
-    -   **Blocked on other issue**: None
-
--   **Issue 2**:
-    -   **Description**: The user reports that podcast audio stops when the phone screen is locked.
-    -   **Attempted fixes**: The agent migrated from  to , updated  with background mode permissions, and explained to the user that **this is a known limitation of Expo Go**. This functionality will only work on a native build created with EAS.
-    -   **Next debug checklist**: None. The issue is understood and is pending a native build.
-    -   **Why fix this issue and what will be achieved with the fix?**: It's a core feature for a podcast app.
-    -   **Status**: BLOCKED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: Frontend (manual testing on a native build).
-    -   **Blocked on other issue**: Issue 1: Deployment Failure
-
--   **Issue 3**:
-    -   **Description**: A fix for the Don et adhésion modal not opening on mobile was implemented in a previous session using a .
-    -   **Status**: USER VERIFICATION PENDING
-    -   **Should Test frontend/backend/both after fix?**: Frontend (Manual user testing on a device).
-
-**In progress Task List**:
--   None.
-
-**Upcoming and Future Tasks**
--   **Upcoming Tasks**:
-    -   **P0: Guide User Through Deployment & Native Build**: Once the deployment blocker is resolved, guide the user to:
-        1.  Click Deploy to build the backend with the new package name configuration.
-        2.  Download the code and run An Expo user account is required to proceed.
+**Last working item**: 
+- Last item agent was working: The user finally secured an Apple Developer account for the association. The agent provided the initial instructions on how to use EAS CLI (An Expo user account is required to proceed.
 
 Log in to EAS with email or username (exit and run eas login --help to see other login options)
-Input is required, but stdin is not readable. Failed to display prompt: Email or username locally to create a native / file for the Play Store.
-    -   **P1: Flesh out Profile Functionality**: Implement the logic for applying theme changes (light/dark mode) and language changes, which are currently only UI elements in the .
+Input is required, but stdin is not readable. Failed to display prompt: Email or username, An Expo user account is required to proceed.
 
--   **Future Tasks**:
-    -   **Enable Background Audio**: After a successful native build, remind the user to test the background audio functionality on a real device.
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username, An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username) to deploy the iOS app to the App Store.
+- Status: USER VERIFICATION PENDING (Waiting for user to execute iOS build steps)
+- Agent Testing Done: N/A (Deployment step)
+- Which testing method agent to use? NA (Relies on EAS CLI logs and user's Apple Developer account access).
+- User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  - Issue 1: iOS App Store Deployment
+     - Attempted fixes: Agent provided EAS CLI commands for iOS build and submission.
+     - Next debug checklist: Monitor user's execution of An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username. If certificates fail, guide user through App Store Connect.
+     - Why fix this issue and what will be achieved with the fix? Completes the product requirement of having the app on both major mobile platforms.
+     - Status: IN PROGRESS (Awaiting user action)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Frontend (iOS TestFlight).
+     - Blocked on other issue: None.
+     
+  - Issue 2: WebApp Authentication Login Bug
+     - Attempted fixes: Changed  to  in  to match the FastAPI backend's camelCase response.
+     - Next debug checklist: Ask user if the login with  now successfully grants access on the live WebApp. 
+     - Why fix this issue and what will be achieved with the fix? Allows actual members to bypass the login wall and access Zoom webinars on the WebApp.
+     - Status: USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Frontend (WebApp).
+     - Blocked on other issue: None.
+
+  - Issue 3: Background audio for podcasts does not work on a locked screen (Mobile)
+     - Attempted fixes: Configured  and background permissions in . Agent previously informed user this only works in native builds, not Expo Go.
+     - Next debug checklist: Ask user to test background audio on their physical Android device now that the native APK is deployed.
+     - Why fix this issue and what will be achieved with the fix? Core feature for a podcast application.
+     - Status: TESTING PENDING (User side)
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? Frontend.
+     - Blocked on other issue: None.
+
+**In progress Task List**:
+  - Task 1: Complete iOS Submission via EAS
+     - Where to resume: Await user's confirmation of running An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username.
+     - What will be achieved with this? App published to Apple App Store.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Frontend.
+     - Blocked on something: User executing local EAS commands with their Apple ID.
+
+**Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - P1: Flesh out Profile Functionality: Implement the logic for applying theme changes (light/dark mode) and language changes across Mobile and WebApp (currently only UI elements in the  and ).
+    
+    Future Tasks:
+    - P2: Codebase Refactoring: Evaluate creating a shared logic folder (or monorepo structure) since WebApp and Mobile App currently have duplicated API fetching logic and contexts.
 
 **Completed work in this session**
--   **Audio System Migration**: Migrated the entire app from the deprecated  to , including rewriting the  and updating .
--   **Podcast Playback Bugfix**: Fixed a crash on the podcast page by correcting the API call from  to .
--   **Deployment Alias Fix**: Resolved a build failure () by creating  with .
--   **Package Name Conflict Resolution**: Changed the application's package name in  to  to avoid conflicts on the Google Play Store.
--   ** Validation Fix**: Corrected the  file by removing disallowed  and  keys.
--   **Image Fix**: Replaced a broken image URL for Revue n°3 on the home screen with a user-provided image.
--   **App Store Content Generation**: Provided the user with all required text (promotional text, descriptions, release notes) and a feature graphic for the App Store and Play Store listings.
+- Android  and  deployment blockers resolved (DONE)
+- Android UI Fix: Bottom tab bar padding increased so it isn't hidden by OS navigation (DONE)
+- WebApp Creation: Built Vite/React webapp mirroring mobile UI/UX entirely (DONE)
+- VPS Deployment: Configured user's OVH Ubuntu VPS with Nginx, systemd, and Let's Encrypt SSL. Backend and WebApp are live (DONE)
+- WebApp UI/UX matching: Replicated Splash screen, mobile layout, audio player overlay, and protected routes for Zoom tab (DONE)
+- WebApp Auth Fix: Corrected snake_case/camelCase mismatch for HelloAsso member verification (DONE)
 
 **Earlier issues found/mentioned but not fixed**
--   None.
+None explicitly missed, but the agent relied heavily on the user to test the WebApp UI fixes (Splash screen, Article formatting) on their VPS rather than verifying the final state locally with the screenshot tool.
 
 **Known issue recurrence from previous fork**
--   The deployment process has been a recurring blocker. Initially, it was due to an empty  profile in . In this session, it was caused by an unresolved path alias, and then by an invalid  structure after the agent tried to add the package name there. The root cause seems to be a lack of initial familiarity with the specific requirements of the EAS build environment.
+  - Issue recurrence in previous fork: Deployment environments and EAS configurations.
+  - Recurrence count: 2
+  - Status: RESOLVED (for Android/Web), IN PROGRESS (for iOS).
+  Note: Keep a close eye on EAS configurations for iOS, as Android previously failed due to bad  formatting.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend**: React Native, Expo, Expo Router, TypeScript
--   **Backend**: Python, FastAPI
--   **Audio**: 
--   **Build System**: Expo Application Services (EAS),  for path aliases.
--   **Deployment**: Emergent deployment pipeline for the backend, EAS for the mobile app builds.
+- Frontend Mobile: React Native, Expo, Expo Router, 
+- Frontend Web: React, Vite, Tailwind CSS, React Router
+- Backend: Python, FastAPI
+- Hosting/Deployment: OVH VPS (Ubuntu), Nginx (Reverse Proxy for WebApp and API), systemd (daemon for FastAPI), EAS (Expo Application Services) for mobile builds.
 
 **key DB schema**
--   N/A (The application backend is stateless).
+- N/A (Backend is stateless, purely acts as an API proxy/formatter).
 
 **changes in tech stack**
--    was fully replaced by .
--    was added to the frontend dev dependencies.
+- Added **React (Vite)** and **Tailwind CSS** for the WebApp.
+- Added **Nginx** and **systemd** knowledge context, as the app is now hosted on a raw Ubuntu VPS.
 
-**All files of reference**
--    (The file that was causing the most recent deployment blocker)
--    (Contains the official package name )
--    (Crucial for resolving aliases during the EAS build)
--    (Contains the new  implementation)
--    (Contains the corrected image URL for Revue n°3)
+**All files of reference** 
+-  (Modified to fix  login bug)
+-  (Contains WebApp protected routing logic)
+-  (Important for iOS EAS build settings)
 
-**Areas that need refactoring**:
--   None identified.
+**Areas that need refactoring**: 
+- WebApp and Frontend share identical context logic (, ) and API fetching logic. Future refactor could extract these into a shared utility folder to respect DRY principles.
 
 **key api endpoints**
--   
--   
--   
--   
--   
+-  (HelloAsso validation)
+- 
+- 
 
-**Critical Info for New Agent**
--   **P0 DEPLOYMENT BLOCKER**: The absolute priority is to get a successful deployment. The user has been blocked by a package name conflict on Google Play. The agent has changed the package name to  in  and has just fixed an  validation error. Your first action should be to instruct the user to **click the Deploy button again**. Do not make any more changes until you see the result of that build.
--   **BACKGROUND AUDIO**: You MUST reinforce to the user that **background audio will not work in Expo Go**. It is not a bug. It will only work after a native build is created using An Expo user account is required to proceed.
+**Critical Info for New Agent** 
+- **LANGUAGE:** Always communicate with the user in **French**.
+- **VPS WORKFLOW:** The Backend and WebApp live on the user's OVH VPS. If you write code changes to  or , you MUST instruct the user to execute a , yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command. (for webapp), or  (for backend) on their VPS.
+- **iOS DEPLOYMENT:** The immediate next step is assisting the user with An Expo user account is required to proceed.
 
 Log in to EAS with email or username (exit and run eas login --help to see other login options)
-Input is required, but stdin is not readable. Failed to display prompt: Email or username. This can only happen *after* the deployment blocker is resolved.
--   **PACKAGE NAME**: The correct and final package name is . It should only be defined in , not . Do not change it.
+Input is required, but stdin is not readable. Failed to display prompt: Email or username. Be prepared to troubleshoot Apple Developer certificate issues.
+- **WEBAPP AUTH:** You just pushed a fix to  for the WebApp login. Ensure the user confirms it works before moving on.
 
-**documents and test reports created in this job**
--   
--   
+**documents and test reports created in this job** 
+- /app/memory/PRD.md (Updated with WebApp requirements)
 
-**Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Confirms the new cover image for revue #3 is still not showing and asks about the sound issue again.
-2.  **Agent**: Explains it's a cache issue and reiterates that background audio is an Expo Go limitation, then asks if the user wants to prepare for deployment to get a native build.
-3.  **User**: Agrees to proceed with deployment (oui).
-4.  **Agent**: Confirms everything is ready and instructs the user to click Deploy.
-5.  **User**: Calls  to check readiness.
-6.  **Agent**: Acknowledges the agent's report, performs a final health check, and again instructs the user to click Deploy.
-7.  **User**: Says it is ok.
-8.  **Agent**: Instructs user to click Deploy to launch.
-9.  **User**: Reports a new package name conflict error from Google Play after trying to publish.
-10. **Agent**: Acknowledges the package name conflict, changes it in the code, and after a failed deployment due to an invalid , fixes  and instructs the user to click Deploy again.
+**Last 10 User Messages and any pending HUMAN messages** 
+- User: Confirmed the WebApp works on the VPS but pointed out 4 bugs (No splash screen, Zoom not protected, Article HTML showing raw, Audio player overlapping menu).
+- Agent: Fixed all 4 bugs in the WebApp React code and instructed user to pull to VPS.
+- User: Reported login fails with not associated with an active member despite using a valid member email.
+- Agent: Found the bug ( instead of ) and fixed .
+- User: Asked how to deploy to iOS now that they successfully opened an Apple Developer account for the association.
+- Agent: Explained the EAS iOS build process (An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username, An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username, An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+Input is required, but stdin is not readable. Failed to display prompt: Email or username) and asked if the user wanted step-by-step guidance. *(Pending user response)*.
 
 **Project Health Check:**
--   **Broken**: The deployment process is critically blocked, preventing the user from publishing their app.
--   **Mocked**: None.
+- Broken: None. 
+- Mocked: None.
 
-**3rd Party Integrations**
--   **Zoom**: Server-to-Server OAuth
--   **HelloAsso**: Public API
--   **WordPress**: Public REST API
--   **SoundCloud**: RSS Feed via 
--   **YouTube**: RSS Feed via 
--   ****: For native audio playback.
--   **Expo Application Services (EAS)**: For building the native app.
+**3rd Party Integrations** 
+- Zoom — requires User API Key
+- HelloAsso — requires User API Key
+- WordPress (Public API)
+- SoundCloud (RSS)
+- YouTube (RSS)
+- Let's Encrypt (SSL on VPS)
 
 **Testing status**
--   **Testing agent used after significant changes**: NO
--   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: []
--   **Known regressions**: None
+- Testing agent used after significant changes: NO
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: []
+- Known regressions: None
 
 **Credentials to test flow:**
--   API credentials are in .
--   Use a member email like  for testing member-only features.
+- Member test email: 
 
 **What agent forgot to execute**
--   The agent initially made a mistake by adding  and  keys to , which caused a new deployment failure. This mistake was caught and corrected after analyzing the build logs.</analysis>
+- The agent did not use the  to self-verify the 4 visual/UI bug fixes applied to the WebApp (Splash screen, Article formatting, Audio player position) before handing the code to the user to test on their live VPS. Next agent should visually verify the webapp if further UI changes are made.</analysis>

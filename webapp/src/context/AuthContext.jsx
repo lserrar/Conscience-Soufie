@@ -36,13 +36,19 @@ export const AuthProvider = ({ children }) => {
       
       const data = await response.json();
       
-      if (data.is_member) {
-        const userData = { email, isMember: true, loginDate: new Date().toISOString() };
+      // API returns isMember (camelCase)
+      if (data.isMember) {
+        const userData = { 
+          email, 
+          isMember: true, 
+          memberName: data.memberName,
+          loginDate: new Date().toISOString() 
+        };
         setUser(userData);
         localStorage.setItem('cs_user', JSON.stringify(userData));
-        return { success: true };
+        return { success: true, memberName: data.memberName };
       } else {
-        return { success: false, message: 'Cet email n\'est pas associé à un membre actif.' };
+        return { success: false, message: data.message || 'Cet email n\'est pas associé à un membre actif.' };
       }
     } catch (error) {
       return { success: false, message: 'Erreur de connexion. Veuillez réessayer.' };

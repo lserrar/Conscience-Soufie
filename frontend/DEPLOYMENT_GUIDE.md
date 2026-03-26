@@ -2,7 +2,7 @@
 
 ## 📱 Lien de test pour l'équipe
 ```
-https://conscience-content.preview.emergentagent.com
+https://conscience-preview-2.preview.emergentagent.com
 ```
 
 **Instructions de test :**
